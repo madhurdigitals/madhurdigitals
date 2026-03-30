@@ -1,62 +1,78 @@
-<select id="school">
-  <option value="DAV">DAV</option>
-  <option value="RAV">RAV</option>
-</select>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+</head>
+<body>
 
-<input id="name" placeholder="Name">
-<input id="class" placeholder="Class">
-<input id="section" placeholder="Section">
-<input id="roll" placeholder="Roll">
-
-<button onclick="submitStudent()">Add Student</button>
+<h2 id="title"></h2>
+<button onclick="changeSchool()">Change School</button>
+<button onclick="logout()">Logout</button>
 
 <hr>
 
-<select id="schoolFilter">
-  <option value="DAV">DAV</option>
-  <option value="RAV">RAV</option>
-</select>
+<h3>Add Student</h3>
 
-<button onclick="loadStudents()">Load Students</button>
+<input id="name" placeholder="Name"><br>
+<input id="class" placeholder="Class"><br>
+<input id="section" placeholder="Section"><br>
+<input id="roll" placeholder="Roll"><br>
+<input id="phone" placeholder="Phone"><br>
+<input id="address" placeholder="Address"><br><br>
 
-<div id="students"></div>
+<button onclick="submitStudent()">Submit</button>
 
-<script src="api.js"></script>
+<h3>Last 3 Students</h3>
+<div id="last3"></div>
+
+<h3>All Students</h3>
+<div id="all"></div>
 
 <script>
+const school = localStorage.getItem("school");
+
+if (!school) {
+  window.location.href = "school.html";
+}
+
+document.getElementById("title").innerText = "School: " + school;
+
+function changeSchool() {
+  window.location.href = "school.html";
+}
+
 async function submitStudent() {
   const data = {
-    school: document.getElementById("school").value,
+    school: school,
     name: document.getElementById("name").value,
     class: document.getElementById("class").value,
     section: document.getElementById("section").value,
-    roll: document.getElementById("roll").value
+    roll: document.getElementById("roll").value,
+    phone: document.getElementById("phone").value,
+    address: document.getElementById("address").value
   };
 
   const res = await addStudent(data);
 
-  if (res.status === "success") {
-    alert("Student Added ✅");
-  } else {
-    alert("Error: " + res.error);
-  }
+  alert("Student ID: " + res.student_id);
+
+  loadData();
 }
 
-// ✅ LOAD STUDENTS
-async function loadStudents() {
-  const school = document.getElementById("schoolFilter").value;
-
+async function loadData() {
   const res = await getStudents(school);
 
-  const container = document.getElementById("students");
-  container.innerHTML = "";
+  document.getElementById("all").innerHTML =
+    res.data.map(s => `<p>${s.Student_ID} - ${s.Name}</p>`).join("");
 
-  res.students.forEach(s => {
-    container.innerHTML += `
-      <div style="border:1px solid #ccc; margin:5px; padding:5px;">
-        <b>${s.student_id}</b> - ${s.name} (${s.class}-${s.section})
-      </div>
-    `;
-  });
+  document.getElementById("last3").innerHTML =
+    res.last3.map(s => `<p>${s.Student_ID} - ${s.Name}</p>`).join("");
 }
+
+loadData();
 </script>
+
+</body>
+</html>
