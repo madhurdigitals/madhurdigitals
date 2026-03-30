@@ -43,6 +43,9 @@ function changeSchool() {
   window.location.href = "school.html";
 }
 
+/**
+ * ✅ Submit Student
+ */
 async function submitStudent() {
   const data = {
     school: school,
@@ -56,19 +59,56 @@ async function submitStudent() {
 
   const res = await addStudent(data);
 
-  alert("Student ID: " + res.student_id);
+  alert("Student Added Successfully");
 
   loadData();
 }
 
-async function loadData() {
-  const res = await getStudents(school);
+/**
+ * ✅ Convert sheet array → object
+ */
+function formatData(rows) {
+  const headers = rows[0];
 
+  return rows.slice(1).map(row => {
+    let obj = {};
+    headers.forEach((h, i) => {
+      obj[h] = row[i];
+    });
+    return obj;
+  });
+}
+
+/**
+ * ✅ Load Data
+ */
+async function loadData() {
+  const raw = await getStudents(school);
+
+  if (!raw || raw.length === 0) {
+    document.getElementById("all").innerHTML = "No data found";
+    return;
+  }
+
+  const students = formatData(raw);
+
+  // ✅ All Students
   document.getElementById("all").innerHTML =
-    res.data.map(s => `<p>${s.Student_ID} - ${s.Name}</p>`).join("");
+    students.map(s => `
+      <p>
+        ${s.Name} | Class: ${s.Class} | Roll: ${s.Roll}
+      </p>
+    `).join("");
+
+  // ✅ Last 3 Students
+  const last3 = students.slice(-3).reverse();
 
   document.getElementById("last3").innerHTML =
-    res.last3.map(s => `<p>${s.Student_ID} - ${s.Name}</p>`).join("");
+    last3.map(s => `
+      <p>
+        ${s.Name} | Class: ${s.Class}
+      </p>
+    `).join("");
 }
 
 loadData();
