@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+  <script src="js/auth.js"></script>
+</head>
+<body>
+
+<h2>Login</h2>
+
+<input id="username" placeholder="Username"><br><br>
+<input id="password" type="password" placeholder="Password"><br><br>
+
+<button onclick="handleLogin()">Login</button>
+
+<script>
+function handleLogin() {
+  const u = document.getElementById("username").value;
+  const p = document.getElementById("password").value;
+
+  if (login(u, p)) {
+    window.location.href = "school.html";
+  } else {
+    alert("Invalid credentials");
+  }
+}
+</script>
+
+</body>
+</html>
