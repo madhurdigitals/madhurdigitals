@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbytZo8tG54g4sAlcKSmL7VPEQ_I1uNILLcOB9tsUjRqHGNGqKxjv4w82-rcNU8W-H_xTg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzd3Bi9-0a2odrCrIaDvWzEjtumkqCUeq7N_c1KTa_z/dev";
 
 async function addStudent(data) {
   const res = await fetch(API_URL, {
