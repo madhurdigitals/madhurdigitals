@@ -46,11 +46,22 @@ nav button {
   margin-bottom: 30px;
 }
 
+/* FORM */
+.form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
 /* INPUT */
 input {
   width: 100%;
   padding: 10px;
-  margin: 8px 0;
   border-radius: 6px;
   border: 1px solid #ccc;
 }
@@ -72,10 +83,6 @@ input {
   cursor: pointer;
 }
 
-.submit-btn:hover {
-  background: #0b5ed7;
-}
-
 .clear-btn {
   flex: 1;
   padding: 12px;
@@ -84,10 +91,6 @@ input {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-}
-
-.clear-btn:hover {
-  background: #5a6268;
 }
 
 /* TABLE */
@@ -99,7 +102,6 @@ table {
 th, td {
   padding: 10px;
   border-bottom: 1px solid #ddd;
-  text-align: left;
 }
 
 th {
@@ -116,7 +118,6 @@ th {
   padding: 12px 20px;
   border-radius: 6px;
   display: none;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 </style>
 
@@ -124,7 +125,6 @@ th {
 
 <body>
 
-<!-- NAV -->
 <nav>
   <span id="title"></span>
   <div>
@@ -139,12 +139,36 @@ th {
   <div class="card">
     <h3>Add Student</h3>
 
-    <input id="name" placeholder="Student Name">
-    <input id="class" placeholder="Class">
-    <input id="section" placeholder="Section">
-    <input id="roll" placeholder="Roll Number">
-    <input id="phone" placeholder="Phone">
-    <input id="address" placeholder="Address">
+    <div class="form-group">
+      <label>Student Name</label>
+      <input id="name" placeholder="Enter student name">
+    </div>
+
+    <div class="form-group">
+      <label>Class</label>
+      <input id="class" placeholder="Enter class">
+    </div>
+
+    <div class="form-group">
+      <label>Section</label>
+      <input id="section" placeholder="Enter section">
+    </div>
+
+    <div class="form-group">
+      <label>Roll Number</label>
+      <input id="roll" placeholder="Enter roll number">
+    </div>
+
+    <div class="form-group">
+      <label>Phone</label>
+      <input id="phone" placeholder="Enter phone number" 
+             oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+    </div>
+
+    <div class="form-group">
+      <label>Address</label>
+      <input id="address" placeholder="Enter address">
+    </div>
 
     <div class="btn-group">
       <button class="submit-btn" onclick="submitStudent()">Submit</button>
@@ -176,7 +200,6 @@ th {
 <script>
 const school = localStorage.getItem("school");
 
-// protect page
 if (!school) {
   window.location.href = "school.html";
 }
@@ -201,11 +224,11 @@ function showToast(msg) {
 /* CLEAR FORM */
 function clearForm() {
   document.getElementById("name").value = "";
-  document.getElementById("class").value = "";
-  document.getElementById("section").value = "";
   document.getElementById("roll").value = "";
   document.getElementById("phone").value = "";
   document.getElementById("address").value = "";
+
+  // ❗ Class & Section NOT cleared intentionally
 }
 
 /* SUBMIT */
@@ -224,7 +247,7 @@ async function submitStudent() {
 
   showToast("Student Added Successfully");
 
-  clearForm(); // auto clear
+  clearForm();
 
   loadData();
 }
