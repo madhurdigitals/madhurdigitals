@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+</head>
+<body>
+
+<h2 id="title"></h2>
+<button onclick="changeSchool()">Change School</button>
+<button onclick="logout()">Logout</button>
+
+<hr>
+
+<h3>Add Student</h3>
+
+<input id="name" placeholder="Name"><br>
+<input id="class" placeholder="Class"><br>
+<input id="section" placeholder="Section"><br>
+<input id="roll" placeholder="Roll"><br>
+<input id="phone" placeholder="Phone"><br>
+<input id="address" placeholder="Address"><br><br>
+
+<button onclick="submitStudent()">Submit</button>
+
+<h3>Last 3 Students</h3>
+<div id="last3"></div>
+
+<h3>All Students</h3>
+<div id="all"></div>
+
+<script>
+const school = localStorage.getItem("school");
+
+if (!school) {
+  window.location.href = "school.html";
+}
+
+document.getElementById("title").innerText = "School: " + school;
+
+function changeSchool() {
+  window.location.href = "school.html";
+}
+
+async function submitStudent() {
+  const data = {
+    school: school,
+    name: document.getElementById("name").value,
+    class: document.getElementById("class").value,
+    section: document.getElementById("section").value,
+    roll: document.getElementById("roll").value,
+    phone: document.getElementById("phone").value,
+    address: document.getElementById("address").value
+  };
+
+  const res = await addStudent(data);
+  alert("Student ID: " + res.student_id);
+
+  loadData();
+}
+
+async function loadData() {
+  const res = await getStudents(school);
+
+  document.getElementById("all").innerHTML =
+    res.data.map(s => `<p>${s.Student_ID} - ${s.Name}</p>`).join("");
+
+  document.getElementById("last3").innerHTML =
+    res.last3.map(s => `<p>${s.Student_ID} - ${s.Name}</p>`).join("");
+}
+
+loadData();
+</script>
+
+</body>
+</html>
