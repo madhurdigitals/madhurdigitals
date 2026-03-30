@@ -5,6 +5,8 @@
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body {
   font-family: 'Segoe UI', sans-serif;
@@ -16,13 +18,33 @@ body {
 nav {
   background: #0d6efd;
   color: white;
-  padding: 15px 20px;
+  padding: 12px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
 }
 
-nav button {
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo img {
+  width: 35px;
+}
+
+.title-text {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.school-name {
+  font-size: 14px;
+}
+
+.nav-actions button {
   margin-left: 10px;
   padding: 6px 12px;
   border: none;
@@ -33,36 +55,35 @@ nav button {
 /* CONTAINER */
 .container {
   max-width: 900px;
-  margin: 30px auto;
-  padding: 20px;
+  margin: 20px auto;
+  padding: 15px;
 }
 
 /* CARD */
 .card {
   background: white;
-  padding: 25px;
+  padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
-/* FORM */
-.form-group {
-  margin-bottom: 15px;
-  text-align: left;
+/* FORM ROW */
+.form-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
+.form-row label {
+  width: 150px;
   font-weight: 600;
 }
 
-/* INPUT */
-input {
-  width: 100%;
-  padding: 10px;
-  border-radius: 6px;
+.form-row input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 5px;
   border: 1px solid #ccc;
 }
 
@@ -70,12 +91,12 @@ input {
 .btn-group {
   display: flex;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
 .submit-btn {
   flex: 1;
-  padding: 12px;
+  padding: 10px;
   background: #0d6efd;
   color: white;
   border: none;
@@ -85,7 +106,7 @@ input {
 
 .clear-btn {
   flex: 1;
-  padding: 12px;
+  padding: 10px;
   background: #6c757d;
   color: white;
   border: none;
@@ -100,7 +121,7 @@ table {
 }
 
 th, td {
-  padding: 10px;
+  padding: 8px;
   border-bottom: 1px solid #ddd;
 }
 
@@ -115,9 +136,36 @@ th {
   right: 20px;
   background: #28a745;
   color: white;
-  padding: 12px 20px;
+  padding: 10px 15px;
   border-radius: 6px;
   display: none;
+}
+
+/* 📱 MOBILE RESPONSIVE */
+@media (max-width: 600px) {
+
+  .form-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .form-row label {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+
+  .btn-group {
+    flex-direction: column;
+  }
+
+  nav {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nav-actions {
+    margin-top: 10px;
+  }
 }
 </style>
 
@@ -126,8 +174,16 @@ th {
 <body>
 
 <nav>
-  <span id="title"></span>
-  <div>
+  <div class="logo">
+    <!-- Replace with your logo -->
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <div>
+      <div class="title-text">Madhur Digitals</div>
+      <div class="school-name" id="schoolName"></div>
+    </div>
+  </div>
+
+  <div class="nav-actions">
     <button onclick="changeSchool()">Change School</button>
     <button onclick="logout()">Logout</button>
   </div>
@@ -139,35 +195,34 @@ th {
   <div class="card">
     <h3>Add Student</h3>
 
-    <div class="form-group">
+    <div class="form-row">
       <label>Student Name</label>
-      <input id="name" placeholder="Enter student name">
+      <input id="name">
     </div>
 
-    <div class="form-group">
+    <div class="form-row">
       <label>Class</label>
-      <input id="class" placeholder="Enter class">
+      <input id="class">
     </div>
 
-    <div class="form-group">
+    <div class="form-row">
       <label>Section</label>
-      <input id="section" placeholder="Enter section">
+      <input id="section">
     </div>
 
-    <div class="form-group">
+    <div class="form-row">
       <label>Roll Number</label>
-      <input id="roll" placeholder="Enter roll number">
+      <input id="roll">
     </div>
 
-    <div class="form-group">
+    <div class="form-row">
       <label>Phone</label>
-      <input id="phone" placeholder="Enter phone number" 
-             oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+      <input id="phone" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
     </div>
 
-    <div class="form-group">
+    <div class="form-row">
       <label>Address</label>
-      <input id="address" placeholder="Enter address">
+      <input id="address">
     </div>
 
     <div class="btn-group">
@@ -194,7 +249,6 @@ th {
 
 </div>
 
-<!-- TOAST -->
 <div id="toast">Success</div>
 
 <script>
@@ -204,7 +258,7 @@ if (!school) {
   window.location.href = "school.html";
 }
 
-document.getElementById("title").innerText = "School: " + school;
+document.getElementById("schoolName").innerText = "School: " + school;
 
 function changeSchool() {
   window.location.href = "school.html";
@@ -227,8 +281,6 @@ function clearForm() {
   document.getElementById("roll").value = "";
   document.getElementById("phone").value = "";
   document.getElementById("address").value = "";
-
-  // ❗ Class & Section NOT cleared intentionally
 }
 
 /* SUBMIT */
@@ -245,27 +297,24 @@ async function submitStudent() {
 
   await addStudent(data);
 
-  showToast("Student Added Successfully");
+  showToast("Student Added");
 
   clearForm();
 
   loadData();
 }
 
-/* FORMAT DATA */
+/* FORMAT */
 function formatData(rows) {
   const headers = rows[0];
-
   return rows.slice(1).map(row => {
     let obj = {};
-    headers.forEach((h, i) => {
-      obj[h] = row[i];
-    });
+    headers.forEach((h, i) => obj[h] = row[i]);
     return obj;
   });
 }
 
-/* LOAD DATA */
+/* LOAD */
 async function loadData() {
   const raw = await getStudents(school);
 
@@ -276,7 +325,6 @@ async function loadData() {
   }
 
   const students = formatData(raw);
-
   const last3 = students.slice(-3).reverse();
 
   document.getElementById("recentTable").innerHTML =
