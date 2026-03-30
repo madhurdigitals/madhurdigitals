@@ -1,23 +1,35 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzd3Bi9-0a2odrCrIaDvWzEjtumkqCUeq7N_c1KTa_z/dev";
+const API_URL = "PASTE_NEW_DEPLOYMENT_URL_HERE";
 
+// ✅ ADD STUDENT
 async function addStudent(data) {
   const res = await fetch(API_URL, {
     method: "POST",
+    mode: "cors",
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({
       action: "addStudent",
       ...data
     })
   });
-  return res.json();
+
+  return await res.json();
 }
 
+// ✅ GET STUDENTS
 async function getStudents(school) {
   const res = await fetch(API_URL, {
     method: "POST",
+    mode: "cors",
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({
       action: "getStudents",
       school: school
     })
   });
-  return res.json();
+
+  return await res.json();
 }
