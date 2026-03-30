@@ -37,7 +37,7 @@ nav button {
   padding: 20px;
 }
 
-/* FORM CARD */
+/* CARD */
 .card {
   background: white;
   padding: 25px;
@@ -46,11 +46,7 @@ nav button {
   margin-bottom: 30px;
 }
 
-.card h3 {
-  margin-bottom: 15px;
-}
-
-/* INPUTS */
+/* INPUT */
 input {
   width: 100%;
   padding: 10px;
@@ -59,20 +55,39 @@ input {
   border: 1px solid #ccc;
 }
 
-/* BUTTON */
+/* BUTTONS */
+.btn-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
 .submit-btn {
-  width: 100%;
+  flex: 1;
   padding: 12px;
   background: #0d6efd;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  margin-top: 10px;
 }
 
 .submit-btn:hover {
   background: #0b5ed7;
+}
+
+.clear-btn {
+  flex: 1;
+  padding: 12px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.clear-btn:hover {
+  background: #5a6268;
 }
 
 /* TABLE */
@@ -90,13 +105,26 @@ th, td {
 th {
   background: #f1f3f5;
 }
+
+/* TOAST */
+#toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #28a745;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  display: none;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
 </style>
 
 </head>
 
 <body>
 
-<!-- NAVBAR -->
+<!-- NAV -->
 <nav>
   <span id="title"></span>
   <div>
@@ -118,7 +146,10 @@ th {
     <input id="phone" placeholder="Phone">
     <input id="address" placeholder="Address">
 
-    <button class="submit-btn" onclick="submitStudent()">Submit</button>
+    <div class="btn-group">
+      <button class="submit-btn" onclick="submitStudent()">Submit</button>
+      <button class="clear-btn" onclick="clearForm()">Clear</button>
+    </div>
   </div>
 
   <!-- RECENT ENTRIES -->
@@ -139,9 +170,13 @@ th {
 
 </div>
 
+<!-- TOAST -->
+<div id="toast">Success</div>
+
 <script>
 const school = localStorage.getItem("school");
 
+// protect page
 if (!school) {
   window.location.href = "school.html";
 }
@@ -152,9 +187,28 @@ function changeSchool() {
   window.location.href = "school.html";
 }
 
-/**
- * Submit Student
- */
+/* TOAST */
+function showToast(msg) {
+  const toast = document.getElementById("toast");
+  toast.innerText = msg;
+  toast.style.display = "block";
+
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, 2000);
+}
+
+/* CLEAR FORM */
+function clearForm() {
+  document.getElementById("name").value = "";
+  document.getElementById("class").value = "";
+  document.getElementById("section").value = "";
+  document.getElementById("roll").value = "";
+  document.getElementById("phone").value = "";
+  document.getElementById("address").value = "";
+}
+
+/* SUBMIT */
 async function submitStudent() {
   const data = {
     school: school,
@@ -168,14 +222,14 @@ async function submitStudent() {
 
   await addStudent(data);
 
-  alert("Student Added Successfully");
+  showToast("Student Added Successfully");
+
+  clearForm(); // auto clear
 
   loadData();
 }
 
-/**
- * Format Data
- */
+/* FORMAT DATA */
 function formatData(rows) {
   const headers = rows[0];
 
@@ -188,15 +242,13 @@ function formatData(rows) {
   });
 }
 
-/**
- * Load Data
- */
+/* LOAD DATA */
 async function loadData() {
   const raw = await getStudents(school);
 
   if (!raw || raw.length === 0) {
     document.getElementById("recentTable").innerHTML =
-      "<tr><td colspan='3'>No data found</td></tr>";
+      "<tr><td colspan='3'>No data</td></tr>";
     return;
   }
 
