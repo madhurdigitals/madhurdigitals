@@ -80,11 +80,18 @@ nav {
   font-weight: 600;
 }
 
-.form-row input {
+.form-row input,
+.form-row select {
   flex: 1;
-  padding: 8px;
-  border-radius: 5px;
+  padding: 10px;
+  border-radius: 6px;
   border: 1px solid #ccc;
+}
+
+/* FOCUS EFFECT */
+input:focus, select:focus {
+  outline: none;
+  border: 2px solid #0d6efd;
 }
 
 /* BUTTONS */
@@ -96,7 +103,7 @@ nav {
 
 .submit-btn {
   flex: 1;
-  padding: 10px;
+  padding: 12px;
   background: #0d6efd;
   color: white;
   border: none;
@@ -106,7 +113,7 @@ nav {
 
 .clear-btn {
   flex: 1;
-  padding: 10px;
+  padding: 12px;
   background: #6c757d;
   color: white;
   border: none;
@@ -141,9 +148,8 @@ th {
   display: none;
 }
 
-/* 📱 MOBILE RESPONSIVE */
+/* MOBILE */
 @media (max-width: 600px) {
-
   .form-row {
     flex-direction: column;
     align-items: flex-start;
@@ -175,7 +181,6 @@ th {
 
 <nav>
   <div class="logo">
-    <!-- Replace with your logo -->
     <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
     <div>
       <div class="title-text">Madhur Digitals</div>
@@ -202,22 +207,33 @@ th {
 
     <div class="form-row">
       <label>Class</label>
-      <input id="class">
+      <select id="class">
+        <option value="">Select Class</option>
+        <option>1</option><option>2</option><option>3</option>
+        <option>4</option><option>5</option><option>6</option>
+        <option>7</option><option>8</option><option>9</option>
+        <option>10</option><option>11</option><option>12</option>
+      </select>
     </div>
 
     <div class="form-row">
       <label>Section</label>
-      <input id="section">
+      <select id="section">
+        <option value="">Select Section</option>
+        <option>A</option><option>B</option>
+        <option>C</option><option>D</option>
+      </select>
     </div>
 
     <div class="form-row">
       <label>Roll Number</label>
-      <input id="roll">
+      <input id="roll" inputmode="numeric">
     </div>
 
     <div class="form-row">
       <label>Phone</label>
-      <input id="phone" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+      <input id="phone" inputmode="numeric" maxlength="10"
+             oninput="this.value = this.value.replace(/[^0-9]/g, '')">
     </div>
 
     <div class="form-row">
@@ -231,7 +247,7 @@ th {
     </div>
   </div>
 
-  <!-- RECENT ENTRIES -->
+  <!-- RECENT -->
   <div class="card">
     <h3>Recent Entries</h3>
 
@@ -260,6 +276,7 @@ if (!school) {
 
 document.getElementById("schoolName").innerText = "School: " + school;
 
+/* NAV */
 function changeSchool() {
   window.location.href = "school.html";
 }
@@ -275,7 +292,7 @@ function showToast(msg) {
   }, 2000);
 }
 
-/* CLEAR FORM */
+/* CLEAR */
 function clearForm() {
   document.getElementById("name").value = "";
   document.getElementById("roll").value = "";
@@ -295,14 +312,35 @@ async function submitStudent() {
     address: document.getElementById("address").value
   };
 
+  if (!data.name || !data.class || !data.section) {
+    showToast("Please fill required fields");
+    return;
+  }
+
   await addStudent(data);
 
   showToast("Student Added");
 
   clearForm();
 
+  document.getElementById("name").focus();
+
   loadData();
 }
+
+/* ENTER NAVIGATION */
+const fields = ["name","class","section","roll","phone","address"];
+
+fields.forEach((id, index) => {
+  document.getElementById(id).addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (index < fields.length - 1) {
+        document.getElementById(fields[index + 1]).focus();
+      }
+    }
+  });
+});
 
 /* FORMAT */
 function formatData(rows) {
