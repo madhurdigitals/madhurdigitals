@@ -186,7 +186,7 @@ th {
       <div class="school-name" id="schoolName"></div>
     </div>
   </div>
-  <button onclick="location.href='home.html'">Home</button>
+
   <div class="nav-actions">
     <button onclick="changeSchool()">Change School</button>
     <button onclick="logout()">Logout</button>
@@ -195,7 +195,6 @@ th {
 
 <div class="container">
 
-  <!-- FORM -->
   <div class="card">
     <h3>Add Student</h3>
 
@@ -260,7 +259,6 @@ th {
     </div>
   </div>
 
-  <!-- RECENT -->
   <div class="card">
     <h3>Recent Entries</h3>
     <table>
@@ -294,11 +292,10 @@ function showToast(msg) {
   setTimeout(() => toast.style.display = "none", 2000);
 }
 
-/* PHOTO VARIABLES */
+/* PHOTO */
 let photoBase64 = "";
 let photoExt = "";
 
-/* FILE UPLOAD */
 function handleFile(input) {
   const file = input.files[0];
   if (!file) return;
@@ -313,7 +310,6 @@ function handleFile(input) {
   reader.readAsDataURL(file);
 }
 
-/* CAMERA */
 function openCamera() {
   const video = document.getElementById("video");
   video.style.display = "block";
@@ -353,16 +349,16 @@ function clearForm() {
   document.getElementById("preview").src = "";
 }
 
-/* SUBMIT */
+/* SUBMIT (FIXED) */
 async function submitStudent() {
   const data = {
     school: school,
-    name: name.value,
-    class: document.getElementById("class").value,
-    section: document.getElementById("section").value,
-    roll: roll.value,
-    phone: phone.value,
-    address: address.value,
+    name: document.getElementById("name").value.trim(),
+    class: document.getElementById("class").value.trim(),
+    section: document.getElementById("section").value.trim(),
+    roll: document.getElementById("roll").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    address: document.getElementById("address").value.trim(),
     photo_base64: photoBase64,
     photo_ext: photoExt
   };
@@ -377,7 +373,7 @@ async function submitStudent() {
   showToast("Student ID: " + res.student_id);
 
   clearForm();
-  name.focus();
+  document.getElementById("name").focus();
 
   loadData();
 }
@@ -387,7 +383,8 @@ async function loadData() {
   const raw = await getStudents(school);
 
   if (!raw || raw.length === 0) {
-    recentTable.innerHTML = "<tr><td colspan='3'>No data</td></tr>";
+    document.getElementById("recentTable").innerHTML =
+      "<tr><td colspan='3'>No data</td></tr>";
     return;
   }
 
@@ -400,13 +397,14 @@ async function loadData() {
 
   const last3 = students.slice(-3).reverse();
 
-  recentTable.innerHTML = last3.map(s => `
-    <tr>
-      <td>${s.Name}</td>
-      <td>${s.Class}</td>
-      <td>${s.Section}</td>
-    </tr>
-  `).join("");
+  document.getElementById("recentTable").innerHTML =
+    last3.map(s => `
+      <tr>
+        <td>${s.Name}</td>
+        <td>${s.Class}</td>
+        <td>${s.Section}</td>
+      </tr>
+    `).join("");
 }
 
 loadData();
