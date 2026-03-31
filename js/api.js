@@ -1,28 +1,22 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbytZo8tG54g4sAlcKSmL7VPEQ_I1uNILLcOB9tsUjRqHGNGqKxjv4w82-rcNU8W-H_xTg/exec";
 
 /**
- * ✅ ADD STUDENT (using GET to avoid CORS)
+ * ✅ ADD STUDENT (POST - supports photo upload)
  */
 async function addStudent(data) {
   try {
-    const params = new URLSearchParams({
-      action: "addStudent",
-      school: data.school,
-      name: data.name,
-      class: data.class,
-      section: data.section,
-      roll: data.roll,
-      phone: data.phone,
-      
-      address: data.address
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(data)
     });
 
-    const url = `${API_URL}?${params.toString()}`;
-
-    console.log("Add URL:", url);
-
-    const res = await fetch(url);
     const result = await res.json();
+
+    console.log("Add Student Response:", result);
+
+    if (result.error) {
+      throw new Error(result.error);
+    }
 
     return result;
 
@@ -33,7 +27,7 @@ async function addStudent(data) {
 }
 
 /**
- * ✅ GET STUDENTS (CORS SAFE)
+ * ✅ GET STUDENTS (GET - no change)
  */
 async function getStudents(school) {
   try {
