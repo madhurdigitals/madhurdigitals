@@ -68,7 +68,7 @@ nav {
   margin-bottom: 20px;
 }
 
-/* FORM ROW */
+/* FORM */
 .form-row {
   display: flex;
   align-items: center;
@@ -88,7 +88,6 @@ nav {
   border: 1px solid #ccc;
 }
 
-/* FOCUS EFFECT */
 input:focus, select:focus {
   outline: none;
   border: 2px solid #0d6efd;
@@ -241,6 +240,20 @@ th {
       <input id="address">
     </div>
 
+    <!-- PHOTO -->
+    <div class="form-row">
+      <label>Photo</label>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="button" onclick="openCamera()">📸 Camera</button>
+        <input type="file" accept="image/*" onchange="handleFile(this)">
+        <button type="button" onclick="capturePhoto()">Capture</button>
+      </div>
+    </div>
+
+    <video id="video" width="150" autoplay style="display:none;"></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <img id="preview" width="100" style="margin-top:10px;">
+
     <div class="btn-group">
       <button class="submit-btn" onclick="submitStudent()">Submit</button>
       <button class="clear-btn" onclick="clearForm()">Clear</button>
@@ -250,7 +263,6 @@ th {
   <!-- RECENT -->
   <div class="card">
     <h3>Recent Entries</h3>
-
     <table>
       <thead>
         <tr>
@@ -270,26 +282,64 @@ th {
 <script>
 const school = localStorage.getItem("school");
 
-if (!school) {
-  window.location.href = "school.html";
-}
+if (!school) window.location.href = "school.html";
 
 document.getElementById("schoolName").innerText = "School: " + school;
-
-/* NAV */
-function changeSchool() {
-  window.location.href = "school.html";
-}
 
 /* TOAST */
 function showToast(msg) {
   const toast = document.getElementById("toast");
   toast.innerText = msg;
   toast.style.display = "block";
+  setTimeout(() => toast.style.display = "none", 2000);
+}
 
-  setTimeout(() => {
-    toast.style.display = "none";
-  }, 2000);
+/* PHOTO VARIABLES */
+let photoBase64 = "";
+let photoExt = "";
+
+/* FILE UPLOAD */
+function handleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  photoExt = file.name.split('.').pop();
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    photoBase64 = e.target.result.split(',')[1];
+    document.getElementById("preview").src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* CAMERA */
+function openCamera() {
+  const video = document.getElementById("video");
+  video.style.display = "block";
+
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => video.srcObject = stream);
+}
+
+function capturePhoto() {
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  canvas.getContext("2d").drawImage(video, 0, 0);
+
+  const dataUrl = canvas.toDataURL("image/jpeg");
+
+  photoBase64 = dataUrl.split(',')[1];
+  photoExt = "jpg";
+
+  document.getElementById("preview").src = dataUrl;
+
+  video.srcObject.getTracks().forEach(t => t.stop());
+  video.style.display = "none";
 }
 
 /* CLEAR */
@@ -298,58 +348,38 @@ function clearForm() {
   document.getElementById("roll").value = "";
   document.getElementById("phone").value = "";
   document.getElementById("address").value = "";
+
+  photoBase64 = "";
+  document.getElementById("preview").src = "";
 }
 
 /* SUBMIT */
 async function submitStudent() {
   const data = {
     school: school,
-    name: document.getElementById("name").value,
+    name: name.value,
     class: document.getElementById("class").value,
     section: document.getElementById("section").value,
-    roll: document.getElementById("roll").value,
-    phone: document.getElementById("phone").value,
-    address: document.getElementById("address").value
+    roll: roll.value,
+    phone: phone.value,
+    address: address.value,
+    photo_base64: photoBase64,
+    photo_ext: photoExt
   };
 
   if (!data.name || !data.class || !data.section) {
-    showToast("Please fill required fields");
+    showToast("Fill required fields");
     return;
   }
 
-  await addStudent(data);
+  const res = await addStudent(data);
 
-  showToast("Student Added");
+  showToast("Student ID: " + res.student_id);
 
   clearForm();
-
-  document.getElementById("name").focus();
+  name.focus();
 
   loadData();
-}
-
-/* ENTER NAVIGATION */
-const fields = ["name","class","section","roll","phone","address"];
-
-fields.forEach((id, index) => {
-  document.getElementById(id).addEventListener("keydown", function(e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (index < fields.length - 1) {
-        document.getElementById(fields[index + 1]).focus();
-      }
-    }
-  });
-});
-
-/* FORMAT */
-function formatData(rows) {
-  const headers = rows[0];
-  return rows.slice(1).map(row => {
-    let obj = {};
-    headers.forEach((h, i) => obj[h] = row[i]);
-    return obj;
-  });
 }
 
 /* LOAD */
@@ -357,22 +387,26 @@ async function loadData() {
   const raw = await getStudents(school);
 
   if (!raw || raw.length === 0) {
-    document.getElementById("recentTable").innerHTML =
-      "<tr><td colspan='3'>No data</td></tr>";
+    recentTable.innerHTML = "<tr><td colspan='3'>No data</td></tr>";
     return;
   }
 
-  const students = formatData(raw);
+  const headers = raw[0];
+  const students = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+
   const last3 = students.slice(-3).reverse();
 
-  document.getElementById("recentTable").innerHTML =
-    last3.map(s => `
-      <tr>
-        <td>${s.Name}</td>
-        <td>${s.Class}</td>
-        <td>${s.Section}</td>
-      </tr>
-    `).join("");
+  recentTable.innerHTML = last3.map(s => `
+    <tr>
+      <td>${s.Name}</td>
+      <td>${s.Class}</td>
+      <td>${s.Section}</td>
+    </tr>
+  `).join("");
 }
 
 loadData();
