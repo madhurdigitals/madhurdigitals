@@ -2,354 +2,67 @@
 <html>
 <head>
   <title>Dashboard</title>
+
+  <!-- ✅ CSS -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- JS -->
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body {
-  font-family: 'Segoe UI', sans-serif;
-  margin: 0;
-  background: #f5f7fb;
-}
-
-/* NAV */
-nav {
-  background: #0d6efd;
-  color: white;
-  padding: 12px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.logo img {
-  width: 35px;
-}
-
-.title-text {
-  font-weight: bold;
-  font-size: 18px;
-}
-
-.school-name {
-  font-size: 14px;
-}
-
-.nav-actions button {
-  margin-left: 10px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-/* CONTAINER */
-.container {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 15px;
-}
-
-/* CARD */
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-  margin-bottom: 20px;
-}
-
-/* FORM */
-.form-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.form-row label {
-  width: 150px;
-  font-weight: 600;
-}
-
-.form-row input,
-.form-row select {
-  flex: 1;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-input:focus, select:focus {
-  outline: none;
-  border: 2px solid #0d6efd;
-}
-
-/* BUTTONS */
-.btn-group {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.submit-btn {
-  flex: 1;
-  padding: 12px;
-  background: #0d6efd;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.clear-btn {
-  flex: 1;
-  padding: 12px;
-  background: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* TABLE */
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 8px;
-  border-bottom: 1px solid #ddd;
-}
-
-th {
-  background: #f1f3f5;
-}
-
-/* TOAST */
-#toast {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #28a745;
-  color: white;
-  padding: 10px 15px;
-  border-radius: 6px;
-  display: none;
-}
-
-/* MOBILE */
-@media (max-width: 600px) {
-  .form-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .form-row label {
-    width: 100%;
-    margin-bottom: 5px;
-  }
-
-  .btn-group {
-    flex-direction: column;
-  }
-
-  nav {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .nav-actions {
-    margin-top: 10px;
-  }
-}
-</style>
-
 </head>
 
 <body>
 
-<nav>
-  <div class="logo">
-    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
-    <div>
-      <div class="title-text">Madhur Digitals</div>
-      <div class="school-name" id="schoolName"></div>
-    </div>
-  </div>
-
-  <div class="nav-actions">
-    <button onclick="changeSchool()">Change School</button>
-    <button onclick="logout()">Logout</button>
-  </div>
-</nav>
-
 <div class="container">
 
-  <div class="card">
-    <h3>Add Student</h3>
+<h2 id="title"></h2>
 
-    <div class="form-row">
-      <label>Student Name</label>
-      <input id="name">
-    </div>
+<button onclick="changeSchool()">Change School</button>
+<button onclick="logout()">Logout</button>
 
-    <div class="form-row">
-      <label>Class</label>
-      <select id="class">
-        <option value="">Select Class</option>
-        <option>1</option><option>2</option><option>3</option>
-        <option>4</option><option>5</option><option>6</option>
-        <option>7</option><option>8</option><option>9</option>
-        <option>10</option><option>11</option><option>12</option>
-      </select>
-    </div>
+<hr>
 
-    <div class="form-row">
-      <label>Section</label>
-      <select id="section">
-        <option value="">Select Section</option>
-        <option>A</option><option>B</option>
-        <option>C</option><option>D</option>
-      </select>
-    </div>
+<h3>Add Student</h3>
 
-    <div class="form-row">
-      <label>Roll Number</label>
-      <input id="roll" inputmode="numeric">
-    </div>
+<input id="name" placeholder="Name"><br>
+<input id="class" placeholder="Class"><br>
+<input id="section" placeholder="Section"><br>
+<input id="roll" placeholder="Roll"><br>
+<input id="phone" placeholder="Phone"><br>
+<input id="address" placeholder="Address"><br>
+<input type="file" id="photo"><br><br>
 
-    <div class="form-row">
-      <label>Phone</label>
-      <input id="phone" inputmode="numeric" maxlength="10"
-             oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-    </div>
+<button onclick="submitStudent()">Submit</button>
 
-    <div class="form-row">
-      <label>Address</label>
-      <input id="address">
-    </div>
+<h3>Last 3 Students</h3>
+<div id="last3"></div>
 
-    <!-- PHOTO -->
-    <div class="form-row">
-      <label>Photo</label>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button type="button" onclick="openCamera()">📸 Camera</button>
-        <input type="file" accept="image/*" onchange="handleFile(this)">
-        <button type="button" onclick="capturePhoto()">Capture</button>
-      </div>
-    </div>
-
-    <video id="video" width="150" autoplay style="display:none;"></video>
-    <canvas id="canvas" style="display:none;"></canvas>
-    <img id="preview" width="100" style="margin-top:10px;">
-
-    <div class="btn-group">
-      <button class="submit-btn" onclick="submitStudent()">Submit</button>
-      <button class="clear-btn" onclick="clearForm()">Clear</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>Recent Entries</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Class</th>
-          <th>Section</th>
-        </tr>
-      </thead>
-      <tbody id="recentTable"></tbody>
-    </table>
-  </div>
+<h3>All Students</h3>
+<div id="all"></div>
 
 </div>
-
-<div id="toast">Success</div>
 
 <script>
 const school = localStorage.getItem("school");
 
-if (!school) window.location.href = "school.html";
-
-document.getElementById("schoolName").innerText = "School: " + school;
-
-/* TOAST */
-function showToast(msg) {
-  const toast = document.getElementById("toast");
-  toast.innerText = msg;
-  toast.style.display = "block";
-  setTimeout(() => toast.style.display = "none", 2000);
+// Redirect if no school
+if (!school || school === "null") {
+  window.location.replace("school.html");
 }
 
-/* PHOTO */
-let photoBase64 = "";
-let photoExt = "";
+document.getElementById("title").innerText = "School: " + school;
 
-function handleFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-
-  photoExt = file.name.split('.').pop();
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    photoBase64 = e.target.result.split(',')[1];
-    document.getElementById("preview").src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+/**
+ * ✅ Change School FIXED
+ */
+function changeSchool() {
+  localStorage.removeItem("school");
+  window.location.href = "school.html";
 }
 
-function openCamera() {
-  const video = document.getElementById("video");
-  video.style.display = "block";
-
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => video.srcObject = stream);
-}
-
-function capturePhoto() {
-  const video = document.getElementById("video");
-  const canvas = document.getElementById("canvas");
-
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-
-  canvas.getContext("2d").drawImage(video, 0, 0);
-
-  const dataUrl = canvas.toDataURL("image/jpeg");
-
-  photoBase64 = dataUrl.split(',')[1];
-  photoExt = "jpg";
-
-  document.getElementById("preview").src = dataUrl;
-
-  video.srcObject.getTracks().forEach(t => t.stop());
-  video.style.display = "none";
-}
-
-/* CLEAR */
-function clearForm() {
-  document.getElementById("name").value = "";
-  document.getElementById("roll").value = "";
-  document.getElementById("phone").value = "";
-  document.getElementById("address").value = "";
-
-  photoBase64 = "";
-  document.getElementById("preview").src = "";
-}
-
-/* SUBMIT (FIXED) */
+/**
+ * ✅ Submit Student
+ */
 async function submitStudent() {
   const data = {
     school: school,
@@ -358,52 +71,91 @@ async function submitStudent() {
     section: document.getElementById("section").value.trim(),
     roll: document.getElementById("roll").value.trim(),
     phone: document.getElementById("phone").value.trim(),
-    address: document.getElementById("address").value.trim(),
-    photo_base64: photoBase64,
-    photo_ext: photoExt
+    address: document.getElementById("address").value.trim()
   };
 
-  if (!data.name || !data.class || !data.section) {
-    showToast("Fill required fields");
-    return;
-  }
+  console.log("Submitting:", data);
 
   const res = await addStudent(data);
 
-  showToast("Student ID: " + res.student_id);
+  if (!res || res.error) {
+    alert("Failed to add student");
+    console.error(res);
+    return;
+  }
+
+  const studentId = res.student_id;
+
+  // Upload photo
+  const file = document.getElementById("photo").files[0];
+
+  if (file) {
+    await uploadPhoto(file, studentId);
+  }
+
+  alert("Student Added: " + studentId);
 
   clearForm();
-  document.getElementById("name").focus();
-
   loadData();
 }
 
-/* LOAD */
+/**
+ * Clear form
+ */
+function clearForm() {
+  document.getElementById("name").value = "";
+  document.getElementById("class").value = "";
+  document.getElementById("section").value = "";
+  document.getElementById("roll").value = "";
+  document.getElementById("phone").value = "";
+  document.getElementById("address").value = "";
+  document.getElementById("photo").value = "";
+}
+
+/**
+ * Convert Sheet → Object
+ */
+function formatData(rows) {
+  const headers = rows[0];
+
+  return rows.slice(1).map(row => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = row[i]);
+    return obj;
+  });
+}
+
+/**
+ * Load Data
+ */
 async function loadData() {
   const raw = await getStudents(school);
 
   if (!raw || raw.length === 0) {
-    document.getElementById("recentTable").innerHTML =
-      "<tr><td colspan='3'>No data</td></tr>";
+    document.getElementById("all").innerHTML = "No data";
     return;
   }
 
-  const headers = raw[0];
-  const students = raw.slice(1).map(r => {
-    let obj = {};
-    headers.forEach((h, i) => obj[h] = r[i]);
-    return obj;
-  });
+  const students = formatData(raw);
 
+  // All students
+  document.getElementById("all").innerHTML =
+    students.map(s => `
+      <div class="card">
+        <b>${s.Name}</b><br>
+        ID: ${s.Student_ID}<br>
+        Class: ${s.Class}
+      </div>
+    `).join("");
+
+  // Last 3
   const last3 = students.slice(-3).reverse();
 
-  document.getElementById("recentTable").innerHTML =
+  document.getElementById("last3").innerHTML =
     last3.map(s => `
-      <tr>
-        <td>${s.Name}</td>
-        <td>${s.Class}</td>
-        <td>${s.Section}</td>
-      </tr>
+      <div class="card">
+        <b>${s.Name}</b> (${s.Student_ID})
+      </div>
     `).join("");
 }
 
