@@ -1,55 +1,69 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbytZo8tG54g4sAlcKSmL7VPEQ_I1uNILLcOB9tsUjRqHGNGqKxjv4w82-rcNU8W-H_xTg/exec";
 
 /**
- * ✅ ADD STUDENT (POST - supports photo upload)
+ * ADD STUDENT
  */
 async function addStudent(data) {
   try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify(data)
+    const params = new URLSearchParams({
+      action: "addStudent",
+      school: data.school,
+      name: data.name,
+      class: data.class,
+      section: data.section,
+      roll: data.roll,
+      phone: data.phone,
+      address: data.address
     });
 
-    const result = await res.json();
-
-    console.log("Add Student Response:", result);
-
-    if (result.error) {
-      throw new Error(result.error);
-    }
-
-    return result;
+    const res = await fetch(`${API_URL}?${params}`);
+    return await res.json();
 
   } catch (error) {
-    console.error("Add Student Error:", error);
-    alert("Failed to add student");
+    console.error("Add Error:", error);
+    return null;
   }
 }
 
 /**
- * ✅ GET STUDENTS (GET - no change)
+ * GET STUDENTS
  */
 async function getStudents(school) {
   try {
-    const url = `${API_URL}?action=getStudents&school=${encodeURIComponent(school)}`;
-
-    console.log("Fetch URL:", url);
-
-    const res = await fetch(url);
-
-    if (!res.ok) {
-      throw new Error(`HTTP error: ${res.status}`);
-    }
-
-    const data = await res.json();
-
-    console.log("Students:", data);
-
-    return data;
+    const res = await fetch(`${API_URL}?action=getStudents&school=${encodeURIComponent(school)}`);
+    return await res.json();
 
   } catch (error) {
     console.error("Fetch Error:", error);
-    alert("Failed to fetch students");
     return [];
   }
+}
+
+/**
+ * UPLOAD PHOTO
+ */
+async function uploadPhoto(file, studentId) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+
+    reader.onload = async function () {
+      const base64 = reader.result.split(",")[1];
+
+      const url = `${API_URL}?action=uploadPhoto&studentId=${studentId}&file=${encodeURIComponent(base64)}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        console.log("Photo uploaded:", data);
+        resolve(data);
+
+      } catch (err) {
+        console.error("Upload error:", err);
+        resolve(null);
+      }
+    };
+
+    reader.readAsDataURL(file);
+  });
 }
