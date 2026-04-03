@@ -12,6 +12,7 @@ nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .logo {
@@ -57,7 +58,7 @@ nav {
   margin-bottom: 20px;
 }
 
-/* FORM */
+/* FORM ROW */
 .form-row {
   display: flex;
   align-items: center;
@@ -77,6 +78,7 @@ nav {
   border: 1px solid #ccc;
 }
 
+/* FOCUS EFFECT */
 input:focus, select:focus {
   outline: none;
   border: 2px solid #0d6efd;
@@ -96,6 +98,7 @@ input:focus, select:focus {
   color: white;
   border: none;
   border-radius: 6px;
+  cursor: pointer;
 }
 
 .clear-btn {
@@ -105,6 +108,7 @@ input:focus, select:focus {
   color: white;
   border: none;
   border-radius: 6px;
+  cursor: pointer;
 }
 
 /* TABLE */
@@ -148,5 +152,14 @@ th {
 
   .btn-group {
     flex-direction: column;
+  }
+
+  nav {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nav-actions {
+    margin-top: 10px;
   }
 }
