@@ -1,0 +1,29 @@
+[
+  {
+    "School_ID": "1",
+    "School": "RAV",
+    "School_Name": "RAV Public School",
+    "School_Address": "Iltifatganj, India",
+    "School_Contact": "9999999999",
+    "extra": "dummy"
+  },
+  {
+    "School_ID": "2",
+    "School": "DAV",
+    "School_Name": "DAV Public School",
+    "School_Address": "Asopur, India",
+    "School_Contact": "8888888888",
+    "extra": "dummy"
+  },
+
+{
+    "School_ID": "3",
+    "School": "Cosmo",
+    "School_Name": "Cosmo Politan School",
+    "School_Address": "Asopur, Tanda, India",
+    "School_Contact": "777777777",
+    "extra": "dummy"
+  }
+
+
+]
