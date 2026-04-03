@@ -1,43 +1,24 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbytZo8tG54g4sAlcKSmL7VPEQ_I1uNILLcOB9tsUjRqHGNGqKxjv4w82-rcNU8W-H_xTg/exec";
 
-/**
- * ADD STUDENT (POST ✅)
- */
+/* ADD STUDENT */
 async function addStudent(data) {
-  try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify(data)
-    });
+  const params = new URLSearchParams({
+    action: "addStudent",
+    school: data.school,
+    name: data.name,
+    class: data.class,
+    section: data.section,
+    roll: data.roll,
+    phone: data.phone,
+    address: data.address
+  });
 
-    const result = await res.json();
-
-    console.log("Add Response:", result);
-
-    return result;
-
-  } catch (error) {
-    console.error("Add Error:", error);
-    alert("Failed to add student");
-    return null;
-  }
+  const res = await fetch(`${API_URL}?${params}`);
+  return await res.json();
 }
 
-/**
- * GET STUDENTS (GET ✅)
- */
+/* GET STUDENTS */
 async function getStudents(school) {
-  try {
-    const res = await fetch(
-      `${API_URL}?action=getStudents&school=${encodeURIComponent(school)}`
-    );
-
-    const data = await res.json();
-
-    return data;
-
-  } catch (error) {
-    console.error("Fetch Error:", error);
-    return [];
-  }
+  const res = await fetch(`${API_URL}?action=getStudents&school=${school}`);
+  return await res.json();
 }
