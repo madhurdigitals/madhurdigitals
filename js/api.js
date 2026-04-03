@@ -30,7 +30,11 @@ async function submitStudent() {
   const cls = document.getElementById("class").value.trim();
   const section = document.getElementById("section").value;
 
-  console.log("DEBUG:", { name, cls, section });
+  // ✅ FIX: GET SCHOOL FROM LOCAL STORAGE
+  const schoolData = JSON.parse(localStorage.getItem("selectedSchool"));
+  const school = schoolData ? schoolData.School : "";
+
+  console.log("DEBUG:", { name, cls, section, school });
 
   // ✅ REQUIRED FIELDS
   if (!name) {
