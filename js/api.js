@@ -23,22 +23,23 @@ async function getStudents(school) {
   return await res.json();
 }
 
+/* SUBMIT STUDENTS */
 async function submitStudent() {
 
   const name = document.getElementById("name").value.trim();
-  const cls = document.getElementById("class").value;
+  const cls = document.getElementById("class").value.trim();
   const section = document.getElementById("section").value;
 
   console.log("DEBUG:", { name, cls, section });
 
-  // ✅ ONLY REQUIRED FIELDS
+  // ✅ REQUIRED FIELDS
   if (!name) {
     showToast("Enter student name");
     return;
   }
 
   if (!cls) {
-    showToast("Select class");
+    showToast("Enter class");
     return;
   }
 
@@ -46,7 +47,7 @@ async function submitStudent() {
     school: school,
     name: name,
     class: cls,
-    section: section || "", // optional
+    section: section || "",
     roll: document.getElementById("roll").value,
     phone: document.getElementById("phone").value,
     address: document.getElementById("address").value
