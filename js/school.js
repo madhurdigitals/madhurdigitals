@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-  fetch("schools.json")
+  fetch(window.location.origin + "/madhurdigitals/schools.json")
     .then(response => response.json())
     .then(data => {
       const dropdown = document.getElementById("school");
