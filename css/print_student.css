@@ -43,16 +43,19 @@ th, td {
 
 /* PRINT GRID */
 .page {
+  width: 210mm;
+  height: 297mm;
   display: grid;
   grid-template-columns: repeat(2, 86mm);
   grid-auto-rows: 54mm;
-  gap: 5mm;
+  gap: 6mm;
   justify-content: center;
-  padding: 10mm;
+  align-content: center;
+  page-break-after: always;
 }
 
 /* CARD */
-.card .card {
+.card {
   width: 86mm;
   height: 54mm;
   border: 1px solid black;
@@ -61,7 +64,6 @@ th, td {
   text-align: center;
   font-size: 10px;
 }
-
 .photo {
   width: 60px;
   height: 60px;
