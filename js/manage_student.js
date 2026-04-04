@@ -64,15 +64,36 @@ function applyFilter() {
 
 // DELETE
 async function deleteStudent(id) {
+
   if (!confirm("Are you sure you want to delete this student?")) return;
+
+  // preserve filters
+  const filters = {
+    name: document.getElementById("searchName").value,
+    class: document.getElementById("searchClass").value,
+    section: document.getElementById("searchSection").value
+  };
+
+  const scrollPos = window.scrollY;
 
   const url = `${API_URL}?action=deleteStudent&school=${school}&student_id=${id}`;
 
   await fetch(url);
 
-  alert("Deleted");
+  alert("Student moved to deleted records");
 
-  loadStudents();
+  // reload
+  await loadStudents();
+
+  // restore filters
+  document.getElementById("searchName").value = filters.name;
+  document.getElementById("searchClass").value = filters.class;
+  document.getElementById("searchSection").value = filters.section;
+
+  applyFilter();
+
+  // restore scroll
+  window.scrollTo(0, scrollPos);
 }
 
 function openEdit(id) {
