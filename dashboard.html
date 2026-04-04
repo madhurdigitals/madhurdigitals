@@ -105,6 +105,32 @@ function goPrint() {
   window.location.href = "Print_Students.html";
 }
 
+// Hide popup
+function hideSchoolSelector() {
+  document.getElementById("schoolBox").style.display = "none";
+}
+
+// ESC key close
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") {
+    hideSchoolSelector();
+  }
+});
+
+// Click outside close
+document.addEventListener("click", function(e) {
+  const box = document.getElementById("schoolBox");
+  const card = e.target.closest(".card");
+
+  if (
+    box.style.display === "block" &&
+    !box.contains(e.target) &&
+    !card
+  ) {
+    hideSchoolSelector();
+  }
+});
+
 </script>
 
 </body>
