@@ -3,11 +3,6 @@
 <!--
 **madhurdigitals/madhurdigitals** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
-To add new school we need to update data in school.josn, in excel sheet add school name sheet in excel and update meta in excel. 
-
-
-
-
 Here are some ideas to get you started:
 
 - 🔭 I’m currently working on ...

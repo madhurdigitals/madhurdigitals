@@ -1,70 +1,61 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbytZo8tG54g4sAlcKSmL7VPEQ_I1uNILLcOB9tsUjRqHGNGqKxjv4w82-rcNU8W-H_xTg/exec";
 
-/* ADD STUDENT */
+/**
+ * ✅ ADD STUDENT (using GET to avoid CORS)
+ */
 async function addStudent(data) {
-  const params = new URLSearchParams({
-    action: "addStudent",
-    school: data.school,
-    name: data.name,
-    class: data.class,
-    section: data.section,
-    roll: data.roll,
-    phone: data.phone,
-    address: data.address
-  });
+  try {
+    const params = new URLSearchParams({
+      action: "addStudent",
+      school: data.school,
+      name: data.name,
+      class: data.class,
+      section: data.section,
+      roll: data.roll,
+      phone: data.phone,
+      
+      address: data.address
+    });
 
-  const res = await fetch(`${API_URL}?${params}`);
-  return await res.json();
+    const url = `${API_URL}?${params.toString()}`;
+
+    console.log("Add URL:", url);
+
+    const res = await fetch(url);
+    const result = await res.json();
+
+    return result;
+
+  } catch (error) {
+    console.error("Add Student Error:", error);
+    alert("Failed to add student");
+  }
 }
 
-/* GET STUDENTS */
+/**
+ * ✅ GET STUDENTS (CORS SAFE)
+ */
 async function getStudents(school) {
-  const res = await fetch(`${API_URL}?action=getStudents&school=${school}`);
-  return await res.json();
-}
+  try {
+    const url = `${API_URL}?action=getStudents&school=${encodeURIComponent(school)}`;
 
-/* SUBMIT STUDENTS */
-async function submitStudent() {
+    console.log("Fetch URL:", url);
 
-  const name = document.getElementById("name").value.trim();
-  const cls = document.getElementById("class").value.trim();
-  const section = document.getElementById("section").value;
+    const res = await fetch(url);
 
-  // ✅ FIX: GET SCHOOL FROM LOCAL STORAGE
-  const schoolData = JSON.parse(localStorage.getItem("selectedSchool"));
-  const school = schoolData ? schoolData.School : "";
+    if (!res.ok) {
+      throw new Error(`HTTP error: ${res.status}`);
+    }
 
-  console.log("DEBUG:", { name, cls, section, school });
+    const data = await res.json();
 
-  // ✅ REQUIRED FIELDS
-  if (!name) {
-    showToast("Enter student name");
-    return;
+    console.log("Students:", data);
+
+    return data;
+
+  } catch (error) {
+    console.error("Fetch Error:", error);
+    alert("Failed to fetch students");
+    return [];
   }
-
-  if (!cls) {
-    showToast("Enter class");
-    return;
-  }
-
-  const data = {
-    school: school,
-    name: name,
-    class: cls,
-    section: section || "",
-    roll: document.getElementById("roll").value,
-    phone: document.getElementById("phone").value,
-    address: document.getElementById("address").value
-  };
-
-  const res = await addStudent(data);
-
-  if (res && res.status === "success") {
-    showToast("Student Added");
-  } else {
-    showToast("Error adding student");
-  }
-
-  clearForm();
-  loadData();
 }

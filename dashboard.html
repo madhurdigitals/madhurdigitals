@@ -5,9 +5,176 @@
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
 
-  <link rel="stylesheet" href="css/dashboard.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  background: #f5f7fb;
+}
+
+/* NAV */
+nav {
+  background: #0d6efd;
+  color: white;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo img {
+  width: 35px;
+}
+
+.title-text {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.school-name {
+  font-size: 14px;
+}
+
+.nav-actions button {
+  margin-left: 10px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* CONTAINER */
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 15px;
+}
+
+/* CARD */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+
+/* FORM ROW */
+.form-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.form-row label {
+  width: 150px;
+  font-weight: 600;
+}
+
+.form-row input,
+.form-row select {
+  flex: 1;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* FOCUS EFFECT */
+input:focus, select:focus {
+  outline: none;
+  border: 2px solid #0d6efd;
+}
+
+/* BUTTONS */
+.btn-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.submit-btn {
+  flex: 1;
+  padding: 12px;
+  background: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.clear-btn {
+  flex: 1;
+  padding: 12px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background: #f1f3f5;
+}
+
+/* TOAST */
+#toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #28a745;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 6px;
+  display: none;
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  .form-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .form-row label {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+
+  .btn-group {
+    flex-direction: column;
+  }
+
+  nav {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nav-actions {
+    margin-top: 10px;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -26,12 +193,12 @@
     <button onclick="logout()">Logout</button>
   </div>
 </nav>
-<h2>School: <span id="schoolName"></span></h2>
+
 <div class="container">
 
+  <!-- FORM -->
   <div class="card">
     <h3>Add Student</h3>
-    <h2>This is a test comment 1</h2>
 
     <div class="form-row">
       <label>Student Name</label>
@@ -40,27 +207,33 @@
 
     <div class="form-row">
       <label>Class</label>
-      <input id="class" placeholder="Enter Class (e.g. 1, 2, 10)">
+      <select id="class">
+        <option value="">Select Class</option>
+        <option>1</option><option>2</option><option>3</option>
+        <option>4</option><option>5</option><option>6</option>
+        <option>7</option><option>8</option><option>9</option>
+        <option>10</option><option>11</option><option>12</option>
+      </select>
     </div>
 
     <div class="form-row">
       <label>Section</label>
       <select id="section">
         <option value="">Select Section</option>
-        <option value="A">A</option>
-        <option value="B">B</option>
-        <option value="C">C</option>
+        <option>A</option><option>B</option>
+        <option>C</option><option>D</option>
       </select>
     </div>
 
     <div class="form-row">
       <label>Roll Number</label>
-      <input id="roll">
+      <input id="roll" inputmode="numeric">
     </div>
 
     <div class="form-row">
       <label>Phone</label>
-      <input id="phone">
+      <input id="phone" inputmode="numeric" maxlength="10"
+             oninput="this.value = this.value.replace(/[^0-9]/g, '')">
     </div>
 
     <div class="form-row">
@@ -74,8 +247,10 @@
     </div>
   </div>
 
+  <!-- RECENT -->
   <div class="card">
     <h3>Recent Entries</h3>
+
     <table>
       <thead>
         <tr>
@@ -90,19 +265,31 @@
 
 </div>
 
-<div id="toast"></div>
+<div id="toast">Success</div>
 
 <script>
 const school = localStorage.getItem("school");
 
+if (!school) {
+  window.location.href = "school.html";
+}
+
 document.getElementById("schoolName").innerText = "School: " + school;
+
+/* NAV */
+function changeSchool() {
+  window.location.href = "school.html";
+}
 
 /* TOAST */
 function showToast(msg) {
-  const t = document.getElementById("toast");
-  t.innerText = msg;
-  t.style.display = "block";
-  setTimeout(() => t.style.display = "none", 2000);
+  const toast = document.getElementById("toast");
+  toast.innerText = msg;
+  toast.style.display = "block";
+
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, 2000);
 }
 
 /* CLEAR */
@@ -113,49 +300,69 @@ function clearForm() {
   document.getElementById("address").value = "";
 }
 
-/* ✅ FIXED VALIDATION */
+/* SUBMIT */
 async function submitStudent() {
-
-  const name = document.getElementById("name").value.trim();
-  const cls = document.getElementById("class").value;
-  const section = document.getElementById("section").value;
-
-  console.log("DEBUG:", name, cls, section);
-
-  if (name === "" || cls === "" || section === "") {
-    showToast("Fill required fields");
-    return;
-  }
-
   const data = {
     school: school,
-    name: name,
-    class: cls,
-    section: section,
+    name: document.getElementById("name").value,
+    class: document.getElementById("class").value,
+    section: document.getElementById("section").value,
     roll: document.getElementById("roll").value,
     phone: document.getElementById("phone").value,
     address: document.getElementById("address").value
   };
 
-  const res = await addStudent(data);
+  if (!data.name || !data.class || !data.section) {
+    showToast("Please fill required fields");
+    return;
+  }
+
+  await addStudent(data);
 
   showToast("Student Added");
 
   clearForm();
+
+  document.getElementById("name").focus();
+
   loadData();
+}
+
+/* ENTER NAVIGATION */
+const fields = ["name","class","section","roll","phone","address"];
+
+fields.forEach((id, index) => {
+  document.getElementById(id).addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (index < fields.length - 1) {
+        document.getElementById(fields[index + 1]).focus();
+      }
+    }
+  });
+});
+
+/* FORMAT */
+function formatData(rows) {
+  const headers = rows[0];
+  return rows.slice(1).map(row => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = row[i]);
+    return obj;
+  });
 }
 
 /* LOAD */
 async function loadData() {
   const raw = await getStudents(school);
 
-  const headers = raw[0];
-  const students = raw.slice(1).map(r => {
-    let obj = {};
-    headers.forEach((h, i) => obj[h] = r[i]);
-    return obj;
-  });
+  if (!raw || raw.length === 0) {
+    document.getElementById("recentTable").innerHTML =
+      "<tr><td colspan='3'>No data</td></tr>";
+    return;
+  }
 
+  const students = formatData(raw);
   const last3 = students.slice(-3).reverse();
 
   document.getElementById("recentTable").innerHTML =
@@ -170,7 +377,6 @@ async function loadData() {
 
 loadData();
 </script>
-<script src="js/dashboard.js"></script>
 
 </body>
 </html>
