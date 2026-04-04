@@ -1,165 +1,85 @@
 body {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: Arial;
   margin: 0;
   background: #f5f7fb;
 }
 
 /* NAV */
 nav {
-  background: #0d6efd;
-  color: white;
-  padding: 12px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  background: #2d3e50;
+  color: white;
+  padding: 10px 20px;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 10px;
 }
 
 .logo img {
-  width: 35px;
+  width: 40px;
+  margin-right: 10px;
 }
 
 .title-text {
-  font-weight: bold;
   font-size: 18px;
+  font-weight: bold;
 }
 
-.school-name {
-  font-size: 14px;
+.heading {
+  text-align: center;
+  margin: 20px;
 }
 
-.nav-actions button {
-  margin-left: 10px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-/* CONTAINER */
+/* CARDS */
 .container {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
-/* CARD */
 .card {
+  background: white;
+  padding: 30px;
+  width: 250px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: 0.3s;
+  text-align: center;
+}
+
+.card:hover {
+  transform: scale(1.05);
+}
+
+/* SCHOOL BOX */
+.school-box {
+  display: none;
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -30%);
   background: white;
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-  margin-bottom: 20px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  text-align: center;
 }
 
-/* FORM ROW */
-.form-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.form-row label {
-  width: 150px;
-  font-weight: 600;
-}
-
-.form-row input,
-.form-row select {
-  flex: 1;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-/* FOCUS EFFECT */
-input:focus, select:focus {
-  outline: none;
-  border: 2px solid #0d6efd;
-}
-
-/* BUTTONS */
-.btn-group {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.submit-btn {
-  flex: 1;
-  padding: 12px;
-  background: #0d6efd;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.clear-btn {
-  flex: 1;
-  padding: 12px;
-  background: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* TABLE */
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
+.school-box select {
   padding: 8px;
-  border-bottom: 1px solid #ddd;
+  width: 200px;
 }
 
-th {
-  background: #f1f3f5;
-}
-
-/* TOAST */
-#toast {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #28a745;
+.school-box button {
+  padding: 8px 15px;
+  background: #2d3e50;
   color: white;
-  padding: 10px 15px;
-  border-radius: 6px;
-  display: none;
-}
-
-/* MOBILE */
-@media (max-width: 600px) {
-  .form-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .form-row label {
-    width: 100%;
-    margin-bottom: 5px;
-  }
-
-  .btn-group {
-    flex-direction: column;
-  }
-
-  nav {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .nav-actions {
-    margin-top: 10px;
-  }
+  border: none;
+  cursor: pointer;
 }
