@@ -195,3 +195,10 @@ input, select {
   margin: 5px;
   padding: 8px;
 }
+
+#editPopup input, #editPopup select {
+  display: block;
+  width: 100%;
+  margin: 5px 0;
+  padding: 8px;
+}
