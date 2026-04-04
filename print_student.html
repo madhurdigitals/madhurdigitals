@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Print Students</title>
+
+  <script src="js/api.js"></script>
+  <script src="js/print_student.js" defer></script>
+
+  <link rel="stylesheet" href="css/print_student.css">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+
+<h2>Print Students</h2>
+
+<div class="container">
+
+  <!-- FILTERS -->
+  <div class="card">
+    <input id="searchName" placeholder="Search Name">
+    <input id="searchClass" placeholder="Class">
+
+    <select id="searchSection">
+      <option value="">All Sections</option>
+      <option>A</option>
+      <option>B</option>
+      <option>C</option>
+    </select>
+  </div>
+
+  <!-- TABLE -->
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="selectAll"></th>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Class</th>
+          <th>Section</th>
+          <th>Roll</th>
+        </tr>
+      </thead>
+      <tbody id="studentTable"></tbody>
+    </table>
+
+    <br>
+    <button onclick="generateCards()" class="submit-btn">
+      Generate Cards
+    </button>
+  </div>
+
+  <!-- CARD PREVIEW -->
+  <div id="cardSection" class="card" style="display:none; text-align:center;">
+    <button onclick="window.print()" class="submit-btn">Print</button>
+
+    <div id="cardContainer" class="page"></div>
+  </div>
+
+</div>
+
+</body>
+</html>
