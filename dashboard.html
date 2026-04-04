@@ -57,7 +57,7 @@
 </div>
 
 <script>
-
+let mode = "";
 // Load schools
 async function loadSchools() {
   const res = await fetch("schools.json");
@@ -68,46 +68,64 @@ async function loadSchools() {
   dropdown.innerHTML = '<option value="">Select School</option>';
 
   dropdown.innerHTML += data.map(s => `
-    <option value="${s.School}">
-      ${s.School_Name}
-    </option>
-  `).join("");
+  <option value="${s.School}" data-id="${s.School_ID}">
+    ${s.School_Name}
+  </option>
+`).join("");
 }
 
 loadSchools();
 
 // Show selector
 function showSchoolSelector() {
+  mode = "add";
   document.getElementById("schoolBox").style.display = "block";
 }
 
 // Continue
 function continueToAdd() {
-  const school = document.getElementById("schoolSelect").value;
+  const dropdown = document.getElementById("schoolSelect");
+  const selectedOption = dropdown.options[dropdown.selectedIndex];
+
+  const school = selectedOption.value;
+  const school_id = selectedOption.getAttribute("data-id");
 
   if (!school) {
     alert("Please select a school");
     return;
   }
 
-  // session storage (per session)
+  // ✅ Store both values
   sessionStorage.setItem("school", school);
+  sessionStorage.setItem("school_id", school_id);
 
-  window.location.href = "add_student.html";
+  // ✅ Redirect based on mode
+  if (mode === "add") {
+    window.location.href = "add_student.html";
+  } 
+  else if (mode === "manage") {
+    window.location.href = "manage_student.html";
+  } 
+  else if (mode === "print") {
+    window.location.href = "print_student.html";
+  }
 }
 
 // Other buttons
 function goManage() {
-  window.location.href = "Manage_Students.html";
+  mode = "manage";
+  document.getElementById("schoolBox").style.display = "block";
 }
 
 function goPrint() {
-  window.location.href = "Print_Students.html";
+  mode = "print";
+  document.getElementById("schoolBox").style.display = "block";
 }
 
 // Hide popup
 function hideSchoolSelector() {
   document.getElementById("schoolBox").style.display = "none";
+  mode = "";
 }
 
 // ESC key close

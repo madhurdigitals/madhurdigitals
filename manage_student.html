@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Manage Students</title>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/manage_student.js" defer></script>
+
+  <link rel="stylesheet" href="css/manage_student.css">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+
+<nav>
+  <div class="logo">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <div>
+      <div class="title-text">Madhur Digitals</div>
+      <div id="schoolNameTop"></div>
+    </div>
+  </div>
+
+  <div class="nav-actions">
+    <button onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<h2>Manage Students - <span id="schoolName"></span></h2>
+
+<div class="container">
+
+  <!-- Filters -->
+  <div class="card">
+    <h3>Filters</h3>
+
+    <input id="searchName" placeholder="Search Name">
+    <input id="searchClass" placeholder="Search Class">
+    
+    <select id="searchSection">
+      <option value="">All Sections</option>
+      <option>A</option>
+      <option>B</option>
+      <option>C</option>
+    </select>
+
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Class</th>
+          <th>Section</th>
+          <th>Roll</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="studentTable"></tbody>
+    </table>
+  </div>
+
+</div>
+
+</body>
+</html>

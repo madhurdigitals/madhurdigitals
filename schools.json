@@ -1,6 +1,6 @@
 [
   {
-    "School_ID": "1",
+    "School_ID": "2",
     "School": "RAV",
     "School_Name": "RAV Public School",
     "School_Address": "Iltifatganj, India",
@@ -8,7 +8,7 @@
     "extra": "dummy"
   },
   {
-    "School_ID": "2",
+    "School_ID": "1",
     "School": "DAV",
     "School_Name": "DAV Public School",
     "School_Address": "Asopur, India",
