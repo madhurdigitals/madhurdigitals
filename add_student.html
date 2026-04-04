@@ -168,6 +168,25 @@ function changeSchool() {
   document.getElementById("schoolBox").style.display = "block";
 }
 
+function applySchoolChange() {
+  const selected = document.getElementById("schoolSelect").value;
+
+  if (!selected) {
+    alert("Please select a school");
+    return;
+  }
+
+  sessionStorage.setItem("school", selected);
+  school = selected;
+
+  document.getElementById("schoolName").innerText = "School: " + school;
+  document.getElementById("schoolNameTop").innerText = school;
+
+  loadData();
+
+  hideSchoolSelector();
+}
+
 
 /* LOAD */
 async function loadData() {
@@ -232,10 +251,12 @@ document.addEventListener("keydown", function(e) {
 // Click outside
 document.addEventListener("click", function(e) {
   const box = document.getElementById("schoolBox");
+  const button = e.target.closest("button");
 
   if (
     box.style.display === "block" &&
-    !box.contains(e.target)
+    !box.contains(e.target) &&
+    !button
   ) {
     hideSchoolSelector();
   }
