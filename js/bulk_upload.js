@@ -86,7 +86,7 @@ function renderTable() {
 
   document.getElementById("tableBody").innerHTML =
     mappedData.map((r, i) => `
-      <tr style="  background:    ${r.status === 'uploaded'      ? '#ccffcc'      : !r.valid      ? '#ffcccc'      : !r.selected      ? '#fff3cd'      : ''}
+      <tr style="background: ${getRowColor(r)}">
 ">
         <td><input type="checkbox" ${r.selected ? 'checked' : ''} onchange="toggleRow(${i}, this.checked)"></td>
         <td contenteditable="true" oninput="editCell(${i}, 'name', this.innerText)">${r.name || ''}</td>
@@ -103,12 +103,14 @@ function renderTable() {
 function editCell(i, field, value) {
   mappedData[i][field] = value;
   mappedData[i].valid = mappedData[i].name && mappedData[i].class;
+  renderTable(); 
   enableSubmit(); 
 }
 
 // SELECT
 function toggleRow(i, checked) {
   mappedData[i].selected = checked;
+  renderTable(); 
   enableSubmit(); 
 }
 
@@ -196,4 +198,21 @@ function enableSubmit() {
 
 function showLoadBtn() {
   document.getElementById("loadBtn").style.display = "inline-block";
+}
+
+function getRowColor(r) {
+
+  if (r.status === "uploaded") {
+    return "#ccffcc";   // green
+  }
+
+  if (!r.valid) {
+    return "#ffcccc";   // red
+  }
+
+  if (!r.selected) {
+    return "#fff3cd";   // yellow
+  }
+
+  return ""; // default
 }
