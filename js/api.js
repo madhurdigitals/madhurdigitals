@@ -1,5 +1,5 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbytZo8tG54g4sAlcKSmL7VPEQ_I1uNILLcOB9tsUjRqHGNGqKxjv4w82-rcNU8W-H_xTg/exec";
-
+let schoolsData = [];
 /**
  * ✅ ADD STUDENT (using GET to avoid CORS)
  */
@@ -65,11 +65,19 @@ async function getStudents(school) {
 /* ========================= */
 
 /* GET SCHOOLS */
-async function getSchools() {
+let schoolCache = null;
+
+async function getSchools(forceRefresh = false) {
   try {
+    // ✅ Return cached data if already fetched
+    if (schoolCache && !forceRefresh) {
+      console.log("Using cached schools");
+      return schoolCache;
+    }
+
     const url = `${API_URL}?action=getSchools`;
 
-    console.log("Get Schools URL:", url);
+    console.log("Fetching from API:", url);
 
     const res = await fetch(url);
 
@@ -79,13 +87,12 @@ async function getSchools() {
 
     const data = await res.json();
 
-    console.log("Schools:", data);
+    schoolCache = data; // ✅ cache it
 
     return data;
 
   } catch (error) {
     console.error("Get Schools Error:", error);
-    alert("Failed to fetch schools");
     return [];
   }
 }

@@ -100,7 +100,7 @@ function clearForm() {
 /* ✅ FIXED VALIDATION */
 async function submitStudent() {
 
-  const raw = await getSchools();
+  const raw = schoolsData;
 
   const headers = raw[0];
 
@@ -210,10 +210,25 @@ loadData();
 
 
 /* Load Schools + Pre-select */
+let schoolsData = [];
+
 async function loadSchools() {
+
+  const dropdown = document.getElementById("schoolSelect");
+
+  // ✅ SHOW LOADING (optional but good UX)
+  dropdown.innerHTML = "<option>Loading...</option>";
+
   const raw = await getSchools();
 
-  if (!raw || raw.length === 0) return;
+  // ✅ store globally (IMPORTANT for performance)
+  schoolsData = raw;
+
+  // safety check
+  if (!raw || raw.length === 0) {
+    dropdown.innerHTML = "<option>No Schools Found</option>";
+    return;
+  }
 
   const headers = raw[0];
 
@@ -223,24 +238,24 @@ async function loadSchools() {
     return obj;
   });
 
-  const dropdown = document.getElementById("schoolSelect");
-
+  // ✅ fill dropdown
   dropdown.innerHTML = '<option value="">Select School</option>';
 
   dropdown.innerHTML += schools.map(s => `
-    <option value="${s.school}">
+    <option value="${s.school}" data-id="${s.school_id}">
       ${s.school_name}
     </option>
   `).join("");
 
-  // ✅ Pre-select current school
+  // ✅ pre-select current school
   if (school) {
     dropdown.value = school;
   }
+
+  // ✅ VERY IMPORTANT: render form AFTER schools loaded
+  renderDynamicForm();
 }
 
-renderDynamicForm();
-loadData();
 
 function hideSchoolSelector() {
   document.getElementById("schoolBox").style.display = "none";
@@ -269,7 +284,7 @@ document.addEventListener("click", function(e) {
 
 async function renderDynamicForm() {
 
-  const raw = await getSchools();   // get data from Google Sheet
+  const raw = schoolsData;  // get data from Google Sheet
 
   const headers = raw[0];
 
@@ -318,9 +333,8 @@ async function renderDynamicForm() {
   });
 }
 
-renderDynamicForm();
-loadData();
-loadSchools();
+loadSchools();   // first load schools + form
+loadData();      // then load student data
 
 </script>
 
