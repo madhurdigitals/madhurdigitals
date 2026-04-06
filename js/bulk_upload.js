@@ -3,6 +3,17 @@ let mappedData = [];
 let headers = [];
 
 const school = sessionStorage.getItem("school");
+document.addEventListener("DOMContentLoaded", function () {
+  const fileInput = document.getElementById("fileInput");
+  const loadBtn = document.getElementById("loadBtn");
+
+  fileInput.addEventListener("change", function () {
+    if (fileInput.files.length > 0) {
+      loadBtn.style.display = "inline-block";
+    }
+  });
+});
+
 
 // READ FILE
 // document.getElementById("fileInput").addEventListener("change", handleFile);
@@ -195,9 +206,9 @@ function enableSubmit() {
   document.querySelector(".submit-btn").disabled = false;
 }
 
-function showLoadBtn() {
-  document.getElementById("loadBtn").style.display = "inline-block";
-}
+// function showLoadBtn() {
+//   document.getElementById("loadBtn").style.display = "inline-block";
+// }
 
 function getRowColor(r) {
 
@@ -301,4 +312,4 @@ function downloadExcel() {
 
   // Download file
   XLSX.writeFile(wb, "students_export.xlsx");
-}
+
