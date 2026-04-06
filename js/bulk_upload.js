@@ -5,7 +5,7 @@ let headers = [];
 const school = sessionStorage.getItem("school");
 
 // READ FILE
-document.getElementById("fileInput").addEventListener("change", handleFile);
+// document.getElementById("fileInput").addEventListener("change", handleFile);
 
 function handleFile(e) {
   const file = e.target.files[0];
@@ -65,6 +65,7 @@ function buildTable() {
 
     obj.valid = obj.name && obj.class;
     obj.selected = obj.valid;
+    obj.status = "pending";
 
     return obj;
   });
@@ -85,7 +86,11 @@ function renderTable() {
 
   document.getElementById("tableBody").innerHTML =
     mappedData.map((r, i) => `
-      <tr style="background:${r.valid ? '' : '#ffcccc'}">
+      <tr style="
+          background:
+            ${r.status === 'uploaded' ? '#ccffcc' : ''}
+            ${!r.valid ? '#ffcccc' : ''}
+        ">
         <td><input type="checkbox" ${r.selected ? 'checked' : ''} onchange="toggleRow(${i}, this.checked)"></td>
         <td contenteditable="true" oninput="editCell(${i}, 'name', this.innerText)">${r.name || ''}</td>
         <td contenteditable="true" oninput="editCell(${i}, 'class', this.innerText)">${r.class || ''}</td>
@@ -101,11 +106,13 @@ function renderTable() {
 function editCell(i, field, value) {
   mappedData[i][field] = value;
   mappedData[i].valid = mappedData[i].name && mappedData[i].class;
+  enableSubmit(); 
 }
 
 // SELECT
 function toggleRow(i, checked) {
   mappedData[i].selected = checked;
+  enableSubmit(); 
 }
 
 function selectAll(el) {
@@ -113,6 +120,7 @@ function selectAll(el) {
     if (r.valid) r.selected = el.checked;
   });
   renderTable();
+  enableSubmit(); 
 }
 
 // SUBMIT
@@ -130,6 +138,18 @@ async function submitData() {
   const res = await fetch(url);
   const result = await res.json();
 
+  // ✅ Mark uploaded rows
+  mappedData.forEach(r => {
+    if (r.valid && r.selected) {
+      r.status = "uploaded";
+    }
+  });
+
+  renderTable();
+
+  // ✅ Disable button
+  document.querySelector(".submit-btn").disabled = true;
+
   alert(`Uploaded: ${result.added}`);
 }
 
@@ -145,4 +165,34 @@ function downloadSample() {
   XLSX.utils.book_append_sheet(wb, ws, "Sample");
 
   XLSX.writeFile(wb, "sample.xlsx");
+}
+
+function loadData() {
+  const file = document.getElementById("fileInput").files[0];
+
+  if (!file) {
+    alert("Please select file first");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(evt) {
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, { type: "array" });
+
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+    headers = json[0];
+    rawData = json.slice(1).filter(r => r.some(cell => cell));
+
+    renderMapping();
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+function enableSubmit() {
+  document.querySelector(".submit-btn").disabled = false;
 }
