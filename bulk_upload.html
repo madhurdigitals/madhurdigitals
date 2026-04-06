@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bulk Upload</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/bulk_upload.js" defer></script>
+
+  <link rel="stylesheet" href="css/manage_student.css">
+</head>
+
+<body>
+
+<h2>Bulk Upload Students</h2>
+
+<div class="container">
+
+  <!-- Upload -->
+  <div class="card">
+    <input type="file" id="fileInput">
+
+    <button onclick="downloadSample()">Download Sample</button>
+  </div>
+
+  <!-- Mapping -->
+  <div class="card" id="mappingBox"></div>
+
+  <!-- Table -->
+  <div class="card">
+    <table>
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+
+    <br>
+    <button onclick="submitData()" class="submit-btn">
+      Submit Selected
+    </button>
+  </div>
+
+</div>
+
+</body>
+</html>
