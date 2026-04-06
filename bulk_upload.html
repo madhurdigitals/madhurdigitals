@@ -18,8 +18,10 @@
 
   <!-- Upload -->
   <div class="card">
-    <input type="file" id="fileInput">
-    <button onclick="loadData()">Load Data</button>
+    <input type="file" id="fileInput" onchange="showLoadBtn()">
+    <button id="loadBtn" onclick="loadData()" style="display:none;">
+      Load Data
+    </button>
 
     <button onclick="downloadSample()">Download Sample</button>
   </div>
