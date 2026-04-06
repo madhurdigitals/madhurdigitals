@@ -89,3 +89,36 @@ async function getSchools() {
     return [];
   }
 }
+
+
+/* ADD SCHOOL */
+async function addSchool(data) {
+  try {
+    const params = new URLSearchParams({
+      action: "addSchool",
+      school: data.school,
+      school_name: data.school_name,
+      address: data.address,
+      contact: data.contact,
+      fields: data.fields,
+      template: data.template,
+      logo: data.logo,
+      card_color: data.card_color
+    });
+
+    const url = `${API_URL}?${params.toString()}`;
+
+    console.log("Add School URL:", url);
+
+    const res = await fetch(url);
+    const result = await res.json();
+
+    console.log("Add School Result:", result);
+
+    return result;
+
+  } catch (error) {
+    console.error("Add School Error:", error);
+    alert("Failed to add school");
+  }
+}
