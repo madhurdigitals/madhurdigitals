@@ -59,3 +59,33 @@ async function getStudents(school) {
     return [];
   }
 }
+
+/* ========================= */
+/* ===== SCHOOL APIs ======= */
+/* ========================= */
+
+/* GET SCHOOLS */
+async function getSchools() {
+  try {
+    const url = `${API_URL}?action=getSchools`;
+
+    console.log("Get Schools URL:", url);
+
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      throw new Error(`HTTP error: ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    console.log("Schools:", data);
+
+    return data;
+
+  } catch (error) {
+    console.error("Get Schools Error:", error);
+    alert("Failed to fetch schools");
+    return [];
+  }
+}
