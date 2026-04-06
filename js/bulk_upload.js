@@ -86,11 +86,8 @@ function renderTable() {
 
   document.getElementById("tableBody").innerHTML =
     mappedData.map((r, i) => `
-      <tr style="
-          background:
-            ${r.status === 'uploaded' ? '#ccffcc' : ''}
-            ${!r.valid ? '#ffcccc' : ''}
-        ">
+      <tr style="  background:    ${r.status === 'uploaded'      ? '#ccffcc'      : !r.valid      ? '#ffcccc'      : !r.selected      ? '#fff3cd'      : ''}
+">
         <td><input type="checkbox" ${r.selected ? 'checked' : ''} onchange="toggleRow(${i}, this.checked)"></td>
         <td contenteditable="true" oninput="editCell(${i}, 'name', this.innerText)">${r.name || ''}</td>
         <td contenteditable="true" oninput="editCell(${i}, 'class', this.innerText)">${r.class || ''}</td>
@@ -195,4 +192,8 @@ function loadData() {
 
 function enableSubmit() {
   document.querySelector(".submit-btn").disabled = false;
+}
+
+function showLoadBtn() {
+  document.getElementById("loadBtn").style.display = "inline-block";
 }
