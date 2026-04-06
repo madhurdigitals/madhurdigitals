@@ -25,19 +25,19 @@
 <div class="container">
 
   <!-- Add Students -->
-  <div class="card" onclick="showSchoolSelector()">
+  <div class="card" onclick="showSchoolSelector('add')">
     <h3>➕ Add Students</h3>
     <p>Add new student records</p>
   </div>
 
   <!-- Manage Students -->
-  <div class="card" onclick="goManage()">
+  <div class="card" onclick="goManage('manage')">
     <h3>🧾 Manage Students</h3>
     <p>View and edit students</p>
   </div>
 
   <!-- Print Students -->
-  <div class="card" onclick="goPrint()">
+  <div class="card" onclick="goPrint('print')">
     <h3>🖨 Print Students</h3>
     <p>Generate ID cards</p>
   </div>
@@ -59,7 +59,8 @@
   </select>
 
   <br><br>
-  <button onclick="continueToAdd()">Continue</button>
+  <!-- <button onclick="continueToAdd()">Continue</button> -->
+   <button onclick="continueAction()">Continue</button>
 </div>
 
 <script>
@@ -83,13 +84,14 @@ async function loadSchools() {
 loadSchools();
 
 // Show selector
-function showSchoolSelector() {
-  mode = "add";
+function showSchoolSelector(selectedMode) {
+  mode = selectedMode;   // dynamic mode
   document.getElementById("schoolBox").style.display = "block";
 }
 
 // Continue
-function continueToAdd() {
+function continueAction() {
+
   const dropdown = document.getElementById("schoolSelect");
   const selectedOption = dropdown.options[dropdown.selectedIndex];
 
@@ -114,6 +116,9 @@ function continueToAdd() {
   } 
   else if (mode === "print") {
     window.location.href = "print_student.html";
+  }
+  else if (mode === "bulk") {
+    window.location.href = "bulk_upload.html";   // ✅ NEW
   }
 }
 
