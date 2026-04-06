@@ -48,6 +48,12 @@
   <p>Upload students using Excel or CSV</p>
   </div>
 
+    <!-- Manage Schools -->
+  <div class="card" onclick="goToSchoolManagement()">
+    <h3>🏫 Manage Schools</h3>
+    <p>Add and configure schools</p>
+  </div>
+
 </div>
 
 <!-- School Selector -->
@@ -67,18 +73,25 @@
 let mode = "";
 // Load schools
 async function loadSchools() {
-  const res = await fetch("schools.json");
-  const data = await res.json();
+  const raw = await getSchools();
+
+  const headers = raw[0];
+
+  const schools = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
 
   const dropdown = document.getElementById("schoolSelect");
 
   dropdown.innerHTML = '<option value="">Select School</option>';
 
-  dropdown.innerHTML += data.map(s => `
-  <option value="${s.School}" data-id="${s.School_ID}">
-    ${s.School_Name}
-  </option>
-`).join("");
+  dropdown.innerHTML += schools.map(s => `
+    <option value="${s.school}" data-id="${s.school_id}">
+      ${s.school_name}
+    </option>
+  `).join("");
 }
 
 loadSchools();
@@ -137,6 +150,10 @@ function goPrint() {
 function hideSchoolSelector() {
   document.getElementById("schoolBox").style.display = "none";
   mode = "";
+}
+
+function goToSchoolManagement() {
+  window.location.href = "school_management.html";
 }
 
 // ESC key close

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>School Management</title>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 8px 12px;
+      cursor: pointer;
+      margin: 3px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    .top-bar {
+      margin-bottom: 15px;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border: 1px solid #ccc;
+      z-index: 1000;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      top: 0;
+      left: 0;
+    }
+
+    input {
+      display: block;
+      margin: 5px 0;
+      padding: 6px;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <h2>School Management</h2>
+  <div>
+    <button onclick="goAddSchool()">➕ Add School</button>
+    <button onclick="loadSchools()">🔄 Refresh</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="top-bar">
+  <h3>Total Schools: <span id="totalSchools">0</span></h3>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>School</th>
+      <th>Name</th>
+      <th>Address</th>
+      <th>Contact</th>
+      <th>Fields</th>
+      <th>Template</th>
+      <th>Logo</th>
+      <th>Color</th>
+      <th>Created</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="schoolTable"></tbody>
+</table>
+
+<!-- EDIT POPUP -->
+<div class="overlay" id="overlay"></div>
+
+<div class="popup" id="editPopup">
+  <h3>Edit School</h3>
+
+  <input id="edit_school_id" disabled>
+  <input id="edit_school" disabled>
+  <input id="edit_school_name" placeholder="School Name">
+  <input id="edit_address" placeholder="Address">
+  <input id="edit_contact" placeholder="Contact">
+  <input id="edit_fields" placeholder="Fields">
+  <input id="edit_template" placeholder="Template">
+  <input id="edit_logo" placeholder="Logo">
+  <input type="color" id="edit_color">
+
+  <button onclick="updateSchoolData()">Save</button>
+  <button onclick="closePopup()">Cancel</button>
+</div>
+
+<script>
+let schoolsData = [];
+
+/* LOAD */
+async function loadSchools() {
+  const raw = await getSchools();
+
+  const headers = raw[0];
+  schoolsData = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+
+  document.getElementById("totalSchools").innerText = schoolsData.length;
+
+  const table = document.getElementById("schoolTable");
+  table.innerHTML = "";
+
+  schoolsData.forEach(s => {
+    table.innerHTML += `
+      <tr>
+        <td>${s.school}</td>
+        <td>${s.school_name}</td>
+        <td>${s.address}</td>
+        <td>${s.contact}</td>
+        <td>${s.fields}</td>
+        <td>${s.template}</td>
+        <td>${s.logo}</td>
+        <td>
+          <div style="background:${s.card_color};width:20px;height:20px;"></div>
+        </td>
+        <td>${s.created_at || ""}</td>
+        <td>
+          <button onclick="editSchool('${s.school_id}')">Edit</button>
+          <button onclick="deleteSchoolData('${s.school_id}')">Delete</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+/* EDIT */
+function editSchool(id) {
+  const s = schoolsData.find(x => String(x.school_id) === id);
+
+  document.getElementById("edit_school_id").value = s.school_id;
+  document.getElementById("edit_school").value = s.school;
+  document.getElementById("edit_school_name").value = s.school_name;
+  document.getElementById("edit_address").value = s.address;
+  document.getElementById("edit_contact").value = s.contact;
+  document.getElementById("edit_fields").value = s.fields;
+  document.getElementById("edit_template").value = s.template;
+  document.getElementById("edit_logo").value = s.logo;
+  document.getElementById("edit_color").value = s.card_color;
+
+  document.getElementById("overlay").style.display = "block";
+  document.getElementById("editPopup").style.display = "block";
+}
+
+/* UPDATE */
+async function updateSchoolData() {
+  const data = {
+    school_id: document.getElementById("edit_school_id").value,
+    school: document.getElementById("edit_school").value,
+    school_name: document.getElementById("edit_school_name").value,
+    address: document.getElementById("edit_address").value,
+    contact: document.getElementById("edit_contact").value,
+    fields: document.getElementById("edit_fields").value,
+    template: document.getElementById("edit_template").value,
+    logo: document.getElementById("edit_logo").value,
+    card_color: document.getElementById("edit_color").value
+  };
+
+  const res = await updateSchool(data);
+
+  if (res.error) {
+    alert(res.error);
+  } else {
+    alert("Updated");
+    closePopup();
+    loadSchools();
+  }
+}
+
+/* DELETE */
+async function deleteSchoolData(id) {
+  if (!confirm("⚠️ This will delete all student data of this school. Continue?")) return;
+
+  const res = await deleteSchool(id);
+
+  if (res.error) {
+    alert(res.error);
+  } else {
+    alert("Deleted");
+    loadSchools();
+  }
+}
+
+/* POPUP */
+function closePopup() {
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("editPopup").style.display = "none";
+}
+
+/* NAV */
+function goAddSchool() {
+  window.location.href = "add_school.html";
+}
+
+/* INIT */
+loadSchools();
+</script>
+
+</body>
+</html>

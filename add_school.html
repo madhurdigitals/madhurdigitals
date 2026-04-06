@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add School</title>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+
+  <link rel="stylesheet" href="css/add_student.css">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+
+<nav>
+  <div class="logo">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <div class="title-text">Madhur Digitals</div>
+  </div>
+
+  <div class="nav-actions">
+    <button onclick="goBack()">← Back</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<h2>Add School</h2>
+
+<div class="container">
+
+  <div class="card">
+
+    <div class="form-row">
+      <label>School Code (Unique)</label>
+      <input id="school" placeholder="e.g. DAV" required>
+    </div>
+
+    <div class="form-row">
+      <label>School Name</label>
+      <input id="school_name" placeholder="Full School Name">
+    </div>
+
+    <div class="form-row">
+      <label>Address</label>
+      <input id="address">
+    </div>
+
+    <div class="form-row">
+      <label>Contact</label>
+      <input id="contact">
+    </div>
+
+    <div class="form-row">
+      <label>Fields (comma separated)</label>
+      <input id="fields" placeholder="name,class,section,phone">
+    </div>
+
+    <div class="form-row">
+      <label>Template</label>
+      <input id="template" value="template_1">
+    </div>
+
+    <div class="form-row">
+      <label>Logo URL</label>
+      <input id="logo">
+    </div>
+
+    <div class="form-row">
+      <label>Card Color</label>
+      <input type="color" id="card_color" value="#FF5733">
+    </div>
+
+    <div class="btn-group">
+      <button class="submit-btn" onclick="submitSchool()">Add School</button>
+      <button class="clear-btn" onclick="clearForm()">Clear</button>
+    </div>
+
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+
+/* TOAST */
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.innerText = msg;
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 2000);
+}
+
+/* CLEAR */
+function clearForm() {
+  document.getElementById("school").value = "";
+  document.getElementById("school_name").value = "";
+  document.getElementById("address").value = "";
+  document.getElementById("contact").value = "";
+  document.getElementById("fields").value = "";
+  document.getElementById("template").value = "template_1";
+  document.getElementById("logo").value = "";
+  document.getElementById("card_color").value = "#FF5733";
+}
+
+/* SUBMIT */
+async function submitSchool() {
+
+  const school = document.getElementById("school").value.trim();
+
+  if (!school) {
+    showToast("School code is required");
+    return;
+  }
+
+  const data = {
+    school: school,
+    school_name: document.getElementById("school_name").value.trim(),
+    address: document.getElementById("address").value.trim(),
+    contact: document.getElementById("contact").value.trim(),
+    fields: document.getElementById("fields").value.trim(),
+    template: document.getElementById("template").value.trim(),
+    logo: document.getElementById("logo").value.trim(),
+    card_color: document.getElementById("card_color").value
+  };
+
+  const res = await addSchool(data);
+
+  if (res.error) {
+    showToast(res.error);   // e.g. "School already exists"
+  } else {
+    showToast("School Created Successfully");
+
+    setTimeout(() => {
+      window.location.href = "school_management.html";
+    }, 1000);
+  }
+}
+
+/* NAV */
+function goBack() {
+  window.location.href = "school_management.html";
+}
+
+</script>
+
+</body>
+</html>

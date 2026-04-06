@@ -33,40 +33,7 @@
     <h3>Add Student</h3>
     <h2>This is a test comment 1</h2>
 
-    <div class="form-row">
-      <label>Student Name</label>
-      <input id="name">
-    </div>
-
-    <div class="form-row">
-      <label>Class</label>
-      <input id="class" placeholder="Enter Class (e.g. 1, 2, 10)">
-    </div>
-
-    <div class="form-row">
-      <label>Section</label>
-      <select id="section">
-        <option value="">Select Section</option>
-        <option value="A">A</option>
-        <option value="B">B</option>
-        <option value="C">C</option>
-      </select>
-    </div>
-
-    <div class="form-row">
-      <label>Roll Number</label>
-      <input id="roll">
-    </div>
-
-    <div class="form-row">
-      <label>Phone</label>
-      <input id="phone">
-    </div>
-
-    <div class="form-row">
-      <label>Address</label>
-      <input id="address">
-    </div>
+    <div id="dynamicForm"></div>
 
     <div class="btn-group">
       <button class="submit-btn" onclick="submitStudent()">Submit</button>
@@ -125,41 +92,67 @@ function showToast(msg) {
 
 /* CLEAR */
 function clearForm() {
-  document.getElementById("name").value = "";
-  document.getElementById("roll").value = "";
-  document.getElementById("phone").value = "";
-  document.getElementById("address").value = "";
+  const inputs = document.querySelectorAll("#dynamicForm input, #dynamicForm select");
+
+  inputs.forEach(el => el.value = "");
 }
 
 /* ✅ FIXED VALIDATION */
 async function submitStudent() {
 
-  const name = document.getElementById("name").value.trim();
-  const cls = document.getElementById("class").value;
-  const section = document.getElementById("section").value;
+  const raw = await getSchools();
 
-  console.log("DEBUG:", name, cls, section);
+  const headers = raw[0];
 
-  if (name === "" || cls === "" || section === "") {
-    showToast("Fill required fields");
+  const schools = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+
+  const currentSchool = schools.find(s => s.school === school);
+
+  if (!currentSchool) {
+    showToast("School config not found");
     return;
   }
 
-  const data = {
-    school: school,
-    name: name,
-    class: cls,
-    section: section,
-    roll: document.getElementById("roll").value,
-    phone: document.getElementById("phone").value,
-    address: document.getElementById("address").value
+  const fields = currentSchool.fields.split(",");
+
+  let data = {
+    school: school
   };
+
+  let valid = true;
+
+  fields.forEach(f => {
+    f = f.trim().toLowerCase();
+
+    const el = document.getElementById(f);
+
+    if (!el) return;
+
+    const value = el.value;
+
+    // required validation
+    if (!value && (f === "name" || f === "class" || f === "section")) {
+      valid = false;
+    }
+
+    data[f] = value;
+  });
+
+  if (!valid) {
+    showToast("Fill required fields");
+    return;
+  }
 
   const res = await addStudent(data);
 
   showToast("Student Added");
 
-  clearForm();
+  renderDynamicForm();
+  renderDynamicForm();
   loadData();
 }
 
@@ -182,6 +175,7 @@ function applySchoolChange() {
   document.getElementById("schoolName").innerText = "School: " + school;
   document.getElementById("schoolNameTop").innerText = school;
 
+  renderDynamicForm();
   loadData();
 
   hideSchoolSelector();
@@ -211,21 +205,31 @@ async function loadData() {
     `).join("");
 }
 
+renderDynamicForm();
 loadData();
 
 
 /* Load Schools + Pre-select */
 async function loadSchools() {
-  const res = await fetch("schools.json");
-  const data = await res.json();
+  const raw = await getSchools();
+
+  if (!raw || raw.length === 0) return;
+
+  const headers = raw[0];
+
+  const schools = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
 
   const dropdown = document.getElementById("schoolSelect");
 
   dropdown.innerHTML = '<option value="">Select School</option>';
 
-  dropdown.innerHTML += data.map(s => `
-    <option value="${s.School}">
-      ${s.School_Name}
+  dropdown.innerHTML += schools.map(s => `
+    <option value="${s.school}">
+      ${s.school_name}
     </option>
   `).join("");
 
@@ -235,7 +239,8 @@ async function loadSchools() {
   }
 }
 
-loadSchools();
+renderDynamicForm();
+loadData();
 
 function hideSchoolSelector() {
   document.getElementById("schoolBox").style.display = "none";
@@ -261,6 +266,61 @@ document.addEventListener("click", function(e) {
     hideSchoolSelector();
   }
 });
+
+async function renderDynamicForm() {
+
+  const raw = await getSchools();   // get data from Google Sheet
+
+  const headers = raw[0];
+
+  const schools = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+
+  // find current school
+  const currentSchool = schools.find(s => s.school === school);
+
+  if (!currentSchool) return;
+
+  const fields = currentSchool.fields.split(",");
+
+  const container = document.getElementById("dynamicForm");
+  container.innerHTML = "";
+
+  fields.forEach(f => {
+    f = f.trim().toLowerCase();
+
+    let html = `
+      <div class="form-row">
+        <label>${f.toUpperCase()}</label>
+        <input id="${f}">
+      </div>
+    `;
+
+    // special case for section dropdown
+    if (f === "section") {
+      html = `
+        <div class="form-row">
+          <label>Section</label>
+          <select id="section">
+            <option value="">Select Section</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+          </select>
+        </div>
+      `;
+    }
+
+    container.innerHTML += html;
+  });
+}
+
+renderDynamicForm();
+loadData();
+loadSchools();
 
 </script>
 
