@@ -87,7 +87,6 @@ function renderTable() {
   document.getElementById("tableBody").innerHTML =
     mappedData.map((r, i) => `
       <tr style="background: ${getRowColor(r)}">
-">
         <td><input type="checkbox" ${r.selected ? 'checked' : ''} onchange="toggleRow(${i}, this.checked)"></td>
         <td contenteditable="true" oninput="editCell(${i}, 'name', this.innerText)">${r.name || ''}</td>
         <td contenteditable="true" oninput="editCell(${i}, 'class', this.innerText)">${r.class || ''}</td>
@@ -215,4 +214,91 @@ function getRowColor(r) {
   }
 
   return ""; // default
+}
+
+function downloadExcel() {
+
+  if (!mappedData || mappedData.length === 0) {
+    alert("No data to download");
+    return;
+  }
+
+  // ✅ Get school name
+  const school = sessionStorage.getItem("school") || "School";
+
+  // ✅ Get today date
+  const today = new Date().toISOString().split("T")[0];
+
+  // =========================
+  // 📄 Sheet 1 → Student_data
+  // =========================
+  const studentData = mappedData
+    .filter(r => r.valid && r.selected)
+    .map(r => ({
+      Name: r.name || "",
+      Class: r.class || "",
+      Section: r.section || "",
+      Roll: r.roll || "",
+      Phone: r.phone || "",
+      Address: r.address || ""
+    }));
+
+  // =========================
+  // 📄 Sheet 2 → Error_data_logs
+  // =========================
+  const errorData = mappedData
+    .filter(r => !r.valid || !r.selected)
+    .map(r => ({
+      Name: r.name || "",
+      Class: r.class || "",
+      Section: r.section || "",
+      Roll: r.roll || "",
+      Phone: r.phone || "",
+      Address: r.address || "",
+      Status: !r.valid ? "Invalid" : "Not Selected"
+    }));
+
+  // =========================
+  // 📦 Create Workbook
+  // =========================
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1
+  const ws1 = XLSX.utils.json_to_sheet(studentData);
+  XLSX.utils.book_append_sheet(wb, ws1, "Student_data");
+
+  // Sheet 2
+  const ws2 = XLSX.utils.json_to_sheet(errorData);
+  XLSX.utils.book_append_sheet(wb, ws2, "Error_data_logs");
+
+  // =========================
+  // 📁 File Name
+  // =========================
+  const fileName = `${school}_${today}_bulk_upload_sheet.xlsx`;
+
+  // Download
+  XLSX.writeFile(wb, fileName);
+}
+
+  // Prepare data
+  const exportData = mappedData
+  .filter(r => r.selected)
+  .map(r => ({
+    Name: r.name || "",
+    Class: r.class || "",
+    Section: r.section || "",
+    Roll: r.roll || "",
+    Phone: r.phone || "",
+    Address: r.address || ""
+  }));
+
+  // Create worksheet
+  const ws = XLSX.utils.json_to_sheet(exportData);
+
+  // Create workbook
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Students");
+
+  // Download file
+  XLSX.writeFile(wb, "students_export.xlsx");
 }
