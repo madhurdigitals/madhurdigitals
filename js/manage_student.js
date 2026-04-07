@@ -7,6 +7,7 @@ let students = [];
 let currentPage = 1;
 let rowsPerPage = 100; // default
 let headersGlobal = [];
+let filteredData = [];
 
 // LOAD DATA
 async function loadStudents() {
@@ -21,7 +22,11 @@ async function loadStudents() {
     return obj;
   });
 
+  filteredData = [...students]; // 🔥 initially same
+
   currentPage = 1;
+
+  renderSmartTable();   // 🔥 NEW
 
   renderTablePaginated();   // ✅ NEW
   renderPagination();       // ✅ NEW
@@ -59,13 +64,16 @@ function applyFilter() {
   const cls = document.getElementById("searchClass").value;
   const sec = document.getElementById("searchSection").value;
 
-  const filtered = students.filter(s =>
-  (s.Name || "").toLowerCase().includes(name) &&
-  (cls === "" || s.Class == cls) &&
-  (sec === "" || s.Section === sec)
+  filteredData = students.filter(s =>
+    (s.Name || "").toLowerCase().includes(name) &&
+    (cls === "" || s.Class == cls) &&
+    (sec === "" || s.Section === sec)
   );
 
-  renderTable(filtered);
+  currentPage = 1;
+
+  renderSmartTable();
+  renderPagination();
 }
 
 // DELETE
@@ -176,8 +184,14 @@ function renderTablePaginated() {
 }
 
 function renderPagination() {
-  const totalPages = Math.ceil(students.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const container = document.getElementById("pagination");
+
+  // 🔥 HIDE pagination if small data
+  if (filteredData.length <= 150) {
+    container.innerHTML = "";
+    return;
+  }
 
   let buttons = "";
 
@@ -198,7 +212,7 @@ function renderPagination() {
 
 function goToPage(page) {
   currentPage = page;
-  renderTablePaginated();
+  renderSmartTable();
   renderPagination();
 }
 
@@ -216,5 +230,22 @@ function prevPage() {
     currentPage--;
     renderTablePaginated();
     renderPagination();
+  }
+}
+
+function renderSmartTable() {
+  const data = filteredData;
+
+  // 🔥 SMART LOGIC
+  if (data.length <= 150) {
+    // ❌ NO PAGINATION
+    renderTable(data, headersGlobal);
+    document.getElementById("pagination").innerHTML = "";
+  } else {
+    // ✅ PAGINATION
+    const start = (currentPage - 1) * rowsPerPage;
+    const pageData = data.slice(start, start + rowsPerPage);
+
+    renderTable(pageData, headersGlobal);
   }
 }
