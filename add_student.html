@@ -79,6 +79,7 @@
 
 <script>
 let school = sessionStorage.getItem("school");
+let schoolsData = [];
 
 document.getElementById("schoolName").innerText = "School: " + school;
 
@@ -206,12 +207,7 @@ async function loadData() {
     `).join("");
 }
 
-renderDynamicForm();
-loadData();
-
-
 /* Load Schools + Pre-select */
-let schoolsData = [];
 
 async function loadSchools() {
 
