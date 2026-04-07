@@ -95,7 +95,15 @@ function showToast(msg) {
 function clearForm() {
   const inputs = document.querySelectorAll("#dynamicForm input, #dynamicForm select");
 
-  inputs.forEach(el => el.value = "");
+  inputs.forEach(el => {
+    const id = el.id;
+
+    // ❌ DO NOT CLEAR these
+    if (id === "class" || id === "section") return;
+
+    // ✅ CLEAR everything else
+    el.value = "";
+  });
 }
 
 /* ✅ FIXED VALIDATION */
@@ -158,7 +166,7 @@ async function submitStudent() {
   showToast("Student Added");
 
   await addStudent(data);   // ✅ wait properly
-
+  clearForm();
   loadData();
 
   isSubmitting = false;   // ✅ unlock
