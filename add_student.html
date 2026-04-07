@@ -120,7 +120,7 @@ async function submitStudent() {
   const fields = currentSchool.fields.split(",");
 
   let data = {
-    school: school
+    school: school,
     school_id: sessionStorage.getItem("school_id")  
   };
 
@@ -155,6 +155,7 @@ async function submitStudent() {
   setTimeout(() => {
     loadData();
   }, 1000);
+}
 
 /* CHANGE SCHOOL */
 function changeSchool() {
