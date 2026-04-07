@@ -14,7 +14,9 @@ async function loadStudents() {
   const raw = await getStudents(school);
 
   const headers = raw[0];
-  headersGlobal = headers; // 🔥 store globally
+
+  // ❌ remove Timestamp from UI
+  headersGlobal = headers.filter(h => h !== "Timestamp");
 
   students = raw.slice(1).map(row => {
     let obj = {};
@@ -22,14 +24,12 @@ async function loadStudents() {
     return obj;
   });
 
-  filteredData = [...students]; // 🔥 initially same
+  filteredData = [...students];
 
   currentPage = 1;
 
-  renderSmartTable();   // 🔥 NEW
-
-  renderTablePaginated();   // ✅ NEW
-  renderPagination();       // ✅ NEW
+  renderSmartTable();
+  renderPagination();
 }
 
 loadStudents();
@@ -39,7 +39,6 @@ function renderTable(data, headers) {
   const table = document.getElementById("studentTable");
   const thead = document.getElementById("tableHead");
 
-  // 🔥 create headers dynamically
   thead.innerHTML = `
     <tr>
       ${headers.map(h => `<th>${h}</th>`).join("")}
@@ -47,10 +46,20 @@ function renderTable(data, headers) {
     </tr>
   `;
 
-  // 🔥 create rows dynamically
   table.innerHTML = data.map(s => `
     <tr>
-      ${headers.map(h => `<td>${s[h] || ""}</td>`).join("")}
+      ${headers.map(h => {
+
+        // 🔥 PHOTO PREVIEW
+        if (h === "Photo_Link" && s[h]) {
+          return `<td>
+            <img src="${s[h]}" width="40" height="40" style="border-radius:50%">
+          </td>`;
+        }
+
+        return `<td>${s[h] || ""}</td>`;
+      }).join("")}
+
       <td>
         <button onclick="openEdit(${s.student_ID})">Edit</button>
         <button onclick="deleteStudent(${s.student_ID})">Delete</button>
@@ -111,21 +120,95 @@ async function deleteStudent(id) {
 }
 
 function openEdit(id) {
-  const student = students.find(s => s.id == id);
+  const student = students.find(s => s.student_ID == id);
 
-  document.getElementById("editId").value = student.id;
-  document.getElementById("editName").value = student.name;
-  document.getElementById("editClass").value = student.class;
-  document.getElementById("editSection").value = student.section;
-  document.getElementById("editRoll").value = student.roll;
-  document.getElementById("editPhone").value = student.phone || "";
-  document.getElementById("editAddress").value = student.address || "";
+  const container = document.getElementById("editPopup");
 
-  document.getElementById("editPopup").style.display = "block";
+  let html = `
+    <div class="school-header">
+      <h3>Edit Student</h3>
+      <span class="close-btn" onclick="closeEdit()">✖</span>
+    </div>
+  `;
+
+  headersGlobal.forEach(h => {
+    if (h === "student_ID") {
+      html += `<input value="${student[h]}" disabled>`;
+    } 
+    else if (h === "Photo_Link") {
+      html += `<input value="${student[h] || ""}" placeholder="${h}">`;
+    }
+    else {
+      html += `<input id="edit_${h}" value="${student[h] || ""}" placeholder="${h}">`;
+    }
+  });
+
+  html += `
+    <br><br>
+    <button onclick="saveEditDynamic(${student.student_ID})">Save</button>
+    <button onclick="closeEdit()">Cancel</button>
+  `;
+
+  container.innerHTML = html;
+  container.style.display = "block";
 }
 
 function closeEdit() {
   document.getElementById("editPopup").style.display = "none";
+}
+
+async function saveEditDynamic(id) {
+
+  // preserve filters
+  const filters = {
+    name: document.getElementById("searchName").value,
+    class: document.getElementById("searchClass").value,
+    section: document.getElementById("searchSection").value
+  };
+
+  const scrollPos = window.scrollY;
+
+  let params = new URLSearchParams({
+    action: "updateStudent",
+    school: school,
+    student_id: id
+  });
+
+  // 🔥 loop through dynamic headers
+  headersGlobal.forEach(h => {
+
+    if (h === "student_ID" || h === "Timestamp") return;
+
+    const el = document.getElementById(`edit_${h}`);
+
+    if (el) {
+      params.append(h.toLowerCase(), el.value);
+    }
+  });
+
+  const url = `${API_URL}?${params.toString()}`;
+
+  try {
+    await fetch(url);
+
+    closeEdit();
+
+    await loadStudents();
+
+    // restore filters
+    document.getElementById("searchName").value = filters.name;
+    document.getElementById("searchClass").value = filters.class;
+    document.getElementById("searchSection").value = filters.section;
+
+    applyFilter();
+
+    // restore scroll
+    window.scrollTo(0, scrollPos);
+
+  } catch (err) {
+    console.error("Dynamic Update Error:", err);
+    alert("Failed to update student");
+  }
 }
 
 async function saveEdit() {
@@ -158,37 +241,36 @@ async function saveEdit() {
     + `&phone=${data.phone}`
     + `&address=${encodeURIComponent(data.address)}`;
 
-  await fetch(url);
+  try {
+    await fetch(url);
 
-  closeEdit();
+    closeEdit();
 
-  // reload
-  await loadStudents();
+    // reload data
+    await loadStudents();
 
-  // restore filters
-  document.getElementById("searchName").value = filters.name;
-  document.getElementById("searchClass").value = filters.class;
-  document.getElementById("searchSection").value = filters.section;
+    // restore filters
+    document.getElementById("searchName").value = filters.name;
+    document.getElementById("searchClass").value = filters.class;
+    document.getElementById("searchSection").value = filters.section;
 
-  applyFilter();
+    applyFilter();
 
-  // restore scroll
-  window.scrollTo(0, scrollPos);
-}
+    // restore scroll
+    window.scrollTo(0, scrollPos);
 
-function renderTablePaginated() {
-  const start = (currentPage - 1) * rowsPerPage;
-  const pageData = students.slice(start, start + rowsPerPage);
-
-  renderTable(pageData, headersGlobal);
+  } catch (err) {
+    console.error("Update Error:", err);
+    alert("Failed to update student");
+  }
 }
 
 function renderPagination() {
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const container = document.getElementById("pagination");
 
-  // 🔥 HIDE pagination if small data
-  if (filteredData.length <= 150) {
+  // 🔥 hide if <=100
+  if (filteredData.length <= 100) {
     container.innerHTML = "";
     return;
   }
@@ -197,30 +279,41 @@ function renderPagination() {
 
   for (let i = 1; i <= totalPages; i++) {
     buttons += `
-      <button onclick="goToPage(${i})" ${i === currentPage ? "style='font-weight:bold'" : ""}>
+      <button onclick="goToPage(${i})"
+        ${i === currentPage ? "style='font-weight:bold'" : ""}>
         ${i}
       </button>
     `;
   }
 
   container.innerHTML = `
-    <button onclick="prevPage()">Prev</button>
+    <button onclick="prevPage()">⬅</button>
     ${buttons}
-    <button onclick="nextPage()">Next</button>
+    <button onclick="nextPage()">➡</button>
   `;
 }
 
 function goToPage(page) {
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+
+  if (page < 1 || page > totalPages) return;
+
   currentPage = page;
   renderSmartTable();
   renderPagination();
 }
 
+function jumpToPage() {
+  const page = parseInt(document.getElementById("pageInput").value);
+  goToPage(page);
+}
+
 function nextPage() {
-  const totalPages = Math.ceil(students.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+
   if (currentPage < totalPages) {
     currentPage++;
-    renderTablePaginated();
+    renderSmartTable();
     renderPagination();
   }
 }
@@ -228,7 +321,7 @@ function nextPage() {
 function prevPage() {
   if (currentPage > 1) {
     currentPage--;
-    renderTablePaginated();
+    renderSmartTable();
     renderPagination();
   }
 }
@@ -236,8 +329,7 @@ function prevPage() {
 function renderSmartTable() {
   const data = filteredData;
 
-  // 🔥 SMART LOGIC
-  if (data.length <= 150) {
+  if (data.length <= 100) {
     // ❌ NO PAGINATION
     renderTable(data, headersGlobal);
     document.getElementById("pagination").innerHTML = "";
