@@ -104,6 +104,7 @@ function clearForm() {
     // ✅ CLEAR everything else
     el.value = "";
   });
+  document.getElementById("name")?.focus();
 }
 
 /* ✅ FIXED VALIDATION */
@@ -165,13 +166,12 @@ async function submitStudent() {
 
   showToast("Student Added");
 
-  await addStudent(data);
-
-  // ✅ instant UI update
+  // ⚡ instant UI first
   addToRecentTable(data);
-
-  // ✅ instant clear
   clearForm();
+
+  // 🚀 backend runs in background
+  addStudent(data);
   
 
   isSubmitting = false;   // ✅ unlock
