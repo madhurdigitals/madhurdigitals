@@ -4,12 +4,16 @@ document.getElementById("schoolName").innerText = school;
 document.getElementById("schoolNameTop").innerText = school;
 
 let students = [];
+let currentPage = 1;
+let rowsPerPage = 100; // default
+let headersGlobal = [];
 
 // LOAD DATA
 async function loadStudents() {
   const raw = await getStudents(school);
 
   const headers = raw[0];
+  headersGlobal = headers; // 🔥 store globally
 
   students = raw.slice(1).map(row => {
     let obj = {};
@@ -17,9 +21,10 @@ async function loadStudents() {
     return obj;
   });
 
-  renderTable(students, headers);
+  currentPage = 1;
 
-  renderTable(students);
+  renderTablePaginated();   // ✅ NEW
+  renderPagination();       // ✅ NEW
 }
 
 loadStudents();
@@ -161,4 +166,55 @@ async function saveEdit() {
 
   // restore scroll
   window.scrollTo(0, scrollPos);
+}
+
+function renderTablePaginated() {
+  const start = (currentPage - 1) * rowsPerPage;
+  const pageData = students.slice(start, start + rowsPerPage);
+
+  renderTable(pageData, headersGlobal);
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(students.length / rowsPerPage);
+  const container = document.getElementById("pagination");
+
+  let buttons = "";
+
+  for (let i = 1; i <= totalPages; i++) {
+    buttons += `
+      <button onclick="goToPage(${i})" ${i === currentPage ? "style='font-weight:bold'" : ""}>
+        ${i}
+      </button>
+    `;
+  }
+
+  container.innerHTML = `
+    <button onclick="prevPage()">Prev</button>
+    ${buttons}
+    <button onclick="nextPage()">Next</button>
+  `;
+}
+
+function goToPage(page) {
+  currentPage = page;
+  renderTablePaginated();
+  renderPagination();
+}
+
+function nextPage() {
+  const totalPages = Math.ceil(students.length / rowsPerPage);
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderTablePaginated();
+    renderPagination();
+  }
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    renderTablePaginated();
+    renderPagination();
+  }
 }
