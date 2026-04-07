@@ -36,7 +36,7 @@
     <div id="dynamicForm"></div>
 
     <div class="btn-group">
-      <button class="submit-btn" onclick="submitStudent()">Submit</button>
+      <button type="button" class="submit-btn" onclick="submitStudent()">Submit</button>
       <button class="clear-btn" onclick="clearForm()">Clear</button>
     </div>
   </div>
@@ -99,7 +99,13 @@ function clearForm() {
 }
 
 /* ✅ FIXED VALIDATION */
+let isSubmitting = false;
+
 async function submitStudent() {
+  const btn = document.querySelector(".submit-btn");
+  btn.disabled = true;
+  if (isSubmitting) return;   // 🚫 prevent double click
+  isSubmitting = true;
 
   const raw = schoolsData;
 
@@ -115,6 +121,7 @@ async function submitStudent() {
 
   if (!currentSchool) {
     showToast("School config not found");
+    isSubmitting = false;
     return;
   }
 
@@ -131,30 +138,31 @@ async function submitStudent() {
     f = f.trim().toLowerCase();
 
     const el = document.getElementById(f);
-
     if (!el) return;
 
     const value = el.value;
 
-    // required validation
     if (!value && (f === "name" || f === "class" || f === "section")) {
       valid = false;
     }
 
-    data[f] = value;
+    data[f] = value || "";   // 🔥 FIX undefined issue
   });
 
   if (!valid) {
-  showToast("Fill required fields");
-  return;
+    showToast("Fill required fields");
+    isSubmitting = false;
+    return;
   }
 
-  // ✅ NEW FAST FLOW
   showToast("Student Added");
-  addStudent(data);
 
-  await addStudent(data);
+  await addStudent(data);   // ✅ wait properly
+
   loadData();
+
+  isSubmitting = false;   // ✅ unlock
+  btn.disabled = false;
 }
 
 /* CHANGE SCHOOL */
