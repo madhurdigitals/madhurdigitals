@@ -1,5 +1,6 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbytZo8tG54g4sAlcKSmL7VPEQ_I1uNILLcOB9tsUjRqHGNGqKxjv4w82-rcNU8W-H_xTg/exec";
 let schoolsData = [];
+school_id: data.school_id
 /**
  * ✅ ADD STUDENT (using GET to avoid CORS)
  */
@@ -8,6 +9,7 @@ async function addStudent(data) {
     const params = new URLSearchParams({
       action: "addStudent",
       school: data.school,
+      school_id: data.school_id, 
       name: data.name,
       class: data.class,
       section: data.section,

@@ -121,6 +121,7 @@ async function submitStudent() {
 
   let data = {
     school: school
+    school_id: sessionStorage.getItem("school_id")  
   };
 
   let valid = true;
@@ -143,18 +144,17 @@ async function submitStudent() {
   });
 
   if (!valid) {
-    showToast("Fill required fields");
-    return;
+  showToast("Fill required fields");
+  return;
   }
 
-  const res = await addStudent(data);
-
+  // ✅ NEW FAST FLOW
   showToast("Student Added");
+  addStudent(data);
 
-  renderDynamicForm();
-  renderDynamicForm();
-  loadData();
-}
+  setTimeout(() => {
+    loadData();
+  }, 1000);
 
 /* CHANGE SCHOOL */
 function changeSchool() {
