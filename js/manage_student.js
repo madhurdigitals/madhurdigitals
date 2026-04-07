@@ -9,15 +9,15 @@ let students = [];
 async function loadStudents() {
   const raw = await getStudents(school);
 
-  students = raw.slice(1).map(r => ({
-  id: r[0],
-  name: r[1],
-  class: r[2],
-  section: r[3],
-  roll: r[4],
-  phone: r[5],
-  address: r[7]
-}));
+  const headers = raw[0];
+
+  students = raw.slice(1).map(row => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = row[i]);
+    return obj;
+  });
+
+  renderTable(students, headers);
 
   renderTable(students);
 }
@@ -25,28 +25,29 @@ async function loadStudents() {
 loadStudents();
 
 // RENDER TABLE
-function renderTable(data) {
+function renderTable(data, headers) {
   const table = document.getElementById("studentTable");
+  const thead = document.getElementById("tableHead");
 
+  // 🔥 create headers dynamically
+  thead.innerHTML = `
+    <tr>
+      ${headers.map(h => `<th>${h}</th>`).join("")}
+      <th>Action</th>
+    </tr>
+  `;
+
+  // 🔥 create rows dynamically
   table.innerHTML = data.map(s => `
     <tr>
-      <td>${s.id}</td>
-      <td>${s.name}</td>
-      <td>${s.class}</td>
-      <td>${s.section}</td>
-      <td>${s.roll}</td>
+      ${headers.map(h => `<td>${s[h] || ""}</td>`).join("")}
       <td>
-        <button onclick="openEdit(${s.id})">Edit</button>
-        <button onclick="deleteStudent(${s.id})">Delete</button>
+        <button onclick="openEdit(${s.student_ID})">Edit</button>
+        <button onclick="deleteStudent(${s.student_ID})">Delete</button>
       </td>
     </tr>
   `).join("");
 }
-
-// FILTER
-document.getElementById("searchName").addEventListener("input", applyFilter);
-document.getElementById("searchClass").addEventListener("input", applyFilter);
-document.getElementById("searchSection").addEventListener("change", applyFilter);
 
 function applyFilter() {
   const name = document.getElementById("searchName").value.toLowerCase();
@@ -54,9 +55,9 @@ function applyFilter() {
   const sec = document.getElementById("searchSection").value;
 
   const filtered = students.filter(s =>
-    s.name.toLowerCase().includes(name) &&
-    (cls === "" || s.class == cls) &&
-    (sec === "" || s.section === sec)
+  (s.Name || "").toLowerCase().includes(name) &&
+  (cls === "" || s.Class == cls) &&
+  (sec === "" || s.Section === sec)
   );
 
   renderTable(filtered);
