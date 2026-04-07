@@ -153,9 +153,8 @@ async function submitStudent() {
   showToast("Student Added");
   addStudent(data);
 
-  setTimeout(() => {
-    loadData();
-  }, 1000);
+  await addStudent(data);
+  loadData();
 }
 
 /* CHANGE SCHOOL */
@@ -251,6 +250,7 @@ async function loadSchools() {
 
   // ✅ VERY IMPORTANT: render form AFTER schools loaded
   renderDynamicForm();
+  loadData();
 }
 
 
@@ -331,7 +331,7 @@ async function renderDynamicForm() {
 }
 
 loadSchools();   // first load schools + form
-loadData();      // then load student data
+
 
 </script>
 
