@@ -1,6 +1,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbytZo8tG54g4sAlcKSmL7VPEQ_I1uNILLcOB9tsUjRqHGNGqKxjv4w82-rcNU8W-H_xTg/exec";
+let schoolCache = null;
 let schoolsData = [];
-school_id: data.school_id
+
 /**
  * ✅ ADD STUDENT (using GET to avoid CORS)
  */
@@ -67,7 +68,7 @@ async function getStudents(school) {
 /* ========================= */
 
 /* GET SCHOOLS */
-let schoolCache = null;
+
 
 async function getSchools(forceRefresh = false) {
   try {
@@ -107,6 +108,7 @@ async function addSchool(data) {
       action: "addSchool",
       school: data.school,
       school_name: data.school_name,
+      school_id: data.school_id,
       address: data.address,
       contact: data.contact,
       fields: data.fields,
