@@ -165,9 +165,14 @@ async function submitStudent() {
 
   showToast("Student Added");
 
-  await addStudent(data);   // ✅ wait properly
+  await addStudent(data);
+
+  // ✅ instant UI update
+  addToRecentTable(data);
+
+  // ✅ instant clear
   clearForm();
-  loadData();
+  
 
   isSubmitting = false;   // ✅ unlock
   btn.disabled = false;
@@ -344,6 +349,27 @@ async function renderDynamicForm() {
 
     container.innerHTML += html;
   });
+}
+
+function addToRecentTable(data) {
+  const table = document.getElementById("recentTable");
+
+  const row = `
+    <tr>
+      <td>${data.name || ""}</td>
+      <td>${data.class || ""}</td>
+      <td>${data.section || ""}</td>
+    </tr>
+  `;
+
+  // ✅ add new row at top
+  table.innerHTML = row + table.innerHTML;
+
+  // ✅ keep only last 3 rows
+  const rows = table.querySelectorAll("tr");
+  if (rows.length > 3) {
+    rows[rows.length - 1].remove();
+  }
 }
 
 loadSchools();   // first load schools + form
