@@ -70,37 +70,39 @@ async function getStudents(school) {
 
 /* GET SCHOOLS */
 
+function getSchools(forceRefresh = false) {
+  return new Promise((resolve, reject) => {
 
-async function getSchools(forceRefresh = false) {
-  try {
-    // ✅ Return cached data if already fetched
+    // ✅ use cache if available
     if (schoolCache && !forceRefresh) {
       console.log("Using cached schools");
-      return schoolCache;
+      resolve(schoolCache);
+      return;
     }
 
-    const url = `${API_URL}?action=getSchools`;
+    const callbackName = "jsonpCallback_" + Date.now();
 
-    console.log("Fetching from API:", url);
+    window[callbackName] = function(data) {
+      console.log("Schools (JSONP):", data);
 
-    const res = await fetch(url);
+      schoolCache = data;   // ✅ cache
+      resolve(data);
 
-    if (!res.ok) {
-      throw new Error(`HTTP error: ${res.status}`);
-    }
+      delete window[callbackName];
+    };
 
-    const data = await res.json();
+    const script = document.createElement("script");
 
-    schoolCache = data; // ✅ cache it
+    script.src = `${API_URL}?action=getSchools&callback=${callbackName}`;
 
-    return data;
+    script.onerror = function() {
+      reject("JSONP failed");
+      delete window[callbackName];
+    };
 
-  } catch (error) {
-    console.error("Get Schools Error:", error);
-    return [];
-  }
+    document.body.appendChild(script);
+  });
 }
-
 
 /* ADD SCHOOL */
 async function addSchool(data) {
