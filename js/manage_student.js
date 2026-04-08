@@ -35,6 +35,7 @@ async function loadStudents() {
   // ✅ Smart render (handles pagination automatically)
   renderSmartTable();
   renderPagination();
+  populateDropdowns();
 }
 
 loadStudents();
@@ -75,13 +76,19 @@ function renderTable(data, headers) {
 
 function applyFilter() {
   const name = document.getElementById("searchName").value.toLowerCase();
-  const cls = document.getElementById("searchClass").value;
-  const sec = document.getElementById("searchSection").value;
+
+  // 🔥 get selected classes
+  const selectedClasses = [...document.querySelectorAll("#classDropdown input:checked")]
+    .map(cb => cb.value);
+
+  // 🔥 get selected sections
+  const selectedSections = [...document.querySelectorAll("#sectionDropdown input:checked")]
+    .map(cb => cb.value);
 
   filteredData = students.filter(s =>
     (s.Name || "").toLowerCase().includes(name) &&
-    (cls === "" || s.Class == cls) &&
-    (sec === "" || s.Section === sec)
+    (selectedClasses.length === 0 || selectedClasses.includes(String(s.Class))) &&
+    (selectedSections.length === 0 || selectedSections.includes(s.Section))
   );
 
   currentPage = 1;
@@ -137,14 +144,23 @@ function openEdit(id) {
   `;
 
   headersGlobal.forEach(h => {
+
+    // skip timestamp if somehow present
+    if (h === "Timestamp") return;
+
+    // format label (nice UI)
+    const label = h.replace(/_/g, " ");
+
+    html += `<label style="display:block; margin-top:10px;">${label}</label>`;
+
     if (h === "student_ID") {
       html += `<input value="${student[h]}" disabled>`;
     } 
     else if (h === "Photo_Link") {
-      html += `<input value="${student[h] || ""}" placeholder="${h}">`;
+      html += `<input id="edit_${h}" value="${student[h] || ""}" placeholder="Enter ${label}">`;
     }
     else {
-      html += `<input id="edit_${h}" value="${student[h] || ""}" placeholder="${h}">`;
+      html += `<input id="edit_${h}" value="${student[h] || ""}" placeholder="Enter ${label}">`;
     }
   });
 
@@ -346,6 +362,38 @@ function renderSmartTable() {
     renderTable(pageData, headersGlobal);
   }
 }
+
+function toggleDropdown(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === "block" ? "none" : "block";
+}
+
+function populateDropdowns() {
+
+  const classSet = new Set();
+  const sectionSet = new Set();
+
+  students.forEach(s => {
+    classSet.add(s.Class);
+    sectionSet.add(s.Section);
+  });
+
+  const classDropdown = document.getElementById("classDropdown");
+  const sectionDropdown = document.getElementById("sectionDropdown");
+
+  classDropdown.innerHTML = [...classSet].map(c => `
+    <label>
+      <input type="checkbox" value="${c}" onchange="applyFilter()"> ${c}
+    </label>
+  `).join("");
+
+  sectionDropdown.innerHTML = [...sectionSet].map(s => `
+    <label>
+      <input type="checkbox" value="${s}" onchange="applyFilter()"> ${s}
+    </label>
+  `).join("");
+}
+
 
 document.getElementById("searchName").addEventListener("input", applyFilter);
 document.getElementById("searchClass").addEventListener("input", applyFilter);

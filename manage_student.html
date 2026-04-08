@@ -36,15 +36,20 @@
   <div class="card">
     <h3>Filters</h3>
 
+    <!-- Name -->
     <input id="searchName" placeholder="Search Name">
-    <input id="searchClass" placeholder="Search Class">
-    
-    <select id="searchSection">
-      <option value="">All Sections</option>
-      <option>A</option>
-      <option>B</option>
-      <option>C</option>
-    </select>
+
+    <!-- Class Multi Select -->
+    <div class="dropdown">
+      <button onclick="toggleDropdown('classDropdown')">Select Class</button>
+      <div id="classDropdown" class="dropdown-content"></div>
+    </div>
+
+    <!-- Section Multi Select -->
+    <div class="dropdown">
+      <button onclick="toggleDropdown('sectionDropdown')">Select Section</button>
+      <div id="sectionDropdown" class="dropdown-content"></div>
+    </div>
 
   </div>
 
@@ -70,7 +75,8 @@
 </div>
 
 <!-- EDIT POPUP -->
-<div id="editPopup" class="school-box">
+ <div id="editPopup" class="school-box"></div>
+<!-- <div id="editPopup" class="school-box">
 
   <div class="school-header">
     <h3>Edit Student</h3>
@@ -96,7 +102,7 @@
   <button onclick="saveEdit()">Save</button>
   <button onclick="closeEdit()">Cancel</button>
 
-</div>
+</div> -->
 
 </body>
 </html>
