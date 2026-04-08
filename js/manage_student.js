@@ -347,29 +347,6 @@ function renderSmartTable() {
   }
 }
 
-function goToPage(page) {
-  currentPage = page;
-  renderTablePaginated();
-  renderPagination();
-}
-
-function nextPage() {
-  const totalPages = Math.ceil(students.length / rowsPerPage);
-  if (currentPage < totalPages) {
-    currentPage++;
-    renderTablePaginated();
-    renderPagination();
-  }
-}
-
-function prevPage() {
-  if (currentPage > 1) {
-    currentPage--;
-    renderTablePaginated();
-    renderPagination();
-  }
-}
-
 document.getElementById("searchName").addEventListener("input", applyFilter);
 document.getElementById("searchClass").addEventListener("input", applyFilter);
 document.getElementById("searchSection").addEventListener("change", applyFilter);
