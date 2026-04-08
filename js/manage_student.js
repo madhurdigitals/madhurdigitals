@@ -5,7 +5,7 @@ document.getElementById("schoolNameTop").innerText = school;
 
 let students = [];
 let currentPage = 1;
-let rowsPerPage = 100; // default
+let rowsPerPage = 20; // default
 let headersGlobal = [];
 let filteredData = [];
 
@@ -275,7 +275,7 @@ function renderPagination() {
   const container = document.getElementById("pagination");
 
   // 🔥 hide if <=100
-  if (filteredData.length <= 100) {
+  if (filteredData.length <= 20) {
     container.innerHTML = "";
     return;
   }
