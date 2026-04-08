@@ -36,6 +36,7 @@ async function loadStudents() {
   // ✅ Smart render (handles pagination automatically)
   renderSmartTable();
   renderPagination();
+  populateDropdowns();
   populateClassSectionDropdown();
 }
 
@@ -372,31 +373,31 @@ document.addEventListener("click", function (e) {
 
 });
 
-// function populateDropdowns() {
+function populateDropdowns() {
 
-//   const classSet = new Set();
-//   const sectionSet = new Set();
+  const classSet = new Set();
+  const sectionSet = new Set();
 
-//   students.forEach(s => {
-//     classSet.add(s.Class);
-//     sectionSet.add(s.Section);
-//   });
+  students.forEach(s => {
+    classSet.add(s.Class);
+    sectionSet.add(s.Section);
+  });
 
-//   const classDropdown = document.getElementById("classDropdown");
-//   const sectionDropdown = document.getElementById("sectionDropdown");
+  const classDropdown = document.getElementById("classDropdown");
+  const sectionDropdown = document.getElementById("sectionDropdown");
 
-//   classDropdown.innerHTML = [...classSet].map(c => `
-//     <label>
-//       <input type="checkbox" value="${c}" onchange="applyFilter()"> ${c}
-//     </label>
-//   `).join("");
+  classDropdown.innerHTML = [...classSet].map(c => `
+    <label>
+      <input type="checkbox" value="${c}" onchange="applyFilter()"> ${c}
+    </label>
+  `).join("");
 
-//   sectionDropdown.innerHTML = [...sectionSet].map(s => `
-//     <label>
-//       <input type="checkbox" value="${s}" onchange="applyFilter()"> ${s}
-//     </label>
-//   `).join("");
-// }
+  sectionDropdown.innerHTML = [...sectionSet].map(s => `
+    <label>
+      <input type="checkbox" value="${s}" onchange="applyFilter()"> ${s}
+    </label>
+  `).join("");
+}
 
 function populateClassSectionDropdown() {
 
