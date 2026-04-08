@@ -202,9 +202,11 @@ async function saveEditDynamic(id) {
 
     const el = document.getElementById(`edit_${h}`);
 
-    if (el) {
+    // ✅ SAFE CHECK
+    if (el && el.value !== undefined) {
       params.append(h.toLowerCase(), el.value);
     }
+
   });
 
   const url = `${API_URL}?${params.toString()}`;
@@ -396,5 +398,3 @@ function populateDropdowns() {
 
 
 document.getElementById("searchName").addEventListener("input", applyFilter);
-document.getElementById("searchClass").addEventListener("input", applyFilter);
-document.getElementById("searchSection").addEventListener("change", applyFilter);
