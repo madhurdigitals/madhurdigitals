@@ -73,13 +73,6 @@ function renderTable(data, headers) {
   `).join("");
 }
 
-function renderTablePaginated() {
-  const start = (currentPage - 1) * rowsPerPage;
-  const pageData = students.slice(start, start + rowsPerPage);
-
-  renderTable(pageData, headersGlobal); // reuse your function
-}
-
 function applyFilter() {
   const name = document.getElementById("searchName").value.toLowerCase();
   const cls = document.getElementById("searchClass").value;
@@ -354,27 +347,6 @@ function renderSmartTable() {
   }
 }
 
-function renderPagination() {
-  const totalPages = Math.ceil(students.length / rowsPerPage);
-  const container = document.getElementById("pagination");
-
-  let buttons = "";
-
-  for (let i = 1; i <= totalPages; i++) {
-    buttons += `
-      <button onclick="goToPage(${i})" ${i === currentPage ? "style='font-weight:bold'" : ""}>
-        ${i}
-      </button>
-    `;
-  }
-
-  container.innerHTML = `
-    <button onclick="prevPage()">Prev</button>
-    ${buttons}
-    <button onclick="nextPage()">Next</button>
-  `;
-}
-
 function goToPage(page) {
   currentPage = page;
   renderTablePaginated();
@@ -397,3 +369,7 @@ function prevPage() {
     renderPagination();
   }
 }
+
+document.getElementById("searchName").addEventListener("input", applyFilter);
+document.getElementById("searchClass").addEventListener("input", applyFilter);
+document.getElementById("searchSection").addEventListener("change", applyFilter);
