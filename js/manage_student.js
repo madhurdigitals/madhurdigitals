@@ -36,7 +36,6 @@ async function loadStudents() {
   // ✅ Smart render (handles pagination automatically)
   renderSmartTable();
   renderPagination();
-  populateDropdowns();
   populateClassSectionDropdown();
 }
 
@@ -400,7 +399,7 @@ function populateDropdowns() {
 }
 
 function populateClassSectionDropdown() {
-
+  console.log("Dropdown function running"); 
   const set = new Set();
 
   students.forEach(s => {
