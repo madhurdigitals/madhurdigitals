@@ -334,7 +334,7 @@ function prevPage() {
 function renderSmartTable() {
   const data = filteredData;
 
-  if (data.length <= 100) {
+  if (data.length <= 20) {
     // ❌ NO PAGINATION
     renderTable(data, headersGlobal);
     document.getElementById("pagination").innerHTML = "";
