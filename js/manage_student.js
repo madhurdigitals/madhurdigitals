@@ -36,7 +36,6 @@ async function loadStudents() {
   // ✅ Smart render (handles pagination automatically)
   renderSmartTable();
   renderPagination();
-  populateDropdowns();
   populateClassSectionDropdown();
 }
 
