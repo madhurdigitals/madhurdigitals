@@ -362,7 +362,12 @@ document.addEventListener("click", function (e) {
 
   const dropdown = document.getElementById("classSectionDropdown");
 
-  if (!dropdown.parentElement.contains(e.target)) {
+  if (!dropdown) return;
+
+  const container = dropdown.parentElement;
+
+  // if click is outside dropdown container
+  if (!container.contains(e.target)) {
     dropdown.style.display = "none";
   }
 
