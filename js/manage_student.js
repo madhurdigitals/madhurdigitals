@@ -145,23 +145,21 @@ function openEdit(id) {
 
   headersGlobal.forEach(h => {
 
-    // skip timestamp if somehow present
     if (h === "Timestamp") return;
 
-    // format label (nice UI)
     const label = h.replace(/_/g, " ");
 
     html += `<label style="display:block; margin-top:10px;">${label}</label>`;
 
+    // 🔥 student_ID (disabled but NO id needed)
     if (h === "student_ID") {
       html += `<input value="${student[h]}" disabled>`;
-    } 
-    else if (h === "Photo_Link") {
-      html += `<input id="edit_${h}" value="${student[h] || ""}" placeholder="Enter ${label}">`;
+      return;
     }
-    else {
-      html += `<input id="edit_${h}" value="${student[h] || ""}" placeholder="Enter ${label}">`;
-    }
+
+    // 🔥 ALL OTHER FIELDS MUST HAVE ID
+    html += `<input id="edit_${h}" value="${student[h] || ""}" placeholder="Enter ${label}">`;
+
   });
 
   html += `
@@ -180,11 +178,8 @@ function closeEdit() {
 
 async function saveEditDynamic(id) {
 
-  // preserve filters
   const filters = {
-    name: document.getElementById("searchName").value,
-    class: document.getElementById("searchClass").value,
-    section: document.getElementById("searchSection").value
+    name: document.getElementById("searchName").value
   };
 
   const scrollPos = window.scrollY;
@@ -195,18 +190,19 @@ async function saveEditDynamic(id) {
     student_id: id
   });
 
-  // 🔥 loop through dynamic headers
   headersGlobal.forEach(h => {
 
     if (h === "student_ID" || h === "Timestamp") return;
 
     const el = document.getElementById(`edit_${h}`);
 
-    // ✅ SAFE CHECK
-    if (el && el.value !== undefined) {
-      params.append(h.toLowerCase(), el.value);
+    // 🔥 SAFE CHECK (NO ERROR)
+    if (!el) {
+      console.warn(`Missing input for: ${h}`);
+      return;
     }
 
+    params.append(h.toLowerCase(), el.value || "");
   });
 
   const url = `${API_URL}?${params.toString()}`;
@@ -215,17 +211,11 @@ async function saveEditDynamic(id) {
     await fetch(url);
 
     closeEdit();
-
     await loadStudents();
 
-    // restore filters
     document.getElementById("searchName").value = filters.name;
-    document.getElementById("searchClass").value = filters.class;
-    document.getElementById("searchSection").value = filters.section;
-
     applyFilter();
 
-    // restore scroll
     window.scrollTo(0, scrollPos);
 
   } catch (err) {
