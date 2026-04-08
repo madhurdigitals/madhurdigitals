@@ -13,21 +13,26 @@ let filteredData = [];
 async function loadStudents() {
   const raw = await getStudents(school);
 
+  if (!raw || raw.length === 0) return;
+
   const headers = raw[0];
 
-  // ❌ remove Timestamp from UI
+  // ✅ Remove Timestamp from UI
   headersGlobal = headers.filter(h => h !== "Timestamp");
 
+  // ✅ Convert rows to objects (keep full data internally)
   students = raw.slice(1).map(row => {
     let obj = {};
     headers.forEach((h, i) => obj[h] = row[i]);
     return obj;
   });
 
+  // ✅ Initial state = no filter
   filteredData = [...students];
 
   currentPage = 1;
 
+  // ✅ Smart render (handles pagination automatically)
   renderSmartTable();
   renderPagination();
 }
@@ -66,6 +71,13 @@ function renderTable(data, headers) {
       </td>
     </tr>
   `).join("");
+}
+
+function renderTablePaginated() {
+  const start = (currentPage - 1) * rowsPerPage;
+  const pageData = students.slice(start, start + rowsPerPage);
+
+  renderTable(pageData, headersGlobal); // reuse your function
 }
 
 function applyFilter() {
@@ -339,5 +351,49 @@ function renderSmartTable() {
     const pageData = data.slice(start, start + rowsPerPage);
 
     renderTable(pageData, headersGlobal);
+  }
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(students.length / rowsPerPage);
+  const container = document.getElementById("pagination");
+
+  let buttons = "";
+
+  for (let i = 1; i <= totalPages; i++) {
+    buttons += `
+      <button onclick="goToPage(${i})" ${i === currentPage ? "style='font-weight:bold'" : ""}>
+        ${i}
+      </button>
+    `;
+  }
+
+  container.innerHTML = `
+    <button onclick="prevPage()">Prev</button>
+    ${buttons}
+    <button onclick="nextPage()">Next</button>
+  `;
+}
+
+function goToPage(page) {
+  currentPage = page;
+  renderTablePaginated();
+  renderPagination();
+}
+
+function nextPage() {
+  const totalPages = Math.ceil(students.length / rowsPerPage);
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderTablePaginated();
+    renderPagination();
+  }
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    renderTablePaginated();
+    renderPagination();
   }
 }
