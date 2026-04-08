@@ -332,21 +332,32 @@ async function renderDynamicForm() {
       </div>
     `;
 
-    // special case for section dropdown
-    if (f === "section") {
+    // special case for class and section dropdown
+    // 🔥 CLASS DROPDOWN
+    if (f === "class") {
       html = `
         <div class="form-row">
-          <label>Section</label>
-          <select id="section">
-            <option value="">Select Section</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
+          <label>Class</label>
+          <select id="class">
+            <option value="">Select Class</option>
+            ${CONFIG.classes.map(c => `<option value="${c}">${c}</option>`).join("")}
           </select>
         </div>
       `;
     }
 
+    // 🔥 SECTION DROPDOWN
+    else if (f === "section") {
+      html = `
+        <div class="form-row">
+          <label>Section</label>
+          <select id="section">
+            <option value="">Select Section</option>
+            ${CONFIG.sections.map(s => `<option value="${s}">${s}</option>`).join("")}
+          </select>
+        </div>
+      `;
+    }
     container.innerHTML += html;
   });
 }
