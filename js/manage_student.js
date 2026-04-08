@@ -8,6 +8,7 @@ let currentPage = 1;
 let rowsPerPage = 20; // default
 let headersGlobal = [];
 let filteredData = [];
+let selectedFilters = [];
 
 // LOAD DATA
 async function loadStudents() {
@@ -36,6 +37,7 @@ async function loadStudents() {
   renderSmartTable();
   renderPagination();
   populateDropdowns();
+  populateClassSectionDropdown();
 }
 
 loadStudents();
@@ -77,19 +79,15 @@ function renderTable(data, headers) {
 function applyFilter() {
   const name = document.getElementById("searchName").value.toLowerCase();
 
-  // 🔥 get selected classes
-  const selectedClasses = [...document.querySelectorAll("#classDropdown input:checked")]
-    .map(cb => cb.value);
+  filteredData = students.filter(s => {
 
-  // 🔥 get selected sections
-  const selectedSections = [...document.querySelectorAll("#sectionDropdown input:checked")]
-    .map(cb => cb.value);
+    const key = s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`;
 
-  filteredData = students.filter(s =>
-    (s.Name || "").toLowerCase().includes(name) &&
-    (selectedClasses.length === 0 || selectedClasses.includes(String(s.Class))) &&
-    (selectedSections.length === 0 || selectedSections.includes(s.Section))
-  );
+    return (
+      (s.Name || "").toLowerCase().includes(name) &&
+      (selectedFilters.length === 0 || selectedFilters.includes(key))
+    );
+  });
 
   currentPage = 1;
 
@@ -355,35 +353,131 @@ function renderSmartTable() {
   }
 }
 
-function toggleDropdown(id) {
-  const el = document.getElementById(id);
-  el.style.display = el.style.display === "block" ? "none" : "block";
-}
+// function toggleDropdown(id) {
+//   const el = document.getElementById(id);
+//   el.style.display = el.style.display === "block" ? "none" : "block";
+// }
 
-function populateDropdowns() {
+document.addEventListener("click", function (e) {
 
-  const classSet = new Set();
-  const sectionSet = new Set();
+  const dropdown = document.getElementById("classSectionDropdown");
+
+  if (!dropdown.parentElement.contains(e.target)) {
+    dropdown.style.display = "none";
+  }
+
+});
+
+// function populateDropdowns() {
+
+//   const classSet = new Set();
+//   const sectionSet = new Set();
+
+//   students.forEach(s => {
+//     classSet.add(s.Class);
+//     sectionSet.add(s.Section);
+//   });
+
+//   const classDropdown = document.getElementById("classDropdown");
+//   const sectionDropdown = document.getElementById("sectionDropdown");
+
+//   classDropdown.innerHTML = [...classSet].map(c => `
+//     <label>
+//       <input type="checkbox" value="${c}" onchange="applyFilter()"> ${c}
+//     </label>
+//   `).join("");
+
+//   sectionDropdown.innerHTML = [...sectionSet].map(s => `
+//     <label>
+//       <input type="checkbox" value="${s}" onchange="applyFilter()"> ${s}
+//     </label>
+//   `).join("");
+// }
+
+function populateClassSectionDropdown() {
+
+  const set = new Set();
 
   students.forEach(s => {
-    classSet.add(s.Class);
-    sectionSet.add(s.Section);
+    const key = s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`;
+    set.add(key);
   });
 
-  const classDropdown = document.getElementById("classDropdown");
-  const sectionDropdown = document.getElementById("sectionDropdown");
+  const sorted = [...set].sort((a, b) => {
+    const [c1, s1] = a.split("-");
+    const [c2, s2] = b.split("-");
 
-  classDropdown.innerHTML = [...classSet].map(c => `
+    if (c1 != c2) return c1 - c2;
+    return (s1 || "").localeCompare(s2 || "");
+  });
+
+  const dropdown = document.getElementById("classSectionDropdown");
+
+  dropdown.innerHTML = sorted.map(val => `
     <label>
-      <input type="checkbox" value="${c}" onchange="applyFilter()"> ${c}
+      <input type="checkbox" value="${val}" onchange="handleFilterChange(this)">
+      ${val}
     </label>
   `).join("");
+}
 
-  sectionDropdown.innerHTML = [...sectionSet].map(s => `
-    <label>
-      <input type="checkbox" value="${s}" onchange="applyFilter()"> ${s}
-    </label>
+function handleFilterChange(checkbox) {
+
+  const value = checkbox.value;
+
+  if (checkbox.checked) {
+    if (!selectedFilters.includes(value)) {
+      selectedFilters.push(value);
+    }
+  } else {
+    selectedFilters = selectedFilters.filter(v => v !== value);
+  }
+
+  renderChips();
+  applyFilter();
+}
+
+function renderChips() {
+  const container = document.getElementById("selectedChips");
+
+  container.innerHTML = selectedFilters.map(val => `
+    <div style="
+      background:#e0e0e0;
+      padding:5px 10px;
+      border-radius:15px;
+      display:flex;
+      align-items:center;
+      gap:5px;
+    ">
+      ${val}
+      <span style="cursor:pointer;" onclick="removeFilter('${val}')">✖</span>
+    </div>
   `).join("");
+}
+
+function removeFilter(value) {
+
+  selectedFilters = selectedFilters.filter(v => v !== value);
+
+  // uncheck checkbox
+  const checkboxes = document.querySelectorAll("#classSectionDropdown input");
+
+  checkboxes.forEach(cb => {
+    if (cb.value === value) cb.checked = false;
+  });
+
+  renderChips();
+  applyFilter();
+}
+
+function toggleDropdown(id) {
+  const el = document.getElementById(id);
+
+  const isOpen = el.style.display === "block";
+
+  document.querySelectorAll(".dropdown-content").forEach(d => d.style.display = "none");
+
+  el.style.display = isOpen ? "none" : "block";
 }
 
 

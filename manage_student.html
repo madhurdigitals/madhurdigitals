@@ -39,17 +39,22 @@
     <!-- Name -->
     <input id="searchName" placeholder="Search Name">
 
-    <!-- Class Multi Select -->
-    <div class="dropdown">
-      <button onclick="toggleDropdown('classDropdown')">Select Class</button>
-      <div id="classDropdown" class="dropdown-content"></div>
-    </div>
+    <!-- Class-Section Filter -->
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;">
 
-    <!-- Section Multi Select -->
-    <div class="dropdown">
-      <button onclick="toggleDropdown('sectionDropdown')">Select Section</button>
-      <div id="sectionDropdown" class="dropdown-content"></div>
+      <!-- Button -->
+      <div class="dropdown">
+        <button onclick="toggleDropdown('classSectionDropdown')">
+          Select Class-Section
+        </button>
+        <div id="classSectionDropdown" class="dropdown-content"></div>
+      </div>
+
+      <!-- 🔥 Selected Chips -->
+      <div id="selectedChips" style="display:flex; gap:5px; flex-wrap:wrap;"></div>
+
     </div>
+  </div>
 
   </div>
 
