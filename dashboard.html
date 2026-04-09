@@ -145,6 +145,11 @@ function continueAction() {
   else if (mode === "bulk") {
     window.location.href = "bulk_upload.html";   // ✅ NEW
   }
+  else {
+    // If no mode (like change school), just update UI
+    showSelectedSchool();
+    hideSchoolSelector();
+  }
 }
 
 // Other buttons
@@ -226,11 +231,17 @@ function showSelectedSchool() {
 }
 
 function changeSchool() {
+  // clear old selection
   sessionStorage.removeItem("school");
   sessionStorage.removeItem("school_id");
 
+  // hide selected bar
   document.getElementById("selectedSchoolBar").style.display = "none";
 
+  // IMPORTANT: reset mode so user can reselect properly
+  mode = "";
+
+  // show popup again
   document.getElementById("schoolBox").style.display = "block";
 }
 showSelectedSchool();
