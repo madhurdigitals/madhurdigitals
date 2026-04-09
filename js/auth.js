@@ -13,5 +13,6 @@ function login(username, password) {
 
 function logout() {
   localStorage.clear();
-  window.location.href = "login.html";
+  sessionStorage.clear(); // IMPORTANT
+  window.location.href = "index.html";
 }
