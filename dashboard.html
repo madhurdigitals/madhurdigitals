@@ -127,12 +127,14 @@ function continueAction() {
     return;
   }
 
-  // ✅ Store both values
+  // ✅ ALWAYS update selected school
   sessionStorage.setItem("school", school);
   sessionStorage.setItem("school_id", school_id);
-  showSelectedSchool(); 
 
-  // ✅ Redirect based on mode
+  showSelectedSchool();
+  hideSchoolSelector();
+
+  // ✅ Only redirect if mode exists
   if (mode === "add") {
     window.location.href = "add_student.html";
   } 
@@ -143,20 +145,12 @@ function continueAction() {
     window.location.href = "print_student.html";
   }
   else if (mode === "bulk") {
-    window.location.href = "bulk_upload.html";   // ✅ NEW
+    window.location.href = "bulk_upload.html";
   }
-  else if (mode === "change") {
-    // Just update dashboard, no redirect
-    showSelectedSchool();
-    hideSchoolSelector();
-  }
-  else {
-    // If no mode (like change school), just update UI
-    showSelectedSchool();
-    hideSchoolSelector();
-  }
-}
 
+  // ✅ reset mode after use
+  mode = "";
+}
 // Other buttons
 function goManage() {
   mode = "manage";
@@ -236,16 +230,9 @@ function showSelectedSchool() {
 }
 
 function changeSchool() {
-  sessionStorage.removeItem("school");
-  sessionStorage.removeItem("school_id");
-
-  document.getElementById("selectedSchoolBar").style.display = "none";
-
-  mode = "change"; // ✅ IMPORTANT
-
+  // Just open popup
   document.getElementById("schoolBox").style.display = "block";
 }
-showSelectedSchool();
 
 </script>
 
