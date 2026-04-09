@@ -5,147 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Madhur Digitals</title>
 
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', sans-serif;
-}
-
-body {
-    background: #f5f7fb;
-}
-
-/* NAVBAR */
-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 40px;
-    background: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
-
-nav h1 {
-    color: #0d6efd;
-}
-
-.nav-btn {
-    padding: 10px 18px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-}
-
-.login-btn {
-    background: transparent;
-    border: 1px solid #0d6efd;
-    color: #0d6efd;
-}
-
-.login-btn:hover {
-    background: #0d6efd;
-    color: white;
-}
-
-/* HERO */
-.hero {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 80vh;
-    text-align: center;
-    padding: 20px;
-    background: linear-gradient(135deg, #0d6efd, #4dabf7);
-    color: white;
-}
-
-.hero h2 {
-    font-size: 40px;
-    margin-bottom: 15px;
-}
-
-.hero p {
-    max-width: 600px;
-    margin-bottom: 20px;
-}
-
-.hero .btn {
-    padding: 12px 25px;
-    background: white;
-    color: #0d6efd;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.hero .btn:hover {
-    background: #eaeaea;
-}
-
-/* SECTION */
-.section {
-    padding: 60px 20px;
-    text-align: center;
-}
-
-.section h2 {
-    margin-bottom: 30px;
-}
-
-/* CARDS */
-.cards {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 25px;
-}
-
-.card {
-    background: white;
-    padding: 25px;
-    width: 260px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    transition: 0.3s;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-}
-
-.card h3 {
-    margin-bottom: 10px;
-    color: #0d6efd;
-}
-
-/* CTA */
-.cta {
-    background: #0d6efd;
-    color: white;
-    padding: 50px 20px;
-}
-
-/* FOOTER */
-footer {
-    background: #111;
-    color: white;
-    text-align: center;
-    padding: 20px;
-}
-</style>
-
 </head>
 
 <body>
 
 <!-- NAVBAR -->
 <nav>
-    <h1>Madhur Digitals</h1>
+    <h1 onclick="location.href='index.html'" style="cursor:pointer;">
+        Madhur Digitals
+    </h1>
+
     <button class="nav-btn login-btn" onclick="location.href='login.html'">
         Login
     </button>
