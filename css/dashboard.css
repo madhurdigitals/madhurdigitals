@@ -168,3 +168,27 @@ body::before {
     font-size: 16px;
   }
 }
+
+/* Selected School Bar */
+.selected-school {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.selected-school button {
+  padding: 6px 12px;
+  border: 1px solid #0d6efd;
+  background: transparent;
+  color: #0d6efd;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.selected-school button:hover {
+  background: #0d6efd;
+  color: white;
+}

@@ -22,6 +22,10 @@
 </nav>
 
 <h2 class="heading">Dashboard</h2>
+<div id="selectedSchoolBar" class="selected-school" style="display:none;">
+  <span id="selectedSchoolText"></span>
+  <button onclick="changeSchool()">Change</button>
+</div>
 
 <div class="container">
 
@@ -126,6 +130,7 @@ function continueAction() {
   // ✅ Store both values
   sessionStorage.setItem("school", school);
   sessionStorage.setItem("school_id", school_id);
+  showSelectedSchool(); 
 
   // ✅ Redirect based on mode
   if (mode === "add") {
@@ -186,9 +191,18 @@ document.addEventListener("click", function(e) {
 
 // show overlay when popup opens
 function showSchoolSelector(selectedMode) {
+
+  const school = sessionStorage.getItem("school");
+
+  if (school) {
+    // already selected → go directly
+    mode = selectedMode;
+    continueAction();
+    return;
+  }
+
   mode = selectedMode;
   document.getElementById("schoolBox").style.display = "block";
-  document.body.style.overflow = "hidden";
 }
 
 // hide popup properly
@@ -197,6 +211,29 @@ function hideSchoolSelector() {
   document.body.style.overflow = "auto";
   mode = "";
 }
+
+function showSelectedSchool() {
+  const school = sessionStorage.getItem("school");
+  const school_id = sessionStorage.getItem("school_id");
+
+  if (school && school_id) {
+    const bar = document.getElementById("selectedSchoolBar");
+    const text = document.getElementById("selectedSchoolText");
+
+    text.innerText = `School ID: ${school_id} - ${school}`;
+    bar.style.display = "flex";
+  }
+}
+
+function changeSchool() {
+  sessionStorage.removeItem("school");
+  sessionStorage.removeItem("school_id");
+
+  document.getElementById("selectedSchoolBar").style.display = "none";
+
+  document.getElementById("schoolBox").style.display = "block";
+}
+showSelectedSchool();
 
 </script>
 
