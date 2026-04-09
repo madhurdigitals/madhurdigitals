@@ -4,7 +4,7 @@
   <title>Dashboard</title>
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
-  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/dashboard.css"> 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
@@ -22,10 +22,6 @@
 </nav>
 
 <h2 class="heading">Dashboard</h2>
-<div id="selectedSchoolBar" class="selected-school" style="display:none;">
-  <span id="selectedSchoolText"></span>
-  <button onclick="changeSchool()">Change</button>
-</div>
 
 <div class="container">
 
@@ -63,21 +59,15 @@
 
 <!-- School Selector -->
 <div id="schoolBox" class="school-box">
-
-  <div class="school-header">
-    <h3>Select School</h3>
-    <span class="close-btn" onclick="hideSchoolSelector()">✖</span>
-  </div>
-
-  <br>
+  <h3>Select School</h3>
 
   <select id="schoolSelect">
     <option value="">Loading...</option>
   </select>
 
   <br><br>
-
-  <button onclick="continueAction()">Continue</button>
+  <!-- <button onclick="continueToAdd()">Continue</button> -->
+   <button onclick="continueAction()">Continue</button>
 </div>
 
 <script>
@@ -127,14 +117,11 @@ function continueAction() {
     return;
   }
 
-  // ✅ ALWAYS update selected school
+  // ✅ Store both values
   sessionStorage.setItem("school", school);
   sessionStorage.setItem("school_id", school_id);
 
-  showSelectedSchool();
-  hideSchoolSelector();
-
-  // ✅ Only redirect if mode exists
+  // ✅ Redirect based on mode
   if (mode === "add") {
     window.location.href = "add_student.html";
   } 
@@ -145,12 +132,10 @@ function continueAction() {
     window.location.href = "print_student.html";
   }
   else if (mode === "bulk") {
-    window.location.href = "bulk_upload.html";
+    window.location.href = "bulk_upload.html";   // ✅ NEW
   }
-
-  // ✅ reset mode after use
-  mode = "";
 }
+
 // Other buttons
 function goManage() {
   mode = "manage";
@@ -192,47 +177,6 @@ document.addEventListener("click", function(e) {
     hideSchoolSelector();
   }
 });
-
-// show overlay when popup opens
-function showSchoolSelector(selectedMode) {
-
-  const school = sessionStorage.getItem("school");
-
-  if (school) {
-    // already selected → go directly
-    mode = selectedMode;
-    continueAction();
-    return;
-  }
-
-  mode = selectedMode;
-  document.getElementById("schoolBox").style.display = "block";
-}
-
-// hide popup properly
-function hideSchoolSelector() {
-  document.getElementById("schoolBox").style.display = "none";
-  document.body.style.overflow = "auto";
-  mode = "";
-}
-
-function showSelectedSchool() {
-  const school = sessionStorage.getItem("school");
-  const school_id = sessionStorage.getItem("school_id");
-
-  if (school && school_id) {
-    const bar = document.getElementById("selectedSchoolBar");
-    const text = document.getElementById("selectedSchoolText");
-
-    text.innerText = `School ID: ${school_id} - ${school}`;
-    bar.style.display = "flex";
-  }
-}
-
-function changeSchool() {
-  // Just open popup
-  document.getElementById("schoolBox").style.display = "block";
-}
 
 </script>
 
