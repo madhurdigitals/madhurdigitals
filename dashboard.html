@@ -11,7 +11,7 @@
 <body>
 
 <nav>
-  <div class="logo">
+  <div class="logo" onclick="location.href='index.html'" style="cursor:pointer;">
     <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
     <div class="title-text">Madhur Digitals</div>
   </div>
@@ -59,15 +59,21 @@
 
 <!-- School Selector -->
 <div id="schoolBox" class="school-box">
-  <h3>Select School</h3>
+
+  <div class="school-header">
+    <h3>Select School</h3>
+    <span class="close-btn" onclick="hideSchoolSelector()">✖</span>
+  </div>
+
+  <br>
 
   <select id="schoolSelect">
     <option value="">Loading...</option>
   </select>
 
   <br><br>
-  <!-- <button onclick="continueToAdd()">Continue</button> -->
-   <button onclick="continueAction()">Continue</button>
+
+  <button onclick="continueAction()">Continue</button>
 </div>
 
 <script>
@@ -177,6 +183,20 @@ document.addEventListener("click", function(e) {
     hideSchoolSelector();
   }
 });
+
+// show overlay when popup opens
+function showSchoolSelector(selectedMode) {
+  mode = selectedMode;
+  document.getElementById("schoolBox").style.display = "block";
+  document.body.style.overflow = "hidden";
+}
+
+// hide popup properly
+function hideSchoolSelector() {
+  document.getElementById("schoolBox").style.display = "none";
+  document.body.style.overflow = "auto";
+  mode = "";
+}
 
 </script>
 
