@@ -19,11 +19,13 @@
     <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
     <div>
       <div class="title-text">Madhur Digitals</div>
-      <div id="schoolNameTop"></div>
+      <div class="school-name" id="schoolNameTop"></div>
     </div>
   </div>
 
   <div class="nav-actions">
+    <button onclick="changeSchool()">Change School</button>
+    <button onclick="location.href='dashboard.html'">Dashboard</button>
     <button onclick="logout()">Logout</button>
   </div>
 </nav>
@@ -60,12 +62,12 @@
 
   <!-- Table -->
   <div class="card">
-    <div class="table-wrapper"></div>
+    <div class="table-wrapper">
       <table>
         <thead id="tableHead"></thead>
         <tbody id="studentTable"></tbody>
       </table>
-  </div>
+    </div>
     <!-- ✅ SINGLE pagination -->
     <div id="pagination" style="margin-top:10px;"></div>
 
