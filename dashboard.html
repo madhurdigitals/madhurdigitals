@@ -178,6 +178,15 @@ document.addEventListener("click", function(e) {
   }
 });
 
+// Always reset popup when page loads (important fix)
+window.addEventListener("pageshow", function () {
+  hideSchoolSelector();
+});
+
+window.onload = function () {
+  hideSchoolSelector();
+};
+
 </script>
 
 </body>
