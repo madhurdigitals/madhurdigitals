@@ -342,7 +342,8 @@ function renderSmartTable() {
   if (data.length <= 20) {
     // ❌ NO PAGINATION
     renderTable(data, headersGlobal);
-    document.getElementById("pagination").innerHTML = "";
+    document.getElementById("pagination").innerHTML = html;
+    document.getElementById("paginationTop").innerHTML = html;
   } else {
     // ✅ PAGINATION
     const start = (currentPage - 1) * rowsPerPage;
@@ -490,6 +491,44 @@ function changeSchool() {
 
 function hideSchoolSelector() {
   document.getElementById("schoolBox").classList.remove("active");
+}
+
+async function loadSchools() {
+  const dropdown = document.getElementById("schoolSelect");
+
+  const raw = await getSchools();   // from api.js
+
+  const headers = raw[0];
+
+  const schools = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+
+  dropdown.innerHTML = '<option value="">Select School</option>';
+
+  dropdown.innerHTML += schools.map(s => `
+    <option value="${s.school}">${s.school_name}</option>
+  `).join("");
+}
+loadSchools();
+
+function applySchoolChange() {
+  const dropdown = document.getElementById("schoolSelect");
+
+  const school = dropdown.value;
+  const school_name = dropdown.options[dropdown.selectedIndex].text;
+
+  if (!school) {
+    alert("Select school");
+    return;
+  }
+
+  sessionStorage.setItem("school", school);
+  sessionStorage.setItem("school_name", school_name);
+
+  location.reload();   // reload page
 }
 
 document.getElementById("pagination").innerHTML = html;
