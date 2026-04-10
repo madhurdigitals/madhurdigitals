@@ -59,21 +59,15 @@
 
 <!-- School Selector -->
 <div id="schoolBox" class="school-box">
-
-  <div class="school-header">
-    <h3>Select School</h3>
-    <span class="close-btn" onclick="hideSchoolSelector()">✖</span>
-  </div>
-
-  <br>
+  <h3>Select School</h3>
 
   <select id="schoolSelect">
     <option value="">Loading...</option>
   </select>
 
   <br><br>
-
-  <button onclick="continueAction()">Continue</button>
+  <!-- <button onclick="continueToAdd()">Continue</button> -->
+   <button onclick="continueAction()">Continue</button>
 </div>
 
 <script>
@@ -184,27 +178,14 @@ document.addEventListener("click", function(e) {
   }
 });
 
-// // Always reset popup when page loads (important fix)
-// window.addEventListener("pageshow", function () {
-//   hideSchoolSelector();
-// });
+// Always reset popup when page loads (important fix)
+window.addEventListener("pageshow", function () {
+  hideSchoolSelector();
+});
 
-// window.onload = function () {
-//   hideSchoolSelector();
-// };
-// show overlay when popup opens
-function showSchoolSelector(selectedMode) {
-  mode = selectedMode;
-  document.getElementById("schoolBox").style.display = "block";
-  document.body.style.overflow = "hidden";
-}
-
-// hide popup properly
-function hideSchoolSelector() {
-  document.getElementById("schoolBox").style.display = "none";
-  document.body.style.overflow = "auto";
-  mode = "";
-}
+window.onload = function () {
+  hideSchoolSelector();
+};
 
 </script>
 
