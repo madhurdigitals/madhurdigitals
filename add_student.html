@@ -30,7 +30,11 @@
     <button onclick="logout()">Logout</button>
   </div>
 </nav>
-<h2>School: <span id="schoolName"></span></h2>
+<div class="heading-wrapper">
+  <div class="heading-badge">
+    School: <span id="schoolName"></span>
+  </div>
+</div>
 <div class="container">
 
   <div class="card">
@@ -88,7 +92,7 @@
 let school = sessionStorage.getItem("school");
 
 
-document.getElementById("schoolName").innerText = "School: " + school;
+document.getElementById("schoolName").innerText = school_name;
 
 /* TOAST */
 function showToast(msg) {

@@ -24,6 +24,7 @@ nav {
   gap: 10px;
 }
 
+
 .logo img {
   width: 35px;
 }
@@ -52,9 +53,12 @@ nav {
 
 h2 {
   text-align: center;
-  margin-top: 15px;
-  color: #0d6efd;
-  font-weight: 600;
+  margin: 20px 0;
+  font-weight: 700;
+  background: linear-gradient(135deg, #0d6efd, #3b82f6);
+  /* -webkit-background-clip: text; */
+  background-clip: text;
+  color: transparent;
 }
 
 .nav-actions button:hover {
@@ -241,6 +245,10 @@ tbody tr:hover {
     align-items: flex-start;
   }
 
+  td {
+    text-align: left;
+  }
+  
   .form-row label {
     width: 100%;
   }
@@ -310,6 +318,16 @@ tbody tr:hover {
   color: white;
   border-radius: 5px;
   cursor: pointer;
+}
+
+table {
+  margin: 0 auto;
+}
+
+th, td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 12px 15px;
 }
 
 td:nth-child(6)::before { content: "Action"; }
