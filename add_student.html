@@ -227,7 +227,7 @@ async function loadData() {
   document.getElementById("recentTable").innerHTML =
     last3.map(s => `
       <tr>
-        <td>${s["Student_ID"] || ""}</td>
+        <td>${s["student_ID"] || ""}</td>
         <td>${s["Name"] || ""}</td>
         <td>${s["Class"] || ""}</td>
         <td>${s["Section"] || ""}</td>
