@@ -26,6 +26,7 @@
 
   <div class="nav-actions">
     <button onclick="changeSchool()">Change School</button>
+    <button onclick="location.href='dashboard.html'">Dashboard</button>
     <button onclick="logout()">Logout</button>
   </div>
 </nav>
@@ -34,8 +35,6 @@
 
   <div class="card">
     <h3>Add Student</h3>
-    <h2>This is a test comment 1</h2>
-
     <div id="dynamicForm"></div>
 
     <div class="btn-group">
@@ -49,9 +48,12 @@
     <table>
       <thead>
         <tr>
+          <th>Student ID</th>
           <th>Name</th>
+          <th>Father Name</th>
           <th>Class</th>
           <th>Section</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody id="recentTable"></tbody>
@@ -66,17 +68,20 @@
 
 <div id="schoolBox" class="school-box">
 
-  <div class="school-header">
-    <h3>Select School</h3>
-    <span class="close-btn" onclick="hideSchoolSelector()">✖</span>
+  <div>
+    <div class="school-header">
+      <h3>Select School</h3>
+      <span class="close-btn" onclick="hideSchoolSelector()">✖</span>
+    </div>
+
+    <select id="schoolSelect">
+      <option value="">Loading...</option>
+    </select>
+
+    <br><br>
+    <button onclick="applySchoolChange()">Apply</button>
   </div>
 
-  <select id="schoolSelect">
-    <option value="">Loading...</option>
-  </select>
-
-  <br><br>
-  <button onclick="applySchoolChange()">Apply</button>
 </div>
 
 
@@ -223,9 +228,15 @@ async function loadData() {
   document.getElementById("recentTable").innerHTML =
     last3.map(s => `
       <tr>
-        <td>${s.Name}</td>
-        <td>${s.Class}</td>
-        <td>${s.Section}</td>
+        <td>${data.student_id || ""}</td>
+        <td>${data.name || ""}</td>
+        <td>${data.father_name || ""}</td>
+        <td>${data.class || ""}</td>
+        <td>${data.section || ""}</td>
+        <td>
+          <button class="edit-btn">Edit</button>
+          <button class="delete-btn">Delete</button>
+        </td>
       </tr>
     `).join("");
 }

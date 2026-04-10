@@ -1,18 +1,21 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: 'Segoe UI', sans-serif;
   margin: 0;
   background: #f5f7fb;
 }
 
-/* NAV */
+/* NAVBAR */
 nav {
-  background: #0d6efd;
-  color: white;
+  background: white;
   padding: 12px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .logo {
@@ -28,18 +31,28 @@ nav {
 .title-text {
   font-weight: bold;
   font-size: 18px;
+  color: #0d6efd;
 }
 
 .school-name {
-  font-size: 14px;
+  font-size: 13px;
+  color: #666;
 }
 
 .nav-actions button {
   margin-left: 10px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
+  padding: 7px 14px;
+  border: 1px solid #0d6efd;
+  background: transparent;
+  color: #0d6efd;
+  border-radius: 6px;
   cursor: pointer;
+  transition: 0.3s;
+}
+
+.nav-actions button:hover {
+  background: #0d6efd;
+  color: white;
 }
 
 /* CONTAINER */
@@ -52,22 +65,24 @@ nav {
 /* CARD */
 .card {
   background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  padding: 22px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
   margin-bottom: 20px;
 }
 
-/* FORM ROW */
+/* FORM */
 .form-row {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  gap: 15px;
+  margin-bottom: 14px;
 }
 
 .form-row label {
   width: 150px;
   font-weight: 600;
+  color: #333;
 }
 
 .form-row input,
@@ -76,12 +91,14 @@ nav {
   padding: 10px;
   border-radius: 6px;
   border: 1px solid #ccc;
+  transition: 0.2s;
 }
 
-/* FOCUS EFFECT */
+/* FOCUS */
 input:focus, select:focus {
   outline: none;
-  border: 2px solid #0d6efd;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 2px rgba(13,110,253,0.1);
 }
 
 /* BUTTONS */
@@ -113,17 +130,24 @@ input:focus, select:focus {
 
 /* TABLE */
 table {
-  width: 100%;
+  width: auto;
+  min-width: 100%;
   border-collapse: collapse;
 }
 
 th, td {
-  padding: 8px;
-  border-bottom: 1px solid #ddd;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
 }
 
 th {
   background: #f1f3f5;
+  font-weight: 600;
+}
+
+tbody tr:hover {
+  background: #f9fafb;
 }
 
 /* TOAST */
@@ -138,8 +162,41 @@ th {
   display: none;
 }
 
+/* POPUP OVERLAY */
+.school-box {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.school-box > div {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+}
+
+/* HEADER */
+.school-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-btn {
+  cursor: pointer;
+  color: red;
+}
+
 /* MOBILE */
 @media (max-width: 600px) {
+
   .form-row {
     flex-direction: column;
     align-items: flex-start;
@@ -147,7 +204,6 @@ th {
 
   .form-row label {
     width: 100%;
-    margin-bottom: 5px;
   }
 
   .btn-group {
@@ -162,31 +218,59 @@ th {
   .nav-actions {
     margin-top: 10px;
   }
+
+  /* TABLE → CARD VIEW */
+  table, thead, tbody, tr, td, th {
+    display: block;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tr {
+    background: white;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  td {
+    border: none;
+    padding: 6px 0;
+  }
+
+  td::before {
+    font-weight: bold;
+    display: block;
+    color: #555;
+  }
+
+  td:nth-child(1)::before { content: "Student ID"; }
+  td:nth-child(2)::before { content: "Name"; }
+  td:nth-child(3)::before { content: "Father Name"; }
+  td:nth-child(4)::before { content: "Class"; }
+  td:nth-child(5)::before { content: "Section"; }
 }
 
-/* SCHOOL POPUP */
-
-.school-box {
-  display: none;
-  position: fixed;   /* VERY IMPORTANT */
-  top: 30%;
-  left: 50%;
-  transform: translate(-50%, -30%);
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  z-index: 1000;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-}
-
-.school-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.close-btn {
+.edit-btn {
+  padding: 5px 10px;
+  margin-right: 5px;
+  border: none;
+  background: #ffc107;
+  color: #000;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 18px;
-  color: red;
 }
+
+.delete-btn {
+  padding: 5px 10px;
+  border: none;
+  background: #dc3545;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+td:nth-child(6)::before { content: "Action"; }
