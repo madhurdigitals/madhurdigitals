@@ -11,9 +11,9 @@
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
       background: #f5f7fb;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
     }
 
     /* NAVBAR */
@@ -50,11 +50,10 @@
 
     /* CENTER AREA */
     .main {
-      flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 20px;
+      flex: 1;
     }
 
     /* LOGIN CARD */
@@ -134,6 +133,7 @@
       background: #111;
       color: white;
       font-size: 14px;
+      margin-top: auto;
     }
 
     /* MOBILE */
@@ -141,6 +141,10 @@
       .login-card {
         padding: 20px;
       }
+    }
+
+    html, body {
+      overflow-x: hidden;
     }
 
   </style>
