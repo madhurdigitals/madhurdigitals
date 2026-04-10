@@ -1,7 +1,10 @@
 let school = sessionStorage.getItem("school");
+let school_name = sessionStorage.getItem("school_name");
 
-document.getElementById("schoolName").innerText = school;
-document.getElementById("schoolNameTop").innerText = school;
+const displayName = school_name || school;
+
+document.getElementById("schoolName").innerText = displayName;
+document.getElementById("schoolNameTop").innerText = displayName;
 
 let students = [];
 let currentPage = 1;
@@ -277,11 +280,14 @@ async function saveEdit() {
 
 function renderPagination() {
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  const container = document.getElementById("pagination");
 
-  // 🔥 hide if <=100
+  const container = document.getElementById("pagination");
+  const containerTop = document.getElementById("paginationTop");
+
+  // hide if <=20
   if (filteredData.length <= 20) {
     container.innerHTML = "";
+    containerTop.innerHTML = "";
     return;
   }
 
@@ -296,11 +302,15 @@ function renderPagination() {
     `;
   }
 
-  container.innerHTML = `
+  const html = `
     <button onclick="prevPage()">⬅</button>
     ${buttons}
     <button onclick="nextPage()">➡</button>
   `;
+
+  // ✅ SET BOTH
+  container.innerHTML = html;
+  containerTop.innerHTML = html;
 }
 
 function goToPage(page) {
@@ -342,8 +352,9 @@ function renderSmartTable() {
   if (data.length <= 20) {
     // ❌ NO PAGINATION
     renderTable(data, headersGlobal);
-    document.getElementById("pagination").innerHTML = html;
-    document.getElementById("paginationTop").innerHTML = html;
+    document.getElementById("pagination").innerHTML = "";
+    document.getElementById("paginationTop").innerHTML = "";
+    
   } else {
     // ✅ PAGINATION
     const start = (currentPage - 1) * rowsPerPage;
@@ -531,7 +542,5 @@ function applySchoolChange() {
   location.reload();   // reload page
 }
 
-document.getElementById("pagination").innerHTML = html;
-document.getElementById("paginationTop").innerHTML = html;
 
 document.getElementById("searchName").addEventListener("input", applyFilter);
