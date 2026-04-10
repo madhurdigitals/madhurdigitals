@@ -7,11 +7,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body {
+
+    html, body {
       margin: 0;
+      padding: 0;
+      height: 100%;
       font-family: 'Segoe UI', sans-serif;
       background: #f5f7fb;
-      min-height: 100vh;
+    }
+
+    /* PAGE WRAPPER (FIX) */
+    .page-wrapper {
+      min-height: 100%;
       display: flex;
       flex-direction: column;
     }
@@ -48,12 +55,13 @@
       color: white;
     }
 
-    /* CENTER AREA */
+    /* MAIN CENTER */
     .main {
+      flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
-      flex: 1;
+      padding: 20px;
     }
 
     /* LOGIN CARD */
@@ -65,6 +73,18 @@
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.08);
       text-align: center;
+
+      /* ✅ subtle animation */
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 0.6s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .login-card h2 {
@@ -77,25 +97,48 @@
       color: #666;
     }
 
-    /* INPUTS */
+    /* INPUT GROUP */
     .input-group {
       position: relative;
-      margin-bottom: 15px;
+      margin-bottom: 20px;
     }
 
     .input-group input {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       padding-right: 40px;
       border-radius: 6px;
       border: 1px solid #ccc;
       outline: none;
       transition: 0.2s;
+      background: transparent;
     }
 
     .input-group input:focus {
       border-color: #0d6efd;
       box-shadow: 0 0 0 2px rgba(13,110,253,0.1);
+    }
+
+    /* FLOATING LABEL */
+    .input-group label {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #777;
+      font-size: 14px;
+      pointer-events: none;
+      transition: 0.2s;
+      background: white;
+      padding: 0 4px;
+    }
+
+    /* FLOAT EFFECT */
+    .input-group input:focus + label,
+    .input-group input:not(:placeholder-shown) + label {
+      top: -8px;
+      font-size: 12px;
+      color: #0d6efd;
     }
 
     /* EYE ICON */
@@ -112,7 +155,7 @@
     /* BUTTON */
     .login-btn {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       background: #0d6efd;
       color: white;
       border: none;
@@ -133,7 +176,6 @@
       background: #111;
       color: white;
       font-size: 14px;
-      margin-top: auto;
     }
 
     /* MOBILE */
@@ -143,51 +185,53 @@
       }
     }
 
-    html, body {
-      overflow-x: hidden;
-    }
-
   </style>
 </head>
 
 <body>
 
-<!-- NAVBAR -->
-<nav>
-  <div class="logo" onclick="location.href='index.html'">
-    Madhur Digitals
-  </div>
+<div class="page-wrapper">
 
-  <button class="nav-btn" onclick="location.href='index.html'">
-    Home
-  </button>
-</nav>
-
-<!-- MAIN -->
-<div class="main">
-
-  <div class="login-card">
-    <h2>Madhur Digitals</h2>
-    <p>Welcome Back</p>
-
-    <div class="input-group">
-      <input id="username" placeholder="Username">
+  <!-- NAVBAR -->
+  <nav>
+    <div class="logo" onclick="location.href='index.html'">
+      Madhur Digitals
     </div>
 
-    <div class="input-group">
-      <input id="password" type="password" placeholder="Password">
-      <span class="toggle-password" onclick="togglePassword()">👁️</span>
+    <button class="nav-btn" onclick="location.href='index.html'">
+      Home
+    </button>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <div class="login-card">
+      <h2>Madhur Digitals</h2>
+      <p>Welcome Back</p>
+
+      <div class="input-group">
+        <input id="username" placeholder=" " required>
+        <label>Username</label>
+      </div>
+
+      <div class="input-group">
+        <input id="password" type="password" placeholder=" " required>
+        <label>Password</label>
+        <span class="toggle-password" onclick="togglePassword()">👁️</span>
+      </div>
+
+      <button class="login-btn" onclick="handleLogin()">Login</button>
     </div>
 
-    <button class="login-btn" onclick="handleLogin()">Login</button>
   </div>
+
+  <!-- FOOTER -->
+  <footer>
+    © 2026 Madhur Digitals | All Rights Reserved
+  </footer>
 
 </div>
-
-<!-- FOOTER -->
-<footer>
-  © 2026 Madhur Digitals | All Rights Reserved
-</footer>
 
 <script>
 function handleLogin() {
@@ -201,15 +245,10 @@ function handleLogin() {
   }
 }
 
-// Show / Hide password
+// Toggle password
 function togglePassword() {
   const password = document.getElementById("password");
-
-  if (password.type === "password") {
-    password.type = "text";
-  } else {
-    password.type = "password";
-  }
+  password.type = password.type === "password" ? "text" : "password";
 }
 
 // Enter key login
