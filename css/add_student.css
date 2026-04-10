@@ -169,7 +169,9 @@ tbody tr:hover {
   inset: 0;
   background: rgba(0,0,0,0.4);
   z-index: 1000;
+}
 
+.school-box.active {
   display: flex;
   justify-content: center;
   align-items: center;
