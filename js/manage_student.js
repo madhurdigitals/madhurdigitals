@@ -295,17 +295,18 @@ function renderPagination() {
 
   for (let i = 1; i <= totalPages; i++) {
     buttons += `
-      <button onclick="goToPage(${i})"
-        ${i === currentPage ? "style='font-weight:bold'" : ""}>
+      <button 
+        class="page-btn ${i === currentPage ? "active-page" : ""}"
+        onclick="goToPage(${i})">
         ${i}
       </button>
     `;
   }
 
   const html = `
-    <button onclick="prevPage()">⬅</button>
+    <button class="page-btn" onclick="prevPage()">⬅</button>
     ${buttons}
-    <button onclick="nextPage()">➡</button>
+    <button class="page-btn" onclick="nextPage()">➡</button>
   `;
 
   // ✅ SET BOTH

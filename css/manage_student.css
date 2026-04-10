@@ -318,3 +318,35 @@ footer {
   color: white;
   font-size: 14px;
 }
+
+/* Pagination container */
+#pagination, #paginationTop {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Default buttons */
+.page-btn {
+  padding: 6px 10px;
+  border: 1px solid #0d6efd;
+  background: white;
+  color: #0d6efd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+/* Hover */
+.page-btn:hover {
+  background: #0d6efd;
+  color: white;
+}
+
+/* ✅ ACTIVE PAGE */
+.active-page {
+  background: #0d6efd;
+  color: white;
+  font-weight: bold;
+}
