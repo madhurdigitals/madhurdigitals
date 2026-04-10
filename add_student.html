@@ -89,11 +89,13 @@
 
 
 <script>
-let school = sessionStorage.getItem("school");
-let school_name = sessionStorage.getItem("school_name");
+const school = sessionStorage.getItem("school");
+const school_name = sessionStorage.getItem("school_name");
 
+const displayName = school_name || school;
 
-document.getElementById("schoolName").innerText = school_name;
+document.getElementById("schoolName").innerText = displayName;
+document.getElementById("schoolNameTop").innerText = displayName;
 
 /* TOAST */
 function showToast(msg) {
@@ -196,22 +198,30 @@ function changeSchool() {
 }
 
 function applySchoolChange() {
-  const selected = document.getElementById("schoolSelect").value;
+  const dropdown = document.getElementById("schoolSelect");
+  const selectedOption = dropdown.options[dropdown.selectedIndex];
 
-  if (!selected) {
+  const school = selectedOption.value;
+  const school_name = selectedOption.textContent.trim();
+
+  if (!school) {
     alert("Please select a school");
     return;
   }
 
-  sessionStorage.setItem("school", selected);
-  school = selected;
+  // ✅ Store both values
+  sessionStorage.setItem("school", school);
+  sessionStorage.setItem("school_name", school_name);
 
-  document.getElementById("schoolName").innerText = school;
-  document.getElementById("schoolNameTop").innerText = school;
+  // ✅ Update UI
+  document.getElementById("schoolName").innerText = school_name;
+  document.getElementById("schoolNameTop").innerText = school_name;
 
+  // ✅ Refresh page data
   renderDynamicForm();
   loadData();
 
+  // ✅ Close popup
   hideSchoolSelector();
 }
 
