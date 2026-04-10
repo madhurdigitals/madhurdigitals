@@ -24,7 +24,6 @@ nav {
   gap: 10px;
 }
 
-
 .logo img {
   width: 35px;
 }
@@ -51,19 +50,24 @@ nav {
   transition: 0.3s;
 }
 
-h2 {
-  text-align: center;
-  margin: 20px 0;
-  font-weight: 700;
-  background: linear-gradient(135deg, #0d6efd, #3b82f6);
-  /* -webkit-background-clip: text; */
-  background-clip: text;
-  color: transparent;
-}
-
 .nav-actions button:hover {
   background: #0d6efd;
   color: white;
+}
+
+/* HEADING BADGE */
+.heading-wrapper {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.heading-badge {
+  display: inline-block;
+  padding: 8px 18px;
+  background: rgba(13, 110, 253, 0.1);
+  color: #0d6efd;
+  border-radius: 20px;
+  font-weight: 600;
 }
 
 /* CONTAINER */
@@ -125,13 +129,6 @@ h2 {
   box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
 }
 
-/* FOCUS */
-input:focus, select:focus {
-  outline: none;
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 2px rgba(13,110,253,0.1);
-}
-
 /* BUTTONS */
 .btn-group {
   display: flex;
@@ -166,11 +163,18 @@ input:focus, select:focus {
   cursor: pointer;
 }
 
+/* TABLE WRAPPER (Mobile Scroll Fix) */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
 /* TABLE */
 table {
-  width: auto;
-  min-width: 100%;
+  min-width: 600px;
+  width: 100%;
   border-collapse: collapse;
+  margin: 0 auto;
 }
 
 th {
@@ -179,8 +183,10 @@ th {
   color: #374151;
 }
 
-td {
-  padding: 10px;
+th, td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 12px 15px;
 }
 
 tbody tr {
@@ -189,6 +195,26 @@ tbody tr {
 
 tbody tr:hover {
   background: #f9fafb;
+}
+
+/* BUTTONS (EDIT/DELETE) */
+.edit-btn {
+  padding: 5px 10px;
+  margin-right: 5px;
+  border: none;
+  background: #ffc107;
+  color: #000;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-btn {
+  padding: 5px 10px;
+  border: none;
+  background: #dc3545;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 /* TOAST */
@@ -245,10 +271,6 @@ tbody tr:hover {
     align-items: flex-start;
   }
 
-  td {
-    text-align: left;
-  }
-  
   .form-row label {
     width: 100%;
   }
@@ -265,69 +287,4 @@ tbody tr:hover {
   .nav-actions {
     margin-top: 10px;
   }
-
-  /* TABLE → CARD VIEW */
-  table, thead, tbody, tr, td, th {
-    display: block;
-  }
-
-  thead {
-    display: none;
-  }
-
-  tr {
-    background: white;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  }
-
-  td {
-    border: none;
-    padding: 6px 0;
-  }
-
-  td::before {
-    font-weight: bold;
-    display: block;
-    color: #555;
-  }
-
-  td:nth-child(1)::before { content: "Student ID"; }
-  td:nth-child(2)::before { content: "Name"; }
-  td:nth-child(3)::before { content: "Father Name"; }
-  td:nth-child(4)::before { content: "Class"; }
-  td:nth-child(5)::before { content: "Section"; }
 }
-
-.edit-btn {
-  padding: 5px 10px;
-  margin-right: 5px;
-  border: none;
-  background: #ffc107;
-  color: #000;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.delete-btn {
-  padding: 5px 10px;
-  border: none;
-  background: #dc3545;
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-table {
-  margin: 0 auto;
-}
-
-th, td {
-  text-align: center;
-  vertical-align: middle;
-  padding: 12px 15px;
-}
-
-td:nth-child(6)::before { content: "Action"; }
