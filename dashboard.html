@@ -119,7 +119,7 @@ function continueAction() {
     alert("Please select a school");
     return;
   }
-
+  const school_name = selectedOption.textContent.trim();
   // ✅ Store both values
   sessionStorage.setItem("school", school);
   sessionStorage.setItem("school_id", school_id);
