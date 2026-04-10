@@ -201,7 +201,7 @@ function applySchoolChange() {
   sessionStorage.setItem("school", selected);
   school = selected;
 
-  document.getElementById("schoolName").innerText = "School: " + school;
+  document.getElementById("schoolName").innerText = school;
   document.getElementById("schoolNameTop").innerText = school;
 
   renderDynamicForm();
