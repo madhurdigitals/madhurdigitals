@@ -5,14 +5,14 @@ body {
 }
 
 /* NAV */
+/* NAVBAR */
 nav {
-  background: #0d6efd;
-  color: white;
+  background: white;
   padding: 12px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .logo {
@@ -28,18 +28,43 @@ nav {
 .title-text {
   font-weight: bold;
   font-size: 18px;
+  color: #0d6efd;
 }
 
 .school-name {
-  font-size: 14px;
+  font-size: 13px;
+  color: #6b7280;
 }
 
 .nav-actions button {
   margin-left: 10px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
+  padding: 7px 14px;
+  border: 1px solid #0d6efd;
+  background: transparent;
+  color: #0d6efd;
+  border-radius: 6px;
   cursor: pointer;
+  transition: 0.3s;
+}
+
+.nav-actions button:hover {
+  background: #0d6efd;
+  color: white;
+}
+
+/* HEADING */
+.heading-wrapper {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.heading-badge {
+  display: inline-block;
+  padding: 8px 18px;
+  background: rgba(13, 110, 253, 0.1);
+  color: #0d6efd;
+  border-radius: 20px;
+  font-weight: 600;
 }
 
 /* CONTAINER */
@@ -266,4 +291,30 @@ input, select {
 th, td {
   text-align: center;
   vertical-align: middle;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+/* Wrapper */
+.page-wrapper {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Push content */
+.container {
+  flex: 1;
+}
+
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 15px;
+  background: #111;
+  color: white;
+  font-size: 14px;
 }
