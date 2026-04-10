@@ -37,7 +37,7 @@
     <h3>Filters</h3>
 
     <!-- Name -->
-    <input id="searchName" placeholder="Search Name">
+    <input id="searchName" placeholder="🔍 Search student by name..." class="search-input">
 
     <!-- Class-Section Filter -->
     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;">
@@ -60,12 +60,12 @@
 
   <!-- Table -->
   <div class="card">
-
-    <table>
-      <thead id="tableHead"></thead>
-      <tbody id="studentTable"></tbody>
-    </table>
-
+    <div class="table-wrapper"></div>
+      <table>
+        <thead id="tableHead"></thead>
+        <tbody id="studentTable"></tbody>
+      </table>
+  </div>
     <!-- ✅ SINGLE pagination -->
     <div id="pagination" style="margin-top:10px;"></div>
 

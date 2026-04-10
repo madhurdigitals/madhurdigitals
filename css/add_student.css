@@ -171,10 +171,10 @@ nav {
 
 /* TABLE */
 table {
-  min-width: 600px;
   width: 100%;
   border-collapse: collapse;
-  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 10px;
 }
 
 th {
@@ -184,9 +184,8 @@ th {
 }
 
 th, td {
+  padding: 12px;
   text-align: center;
-  vertical-align: middle;
-  padding: 12px 15px;
 }
 
 tbody tr {
@@ -195,6 +194,7 @@ tbody tr {
 
 tbody tr:hover {
   background: #f9fafb;
+  transform: scale(1.01);
 }
 
 /* BUTTONS (EDIT/DELETE) */
@@ -247,8 +247,8 @@ tbody tr:hover {
 .school-box > div {
   background: white;
   padding: 20px;
-  border-radius: 10px;
-  width: 300px;
+  border-radius: 12px;
+  width: 320px;
 }
 
 /* HEADER */
@@ -287,4 +287,73 @@ tbody tr:hover {
   .nav-actions {
     margin-top: 10px;
   }
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  transition: 0.25s;
+}
+
+.search-input:focus {
+  border-color: #0d6efd;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
+}
+
+.dropdown button {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #0d6efd;
+  background: white;
+  color: #0d6efd;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.dropdown button:hover {
+  background: #0d6efd;
+  color: white;
+}
+
+#selectedChips span {
+  background: #0d6efd;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+#selectedChips span button {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+#pagination {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+#pagination button {
+  padding: 6px 10px;
+  border: 1px solid #0d6efd;
+  background: white;
+  color: #0d6efd;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#pagination button.active {
+  background: #0d6efd;
+  color: white;
 }
