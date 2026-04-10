@@ -56,7 +56,7 @@ nav {
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.08);
   margin-bottom: 20px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* FORM ROW */
@@ -230,8 +230,8 @@ input, select {
   border: 1px solid #ccc;
   max-height: 200px;
   overflow-y: auto;
-  width: 150px;
-  z-index: 1000;
+  width: 200px;
+  z-index: 9999;   /* 🔥 bring above everything */
 }
 
 .dropdown-content label {
@@ -243,4 +243,27 @@ input, select {
 #editPopup label {
   font-weight: 600;
   font-size: 13px;
+}
+
+.edit-btn {
+  padding: 6px 10px;
+  border: none;
+  background: #ffc107;
+  color: #000;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.delete-btn {
+  padding: 6px 10px;
+  border: none;
+  background: #dc3545;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+th, td {
+  text-align: center;
+  vertical-align: middle;
 }

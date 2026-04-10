@@ -62,6 +62,7 @@
 
   <!-- Table -->
   <div class="card">
+    <div id="paginationTop" style="margin-bottom:10px;"></div>
     <div class="table-wrapper">
       <table>
         <thead id="tableHead"></thead>
@@ -83,33 +84,21 @@
 
 <!-- EDIT POPUP -->
  <div id="editPopup" class="school-box"></div>
-<!-- <div id="editPopup" class="school-box">
+<div id="schoolBox" class="school-box">
+  <div>
+    <div class="school-header">
+      <h3>Select School</h3>
+      <span class="close-btn" onclick="hideSchoolSelector()">✖</span>
+    </div>
 
-  <div class="school-header">
-    <h3>Edit Student</h3>
-    <span class="close-btn" onclick="closeEdit()">✖</span>
+    <select id="schoolSelect">
+      <option value="">Loading...</option>
+    </select>
+
+    <br><br>
+    <button onclick="applySchoolChange()">Apply</button>
   </div>
-
-  <input id="editId" disabled placeholder="Student ID">
-  <input id="editName" placeholder="Name">
-  <input id="editClass" placeholder="Class">
-
-  <select id="editSection">
-    <option value="">Section</option>
-    <option>A</option>
-    <option>B</option>
-    <option>C</option>
-  </select>
-
-  <input id="editRoll" placeholder="Roll">
-  <input id="editPhone" placeholder="Phone">
-  <input id="editAddress" placeholder="Address">
-
-  <br><br>
-  <button onclick="saveEdit()">Save</button>
-  <button onclick="closeEdit()">Cancel</button>
-
-</div> -->
+</div>
 
 </body>
 </html>

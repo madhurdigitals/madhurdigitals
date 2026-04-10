@@ -484,5 +484,15 @@ function toggleDropdown(id) {
   el.style.display = isOpen ? "none" : "block";
 }
 
+function changeSchool() {
+  document.getElementById("schoolBox").classList.add("active");
+}
+
+function hideSchoolSelector() {
+  document.getElementById("schoolBox").classList.remove("active");
+}
+
+document.getElementById("pagination").innerHTML = html;
+document.getElementById("paginationTop").innerHTML = html;
 
 document.getElementById("searchName").addEventListener("input", applyFilter);
