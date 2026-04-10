@@ -5,7 +5,7 @@ const USER = {
 
 function login(username, password) {
   if (username === USER.username && password === USER.password) {
-    localStorage.setItem("isLoggedIn", "true");
+    sessionStorage.setItem("isLoggedIn", "true");
     return true;
   }
   return false;
