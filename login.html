@@ -3,15 +3,187 @@
 <head>
   <title>Login</title>
   <script src="js/auth.js"></script>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f7fb;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* NAVBAR */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 25px;
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .logo {
+      font-weight: bold;
+      font-size: 18px;
+      color: #0d6efd;
+      cursor: pointer;
+    }
+
+    .nav-btn {
+      padding: 8px 15px;
+      border: 1px solid #0d6efd;
+      background: transparent;
+      color: #0d6efd;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .nav-btn:hover {
+      background: #0d6efd;
+      color: white;
+    }
+
+    /* CENTER AREA */
+    .main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* LOGIN CARD */
+    .login-card {
+      background: white;
+      padding: 30px;
+      width: 350px;
+      max-width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    .login-card h2 {
+      margin-bottom: 5px;
+      color: #0d6efd;
+    }
+
+    .login-card p {
+      margin-bottom: 20px;
+      color: #666;
+    }
+
+    /* INPUTS */
+    .input-group {
+      position: relative;
+      margin-bottom: 15px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 10px;
+      padding-right: 40px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    .input-group input:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 2px rgba(13,110,253,0.1);
+    }
+
+    /* EYE ICON */
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 14px;
+      color: #555;
+    }
+
+    /* BUTTON */
+    .login-btn {
+      width: 100%;
+      padding: 10px;
+      background: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    .login-btn:hover {
+      background: #0b5ed7;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 15px;
+      background: #111;
+      color: white;
+      font-size: 14px;
+    }
+
+    /* MOBILE */
+    @media (max-width: 768px) {
+      .login-card {
+        padding: 20px;
+      }
+    }
+
+  </style>
 </head>
+
 <body>
 
-<h2>Login</h2>
+<!-- NAVBAR -->
+<nav>
+  <div class="logo" onclick="location.href='index.html'">
+    Madhur Digitals
+  </div>
 
-<input id="username" placeholder="Username"><br><br>
-<input id="password" type="password" placeholder="Password"><br><br>
+  <button class="nav-btn" onclick="location.href='index.html'">
+    Home
+  </button>
+</nav>
 
-<button onclick="handleLogin()">Login</button>
+<!-- MAIN -->
+<div class="main">
+
+  <div class="login-card">
+    <h2>Madhur Digitals</h2>
+    <p>Welcome Back</p>
+
+    <div class="input-group">
+      <input id="username" placeholder="Username">
+    </div>
+
+    <div class="input-group">
+      <input id="password" type="password" placeholder="Password">
+      <span class="toggle-password" onclick="togglePassword()">👁️</span>
+    </div>
+
+    <button class="login-btn" onclick="handleLogin()">Login</button>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  © 2026 Madhur Digitals | All Rights Reserved
+</footer>
 
 <script>
 function handleLogin() {
@@ -24,6 +196,24 @@ function handleLogin() {
     alert("Invalid credentials");
   }
 }
+
+// Show / Hide password
+function togglePassword() {
+  const password = document.getElementById("password");
+
+  if (password.type === "password") {
+    password.type = "text";
+  } else {
+    password.type = "password";
+  }
+}
+
+// Enter key login
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    handleLogin();
+  }
+});
 </script>
 
 </body>
