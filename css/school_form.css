@@ -78,17 +78,16 @@ body {
 
 /* TOP SECTION */
 .top-section {
-  display: grid;
-  grid-template-columns: 1fr 35mm; /* 🔥 KEY */
+  display: flex;
+  align-items: flex-start; /* 🔥 KEY FIX */
   gap: 10px;
-  align-items: start;
 }
 
 /* PHOTO BOX */
 .photo-box {
   width: 30mm;
   height: 38mm;
-  border: 1px solid #000;
+  border: 1px solid black;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -119,6 +118,10 @@ body {
   /* 🔥 MAGIC FIX */
   flex: 1;
   min-width: 50px;
+}
+
+.top-left {
+  flex: 1;
 }
 
 .top-left .line {
