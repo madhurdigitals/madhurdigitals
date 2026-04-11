@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>School Forms</title>
+
+  <script src="js/protect.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/school_form.js" defer></script>
+
+  <link rel="stylesheet" href="css/school_form.css">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+
+<h2>Print School Forms</h2>
+
+<div class="container">
+
+  <!-- CONTROLS -->
+  <div class="card">
+    <button onclick="generateForms()" class="submit-btn">
+      Generate Forms
+    </button>
+  </div>
+
+  <!-- PRINT SECTION -->
+  <div id="formSection" class="card" style="display:none; text-align:center;">
+    <button onclick="window.print()" class="submit-btn">Print</button>
+
+    <div id="formContainer"></div>
+  </div>
+
+</div>
+
+</body>
+</html>

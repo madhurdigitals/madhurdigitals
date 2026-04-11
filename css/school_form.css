@@ -1,0 +1,92 @@
+body {
+  font-family: Arial;
+  margin: 0;
+  background: #f5f7fb;
+}
+
+.container {
+  max-width: 1000px;
+  margin: auto;
+  padding: 15px;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+}
+
+.submit-btn {
+  padding: 10px 20px;
+  background: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* A4 PAGE */
+.page {
+  width: 210mm;
+  height: 297mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10mm;
+  box-sizing: border-box;
+  page-break-after: always;
+}
+
+/* FORM */
+.form-card {
+  border: 2px solid green;
+  padding: 15px;
+  height: 30%;
+  box-sizing: border-box;
+}
+
+/* HEADER */
+.school-header {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.school-header h2 {
+  margin: 0;
+}
+
+/* ROW */
+.row {
+  margin: 8px 0;
+}
+
+/* CLASS + SECTION */
+.split {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* LINE */
+.line {
+  display: inline-block;
+  border-bottom: 1px solid black;
+  width: 200px;
+  height: 14px;
+}
+
+.line.long {
+  width: 100%;
+}
+
+/* PRINT */
+@media print {
+  button {
+    display: none;
+  }
+
+  body {
+    margin: 0;
+    background: white;
+  }
+}
