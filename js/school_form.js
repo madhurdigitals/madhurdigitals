@@ -85,7 +85,9 @@ function renderFieldSettings() {
   const container = document.getElementById("fieldSettings");
 
   container.innerHTML = fieldConfig.map((f, i) => `
-    <div class="field-row">
+    <div class="field-row" data-index="${i}">
+
+      <span class="drag">☰</span>
 
       <input type="checkbox"
         ${f.enabled ? "checked" : ""}
@@ -101,7 +103,31 @@ function renderFieldSettings() {
 
     </div>
   `).join("");
+  new Sortable(document.getElementById("fieldSettings"), {
+    animation: 150,
+    onEnd: function () {
+      updateFieldOrder();
+    }
+  });
 }
+
+
+function updateFieldOrder() {
+
+  const rows = document.querySelectorAll("#fieldSettings .field-row");
+
+  const newOrder = [];
+
+  rows.forEach(row => {
+    const index = row.getAttribute("data-index");
+    newOrder.push(fieldConfig[index]);
+  });
+
+  fieldConfig = newOrder;
+
+  renderFieldSettings(); // refresh UI
+}
+
 
 /* HANDLERS */
 function toggleField(i) {

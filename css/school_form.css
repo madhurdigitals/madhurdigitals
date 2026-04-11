@@ -109,18 +109,28 @@ body {
 
 /* LABEL + LINE */
 .field {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  gap: 6px;
+  width: 100%;
 }
 
 .field span {
-  margin-right: 5px;
+  white-space: nowrap;
 }
 
 .line {
-  flex: 1;
+  display: inline-block;
   border-bottom: 1px solid black;
   height: 12px;
+
+  /* 🔥 CONTROL WIDTH */
+  width: 100%;
+  max-width: 100%;
+}
+
+.top-left .line {
+  width: 100%;
 }
 
 /* HALF */
@@ -132,6 +142,15 @@ body {
 .split .field {
   flex: 1;
 }
+
+.drag {
+  cursor: grab;
+  font-size: 16px;
+}
+
+.line.short { width: 120px; }
+.line.medium { width: 180px; }
+.line.long { width: 100%; }
 
 /* DOB */
 .dob::after {
