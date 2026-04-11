@@ -11,8 +11,10 @@ async function loadSchool() {
     alert("School not found");
     return;
   }
-}
 
+  // ✅ Enable button after load
+  document.getElementById("generateBtn").disabled = false;
+}
 loadSchool();
 
 // LABEL MAP
