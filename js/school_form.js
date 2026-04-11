@@ -3,16 +3,30 @@ let schoolInfo = null;
 
 // LOAD SCHOOL DATA
 async function loadSchool() {
-  const schools = await getSchools();
 
-  schoolInfo = schools.find(s => s.school === school);
+  const raw = await getSchools(true); // force fresh
+
+  const headers = raw[0];
+
+  const schools = raw.slice(1).map(row => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = row[i]);
+    return obj;
+  });
+
+  console.log("Formatted Schools:", schools);
+
+  schoolInfo = schools.find(
+    s => s.school.toLowerCase() === school.toLowerCase()
+  );
+
+  console.log("Matched School:", schoolInfo);
 
   if (!schoolInfo) {
     alert("School not found");
     return;
   }
 
-  // ✅ Enable button after load
   document.getElementById("generateBtn").disabled = false;
 }
 loadSchool();
@@ -20,13 +34,14 @@ loadSchool();
 // LABEL MAP
 const labels = {
   name: "Name",
-  father_name: "Father Name",
+  f_name: "Father Name",
+  F_name: "Father Name",
   class: "Class",
   section: "Section",
   phone: "Phone",
-  address: "Address"
+  address: "Address",
+  DOB: "Date of Birth"
 };
-
 // GENERATE FORMS
 function generateForms() {
 
@@ -45,7 +60,7 @@ function renderForms() {
 
   const container = document.getElementById("formContainer");
 
-  const fields = schoolInfo.fields.split(",");
+  const fields = schoolInfo.fields.split(",").map(f => f.trim());
 
   // ONLY 1 PAGE → 3 FORMS
   let pageHTML = `
