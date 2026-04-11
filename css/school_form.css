@@ -183,12 +183,32 @@ body {
 
 .row.address {
   margin-top: 8px;
+  margin: 8px 0;
 }
 
+.address-first-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Label spacing fix */
+.address-first-line span {
+  white-space: nowrap;
+}
+
+/* Second line */
 .address-line {
   border-bottom: 1px solid black;
   height: 14px;
-  margin-top: 6px;   /* 🔥 spacing between lines */
+  margin-top: 8px;  /* 🔥 consistent spacing */
+}
+
+/* Make first line stretch properly */
+.address-first-line .line {
+  flex: 1;
+  border-bottom: 1px solid black;
+  height: 14px;
 }
 
 /* PRINT ONLY FORM */

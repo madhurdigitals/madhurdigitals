@@ -250,9 +250,14 @@ function generateForm(fields) {
   if (hasField(fields, "address")) {
     html += `
       <div class="row address">
-        <span>Address:</span>
+        
+        <div class="address-first-line">
+          <span>Address:</span>
+          <div class="line"></div>
+        </div>
+
         <div class="address-line"></div>
-        <div class="address-line"></div>
+
       </div>
     `;
   }
