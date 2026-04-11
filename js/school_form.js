@@ -125,7 +125,7 @@ function updateFieldOrder() {
 
   fieldConfig = newOrder;
 
-  renderFieldSettings(); // refresh UI
+  renderFieldSettings();
 }
 
 
@@ -170,7 +170,8 @@ function renderForms() {
 
   const container = document.getElementById("formContainer");
 
-  const enabled = fieldConfig.filter(f => f.enabled);
+  const enabled = fieldConfig
+    .filter(f => f.enabled);
 
   let html = `
     <div class="page">
@@ -196,14 +197,23 @@ function generateForm(fields) {
 
       <!-- HEADER -->
       <div class="header">
-        <div class="school-name">${schoolInfo.school_name}</div>
 
-        <div class="school-meta">
-          <span>${schoolInfo.address}</span>
-          <span>${schoolInfo.contact}</span>
+        <div class="school-title">
+          ${schoolInfo.school_name}
+        </div>
+
+        <div class="school-info">
+          Address: ${schoolInfo.address} &nbsp;&nbsp; | &nbsp;&nbsp;
+          Contact: ${schoolInfo.contact} &nbsp;&nbsp; | &nbsp;&nbsp;
+          Session: 2026-27
         </div>
 
         <div class="divider"></div>
+
+        <div class="form-title">
+          STUDENT ADMISSION FORM
+        </div>
+
       </div>
 
       <!-- MAIN BODY -->
@@ -212,6 +222,10 @@ function generateForm(fields) {
         <!-- LEFT SIDE -->
         <div class="form-left">
   `;
+
+  // ========================
+  // FIXED FIELDS (IN ORDER)
+  // ========================
 
   if (hasField(fields, "name")) {
     html += fieldRow("Name");
@@ -235,13 +249,36 @@ function generateForm(fields) {
 
   if (hasField(fields, "address")) {
     html += `
-      <div class="row">
+      <div class="row address">
         <span>Address:</span>
-        <div class="line"></div>
-        <div class="line"></div>
+        <div class="address-line"></div>
+        <div class="address-line"></div>
       </div>
     `;
   }
+
+  // ========================
+  // 🔥 CUSTOM FIELDS (IMPORTANT FIX)
+  // ========================
+
+  const fixedFields = [
+    "name",
+    "f_name",
+    "class",
+    "section",
+    "dob",
+    "transport",
+    "phone",
+    "address"
+  ];
+
+  fields.forEach(f => {
+    if (!fixedFields.includes(f.key)) {
+      html += fieldRow(f.label);
+    }
+  });
+
+  // ========================
 
   html += `
         </div>

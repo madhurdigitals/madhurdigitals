@@ -58,6 +58,9 @@ body {
 /* HEADER */
 .header {
   text-align: center;
+  background: #f0f0f0;   /* light grey background */
+  padding: 6px;
+  margin-bottom: 8px;
 }
 
 .school-name {
@@ -71,8 +74,25 @@ body {
   font-size: 10px;
 }
 
+.school-title {
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.school-info {
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.form-title {
+  font-size: 13px;
+  font-weight: bold;
+  margin-top: 5px;
+}
+
 .divider {
-  border-top: 1px solid #000;
+  border-top: 1px solid black;
   margin: 5px 0;
 }
 
@@ -159,6 +179,16 @@ body {
   display: block;
   width: 100%;
   margin-top: 3px;
+}
+
+.row.address {
+  margin-top: 8px;
+}
+
+.address-line {
+  border-bottom: 1px solid black;
+  height: 14px;
+  margin-top: 6px;   /* 🔥 spacing between lines */
 }
 
 /* PRINT ONLY FORM */
