@@ -194,6 +194,10 @@ function generateForm(fields) {
   let html = `
     <div class="form-card">
 
+      <!-- PHOTO (FLOAT RIGHT) -->
+      <div class="photo-box">PHOTO</div>
+
+      <!-- HEADER -->
       <div class="header">
         <div class="school-name">${schoolInfo.school_name}</div>
 
@@ -204,10 +208,6 @@ function generateForm(fields) {
 
         <div class="divider"></div>
       </div>
-
-      <div class="top-section">
-
-        <div class="top-left">
   `;
 
   // NAME
@@ -220,15 +220,8 @@ function generateForm(fields) {
     html += fieldRow("Father Name");
   }
 
-  html += `
-        </div>
-
-        <div class="photo-box">
-          PHOTO
-        </div>
-
-      </div>
-  `;
+  // 🔥 IMPORTANT: CLEAR FLOAT AFTER TOP FIELDS
+  html += `<div style="clear: both;"></div>`;
 
   // CLASS + SECTION
   if (hasField(fields, "class") || hasField(fields, "section")) {
@@ -249,7 +242,7 @@ function generateForm(fields) {
   if (hasField(fields, "address")) {
     html += `
       <div class="row">
-        Address:
+        <span>Address:</span>
         <div class="line"></div>
         <div class="line"></div>
       </div>
@@ -257,6 +250,7 @@ function generateForm(fields) {
   }
 
   html += `</div>`;
+
   return html;
 }
 
