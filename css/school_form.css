@@ -51,10 +51,8 @@ body {
 
 /* FORM */
 .form-card {
-  border: 2px solid #2e7d32;
-  padding: 10px;
-  box-sizing: border-box;
-  font-size: 12px;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* HEADER */
@@ -80,14 +78,10 @@ body {
 
 /* TOP SECTION */
 .top-section {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 35mm; /* 🔥 KEY */
   gap: 10px;
-}
-
-/* LEFT SIDE */
-.top-left {
-  flex: 1;
+  align-items: start;
 }
 
 /* PHOTO BOX */
@@ -109,10 +103,9 @@ body {
 
 /* LABEL + LINE */
 .field {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
-  width: 100%;
 }
 
 .field span {
@@ -120,13 +113,12 @@ body {
 }
 
 .line {
-  display: inline-block;
   border-bottom: 1px solid black;
   height: 12px;
 
-  /* 🔥 CONTROL WIDTH */
-  width: 100%;
-  max-width: 100%;
+  /* 🔥 MAGIC FIX */
+  flex: 1;
+  min-width: 50px;
 }
 
 .top-left .line {
@@ -135,8 +127,9 @@ body {
 
 /* HALF */
 .split {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .split .field {
@@ -148,9 +141,7 @@ body {
   font-size: 16px;
 }
 
-.line.short { width: 120px; }
-.line.medium { width: 180px; }
-.line.long { width: 100%; }
+
 
 /* DOB */
 .dob::after {
