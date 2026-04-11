@@ -160,78 +160,112 @@ function renderForms() {
 /* SINGLE FORM */
 function generateForm(fields) {
 
+  if (fields.length > 12) {
+    alert("Maximum 12 fields allowed");
+    return "";
+  }
+
   let html = `
     <div class="form-card">
 
       <div class="header">
-        <h2>${schoolInfo.school_name}</h2>
+        <div class="school-name">${schoolInfo.school_name}</div>
 
-        <div class="sub">
+        <div class="school-meta">
           <span>${schoolInfo.address}</span>
-          <span>Contact: ${schoolInfo.contact}</span>
+          <span>${schoolInfo.contact}</span>
         </div>
 
-        <div class="line-divider"></div>
+        <div class="divider"></div>
+      </div>
+
+      <div class="top-section">
+
+        <div class="top-left">
+  `;
+
+  // NAME
+  if (hasField(fields, "name")) {
+    html += fieldRow("Name");
+  }
+
+  // FATHER NAME
+  if (hasField(fields, "f_name")) {
+    html += fieldRow("Father Name");
+  }
+
+  html += `
+        </div>
+
+        <div class="photo-box">
+          PHOTO
+        </div>
+
       </div>
   `;
 
-  let halfBuffer = [];
+  // CLASS + SECTION
+  if (hasField(fields, "class") || hasField(fields, "section")) {
+    html += splitRow("Class", "Section");
+  }
 
-  fields.forEach(f => {
+  // DOB + TRANSPORT
+  if (hasField(fields, "dob") || hasField(fields, "transport")) {
+    html += splitRow("Date of Birth", "Transport", true);
+  }
 
-    if (f.key === "address") {
-      html += `
-        <div class="row">Address:</div>
-        <div class="row"><span class="line long"></span></div>
-        <div class="row"><span class="line long"></span></div>
-      `;
-      return;
-    }
+  // PHONE
+  if (hasField(fields, "phone")) {
+    html += fieldRow("Phone");
+  }
 
-    if (f.key === "dob") {
-      halfBuffer.push(`
-        <div>Date of Birth:
-          <span class="line dob">DD / MM / YYYY</span>
-        </div>
-      `);
-    }
-
-    else if (f.type === "half") {
-      halfBuffer.push(`
-        <div>${f.label}: <span class="line"></span></div>
-      `);
-    }
-
-    else {
-
-      if (halfBuffer.length) {
-        html += renderHalfRow(halfBuffer);
-        halfBuffer = [];
-      }
-
-      html += `
-        <div class="row">
-          ${f.label}: <span class="line long"></span>
-        </div>
-      `;
-    }
-
-    if (halfBuffer.length === 2) {
-      html += renderHalfRow(halfBuffer);
-      halfBuffer = [];
-    }
-
-  });
-
-  if (halfBuffer.length) {
+  // ADDRESS
+  if (hasField(fields, "address")) {
     html += `
-      <div class="row">${halfBuffer[0]}</div>
+      <div class="row">
+        Address:
+        <div class="line"></div>
+        <div class="line"></div>
+      </div>
     `;
   }
 
   html += `</div>`;
-
   return html;
+}
+
+/* HELPERS */
+
+function fieldRow(label) {
+  return `
+    <div class="row field">
+      <span>${label}:</span>
+      <div class="line"></div>
+    </div>
+  `;
+}
+
+function splitRow(label1, label2, isDOB=false) {
+
+  return `
+    <div class="row split">
+
+      <div class="field">
+        <span>${label1}:</span>
+        <div class="line ${isDOB ? 'dob' : ''}"></div>
+      </div>
+
+      <div class="field">
+        <span>${label2}:</span>
+        <div class="line"></div>
+      </div>
+
+    </div>
+  `;
+}
+
+function hasField(fields, key) {
+  return fields.some(f => f.key === key);
 }
 
 /* HALF ROW */

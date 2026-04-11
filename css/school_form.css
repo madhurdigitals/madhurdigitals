@@ -51,10 +51,10 @@ body {
 
 /* FORM */
 .form-card {
-  border: 2px solid green;
-  padding: 12px;
-  height: 30%;
+  border: 2px solid #2e7d32;
+  padding: 10px;
   box-sizing: border-box;
+  font-size: 12px;
 }
 
 /* HEADER */
@@ -62,47 +62,90 @@ body {
   text-align: center;
 }
 
-.sub {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
+.school-name {
+  font-weight: bold;
+  font-size: 14px;
 }
 
-.line-divider {
-  border-top: 1px solid black;
+.school-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+}
+
+.divider {
+  border-top: 1px solid #000;
   margin: 5px 0;
 }
 
-/* ROWS */
-.row {
-  margin: 8px 0;
-  font-size: 13px;
-}
-
-.split {
+/* TOP SECTION */
+.top-section {
   display: flex;
   justify-content: space-between;
+  gap: 10px;
 }
 
-.split div {
-  width: 48%;
+/* LEFT SIDE */
+.top-left {
+  flex: 1;
 }
 
-/* LINES */
+/* PHOTO BOX */
+.photo-box {
+  width: 30mm;
+  height: 38mm;
+  border: 1px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #bbb;
+}
+
+/* ROW */
+.row {
+  margin: 6px 0;
+}
+
+/* LABEL + LINE */
+.field {
+  display: flex;
+  align-items: center;
+}
+
+.field span {
+  margin-right: 5px;
+}
+
 .line {
-  display: inline-block;
+  flex: 1;
   border-bottom: 1px solid black;
-  width: 120px;
+  height: 12px;
 }
 
-.line.long {
+/* HALF */
+.split {
+  display: flex;
+  gap: 10px;
+}
+
+.split .field {
+  flex: 1;
+}
+
+/* DOB */
+.dob::after {
+  content: "DD / MM / YYYY";
+  font-size: 9px;
+  color: #bbb;
+  margin-left: 5px;
+}
+
+/* ADDRESS */
+.multiline .line {
+  display: block;
   width: 100%;
-}
-
-.line.dob {
-  width: 140px;
-  color: #aaa;
-  font-size: 11px;
+  margin-top: 3px;
 }
 
 /* PRINT ONLY FORM */
