@@ -56,6 +56,11 @@
     <p>Add and configure schools</p>
   </div>
 
+  <div class="card" onclick="showSchoolSelector('form')">
+  <h3>📄 School Forms</h3>
+  <p>Generate blank ID card forms</p>
+</div>
+
 </div>
 
 <!-- School Selector -->
@@ -138,6 +143,9 @@ function continueAction() {
   }
   else if (mode === "bulk") {
     window.location.href = "bulk_upload.html";   // ✅ NEW
+  }
+  else if (mode === "form") {
+    window.location.href = "school_form.html";
   }
 }
 
