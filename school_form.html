@@ -18,15 +18,31 @@
 
 <div class="container">
 
-  <!-- CONTROLS -->
+  <!-- FIELD SETTINGS -->
   <div class="card">
-    <button onclick="generateForms()" class="submit-btn" id="generateBtn" disabled>
+
+    <h3>Field Settings</h3>
+
+    <div id="fieldSettings"></div>
+
+    <hr>
+
+    <h4>Add Custom Field</h4>
+    <input type="text" id="customFieldInput" placeholder="Enter field name">
+    <button onclick="addCustomField()">Add</button>
+
+    <div id="customFieldList"></div>
+
+    <br>
+
+    <button onclick="generateForms()" class="submit-btn">
       Generate Forms
     </button>
+
   </div>
 
   <!-- PRINT SECTION -->
-  <div id="formSection" class="card" style="display:none; text-align:center;">
+  <div id="formSection" class="card" style="display:none;">
     <button onclick="window.print()" class="submit-btn">Print</button>
 
     <div id="formContainer"></div>
