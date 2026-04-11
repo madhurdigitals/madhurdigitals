@@ -194,9 +194,6 @@ function generateForm(fields) {
   let html = `
     <div class="form-card">
 
-      <!-- PHOTO (FLOAT RIGHT) -->
-      <div class="photo-box">PHOTO</div>
-
       <!-- HEADER -->
       <div class="header">
         <div class="school-name">${schoolInfo.school_name}</div>
@@ -208,37 +205,34 @@ function generateForm(fields) {
 
         <div class="divider"></div>
       </div>
+
+      <!-- MAIN BODY -->
+      <div class="form-body">
+
+        <!-- LEFT SIDE -->
+        <div class="form-left">
   `;
 
-  // NAME
   if (hasField(fields, "name")) {
     html += fieldRow("Name");
   }
 
-  // FATHER NAME
   if (hasField(fields, "f_name")) {
     html += fieldRow("Father Name");
   }
 
-  // 🔥 IMPORTANT: CLEAR FLOAT AFTER TOP FIELDS
-  html += `<div style="clear: both;"></div>`;
-
-  // CLASS + SECTION
   if (hasField(fields, "class") || hasField(fields, "section")) {
     html += splitRow("Class", "Section");
   }
 
-  // DOB + TRANSPORT
   if (hasField(fields, "dob") || hasField(fields, "transport")) {
     html += splitRow("Date of Birth", "Transport", true);
   }
 
-  // PHONE
   if (hasField(fields, "phone")) {
     html += fieldRow("Phone");
   }
 
-  // ADDRESS
   if (hasField(fields, "address")) {
     html += `
       <div class="row">
@@ -249,7 +243,18 @@ function generateForm(fields) {
     `;
   }
 
-  html += `</div>`;
+  html += `
+        </div>
+
+        <!-- RIGHT SIDE PHOTO -->
+        <div class="form-right">
+          <div class="photo-box">PHOTO</div>
+        </div>
+
+      </div>
+
+    </div>
+  `;
 
   return html;
 }

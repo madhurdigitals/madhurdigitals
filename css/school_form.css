@@ -76,11 +76,24 @@ body {
   margin: 5px 0;
 }
 
+.form-body {
+  display: flex;
+  gap: 10px;
+}
 
-/* PHOTO BOX */
+/* LEFT SIDE */
+.form-left {
+  flex: 1;
+}
+
+/* RIGHT SIDE */
+.form-right {
+  width: 35mm;
+}
+
+/* PHOTO */
 .photo-box {
-  float: right;              /* 🔥 KEY FIX */
-  width: 30mm;
+  width: 100%;
   height: 38mm;
   border: 1px solid black;
 
@@ -90,9 +103,6 @@ body {
 
   font-size: 10px;
   color: #bbb;
-
-  margin-left: 10px;         /* space from fields */
-  margin-bottom: 5px;
 }
 
 /* ROW */
