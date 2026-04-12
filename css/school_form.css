@@ -47,7 +47,7 @@ body {
 
   display: flex;
   flex-direction: column;
-  align-items: right; 
+  align-items: center;
   gap: 8mm;   /* equal spacing between forms */
 }
 
@@ -59,7 +59,8 @@ body {
   border-radius: 4px;
   width: 160mm;        /* 🔥 fixed width */
   height: 86mm;
-
+  min-width: 160mm;
+  max-width: 160mm;
   margin: 0 auto;      /* 🔥 center horizontally */
   position: relative;
 }
@@ -339,5 +340,153 @@ body {
 
 .form-card.tight .line {
   height: 12px;
+}
+
+.form-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.form-group label {
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 110px;
+}
+
+.form-group select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.form-group select {
+  background: #fff;
+  border: 1px solid #ccc;
+  transition: 0.2s;
+}
+
+.form-group select:hover {
+  border-color: #0d6efd;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0 0 3px rgba(13,110,253,0.3);
+}
+
+@media (max-width: 768px) {
+
+  .container {
+    padding: 10px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .page {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    gap: 15px;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .form-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    height: auto;   /* 🔥 allow expansion */
+
+    margin: 0;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .form-body {
+    flex-direction: column;
+  }
+
+  .form-right {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .photo-box {
+    width: 120px;
+    height: 120px;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .field {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .field span {
+    margin-bottom: 3px;
+  }
+
+  .line {
+    width: 100%;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .split {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .school-title {
+    font-size: 14px;
+  }
+
+  .school-info {
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .form-title {
+    font-size: 12px;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .form-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .form-group label {
+    margin-bottom: 5px;
+  }
+
 }
 
