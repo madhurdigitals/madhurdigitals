@@ -10,6 +10,11 @@ body {
   padding: 15px;
 }
 
+#formSection {
+  width: 100%;
+  overflow-x: auto;   /* 🔥 allows full mm rendering */
+}
+
 .card {
   background: white;
   padding: 15px;
