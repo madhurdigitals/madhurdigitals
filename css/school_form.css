@@ -15,16 +15,12 @@ body {
 #formSection {
   width: 210mm;   /* 🔥 force true A4 width */
   margin: 0 auto;
+  max-width: none;
 }
 #formSection {
   max-width: none;   /* 🔥 removes 1000px restriction */
 }
 
-
-#formSection {
-  width: 100%;
-  overflow-x: auto;   /* 🔥 allows full mm rendering */
-}
 
 .card {
   background: white;
@@ -63,13 +59,13 @@ body {
 
   background: white;  /* 🔥 A4 paper color */
 
-  padding: 25mm 25mm;  /* 🔥 EXACT margins (top-bottom + left-right) */
+  padding: 10mm 25mm;  /* 🔥 EXACT margins (top-bottom + left-right) */
 
   box-sizing: border-box;
 
   display: flex;
   flex-direction: column;
-
+  position: relative;
   /* gap: 12mm;  🔥 space between forms */
   justify-content: space-between;
 }
@@ -544,11 +540,4 @@ body {
 
 }
 
-.page::before {
-  content: "";
-  position: absolute;
-  inset: 25mm;
-  border: 1px dashed #ccc;
-  pointer-events: none;
-}
 
