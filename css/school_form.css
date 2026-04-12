@@ -131,12 +131,9 @@ body {
 }
 
 #formSection {
-  width: 210mm;   /* 🔥 force true A4 width */
-  margin: 0 auto;
-  max-width: none;
-}
-#formSection {
-  max-width: none;   /* 🔥 removes 1000px restriction */
+  width: 100%;        /* 🔥 FULL WIDTH */
+  background: #dcdcdc;
+  padding: 30px 0;
 }
 
 
