@@ -1,7 +1,7 @@
 body {
   font-family: Arial;
   margin: 0;
-  background: #f5f7fb;
+  background: #dcdcdc;
 }
 
 .container {
@@ -54,17 +54,24 @@ body {
   flex: 1;
 }
 
-/* A4 PAGE */
+/* A4 SHEET */
 .page {
   width: 210mm;
   height: 297mm;
-  padding: 10mm 25;
+
+  margin: 20px auto; /* spacing on screen */
+
+  background: white;  /* 🔥 A4 paper color */
+
+  padding: 25mm 25mm;  /* 🔥 EXACT margins (top-bottom + left-right) */
+
   box-sizing: border-box;
-  flex-shrink: 0;
+
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8mm;   /* equal spacing between forms */
+
+  /* gap: 12mm;  🔥 space between forms */
+  justify-content: space-between;
 }
 
 /* FORM */
@@ -73,11 +80,10 @@ body {
   padding: 10px;
   box-sizing: border-box;
   border-radius: 4px;
-  width: 160mm;        /* 🔥 fixed width */
+  width: 100%;          /* 🔥 Auto width */
   height: 86mm;
-  min-width: 160mm;
-  max-width: 160mm;
   
+  margin: 0;  /* remove auto */
   position: relative;
 }
 
@@ -279,7 +285,20 @@ body {
 
   .page {
     page-break-after: always;
+    
   }
+}
+
+@media print {
+
+  body {
+    background: none;
+  }
+
+  .page {
+    margin: 0;
+  }
+
 }
 /* PRINT ONLY FORM */
 @media print {
@@ -523,5 +542,13 @@ body {
     margin-bottom: 5px;
   }
 
+}
+
+.page::before {
+  content: "";
+  position: absolute;
+  inset: 25mm;
+  border: 1px dashed #ccc;
+  pointer-events: none;
 }
 
