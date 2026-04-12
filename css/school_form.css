@@ -42,7 +42,7 @@ body {
 .page {
   width: 210mm;
   height: 297mm;
-  padding: 8mm;
+  padding: 10mm 20mm;
   box-sizing: border-box;
 
   display: flex;
@@ -128,6 +128,7 @@ body {
 /* LEFT SIDE */
 .form-left {
   flex: 1;
+  overflow: hidden;
 }
 
 /* RIGHT SIDE */
@@ -285,21 +286,57 @@ body {
   margin-left: 10px;
 }
 
+@media print {
+  .header.light,
+  .header.medium,
+  .header.dark {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
 .header.light {
-  background: #f0f0f0;
+  background-color: #f0f0f0 !important;
 }
 
 .header.medium {
-  background: #d9d9d9;
+  background-color: #d9d9d9 !important;
 }
 
 .header.dark {
-  background: #bfbfbf;
+  background-color: #bfbfbf !important;
 }
 
 @media print {
   .form-card {
     page-break-inside: avoid;
   }
+}
+
+/* DEFAULT */
+.form-card.normal .row {
+  margin: 9px 0;
+}
+
+.form-card.normal .line {
+  height: 14px;
+}
+
+/* MEDIUM */
+.form-card.medium .row {
+  margin: 8px 0;
+}
+
+.form-card.medium .line {
+  height: 13px;
+}
+
+/* TIGHT */
+.form-card.tight .row {
+  margin: 7px 0;
+}
+
+.form-card.tight .line {
+  height: 12px;
 }
 

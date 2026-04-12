@@ -170,6 +170,12 @@ function addCustomField() {
 function generateForms() {
 
   const color = document.getElementById("headerColor").value;
+  const fieldCount = fields.length;
+
+  let spacingClass = "normal";
+
+  if (fieldCount >= 9) spacingClass = "medium";
+  if (fieldCount >= 11) spacingClass = "tight";
 
   document.getElementById("formSection").style.display = "block";
 
@@ -203,10 +209,10 @@ function generateForm(fields, color="light") {
   }
 
   let html = `
-    <div class="form-card">
+    <div class="form-card ${spacingClass}">
 
       <!-- HEADER -->
-      <div class="header ${color}">
+      <div class="header ${color || 'light'}">
 
         <div class="school-title">
           ${schoolInfo.school_name}
