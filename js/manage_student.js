@@ -1,3 +1,4 @@
+document.addEventListener("DOMContentLoaded", function () {
 let school = sessionStorage.getItem("school");
 let school_name = sessionStorage.getItem("school_name");
 
@@ -7,9 +8,7 @@ document.getElementById("schoolName").innerText = displayName;
 document.getElementById("schoolNameTop").innerText = displayName;
 
 let students = [];
-if (typeof currentPage === "undefined") {
-  var currentPage = 1;
-}
+let currentPage = 1;
 let rowsPerPage = 20; // default
 let headersGlobal = [];
 let filteredData = [];
@@ -547,3 +546,4 @@ function applySchoolChange() {
 
 
 document.getElementById("searchName").addEventListener("input", applyFilter);
+});
