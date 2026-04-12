@@ -42,11 +42,12 @@ body {
 .page {
   width: 210mm;
   height: 297mm;
-  padding: 10mm 15mm;
+  padding: 10mm 0;
   box-sizing: border-box;
 
   display: flex;
   flex-direction: column;
+  align-items: right; 
   gap: 8mm;   /* equal spacing between forms */
 }
 
@@ -56,11 +57,10 @@ body {
   padding: 10px;
   box-sizing: border-box;
   border-radius: 4px;
-
-  width: 100%;
-  max-width: 100%;
-
+  width: 160mm;        /* 🔥 fixed width */
   height: 86mm;
+
+  margin: 0 auto;      /* 🔥 center horizontally */
   position: relative;
 }
 
