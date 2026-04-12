@@ -304,24 +304,7 @@ if (halfBuffer.length === 1) {
   // 🔥 CUSTOM FIELDS (IMPORTANT FIX)
   // ========================
 
-  const fixedFields = [
-    "name",
-    "f_name",
-    "class",
-    "section",
-    "dob",
-    "transport",
-    "phone",
-    "address"
-  ];
 
-  fields.forEach(f => {
-    if (!fixedFields.includes(f.key)) {
-      html += fieldRow(f.label);
-    }
-  });
-
-  // ========================
 
   html += `
         </div>
