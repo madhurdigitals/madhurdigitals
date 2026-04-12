@@ -58,7 +58,7 @@ body {
 .page {
   width: 210mm;
   height: 297mm;
-  padding: 10mm 0;
+  padding: 10mm 25;
   box-sizing: border-box;
   flex-shrink: 0;
   display: flex;
@@ -77,7 +77,7 @@ body {
   height: 86mm;
   min-width: 160mm;
   max-width: 160mm;
-  margin: 0 auto;      /* 🔥 center horizontally */
+  
   position: relative;
 }
 
@@ -261,7 +261,26 @@ body {
   border-bottom: 1px solid black;
   height: 14px;
 }
+@page {
+  size: A4;
+  margin: 0;   /* 🔥 disables browser auto margins */
+}
 
+@media print {
+
+  html, body {
+    width: 210mm;
+    height: 297mm;
+  }
+
+  #formSection {
+    width: 210mm;
+  }
+
+  .page {
+    page-break-after: always;
+  }
+}
 /* PRINT ONLY FORM */
 @media print {
 
@@ -427,7 +446,7 @@ body {
 
     height: auto;   /* 🔥 allow expansion */
 
-    margin: 0;
+    
   }
 
 }
