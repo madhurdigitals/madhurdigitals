@@ -33,15 +33,15 @@
     </div>
   </nav>
 
-  <!-- HEADING BADGE -->
+  <!-- HEADING -->
   <div class="heading-wrapper">
     <div class="heading-badge">
       School: <span id="schoolName"></span>
     </div>
   </div>
 
-  <!-- MAIN CONTAINER -->
-  <div class="container">
+  <!-- SETTINGS (CENTERED) -->
+  <div class="container settings-container">
 
     <div class="card">
       <h3>Print School Forms</h3>
@@ -78,12 +78,12 @@
       </button>
     </div>
 
-    <!-- PRINT SECTION -->
-    <div id="formSection" class="card" style="display:none;">
-      <button onclick="window.print()" class="submit-btn">Print</button>
-      <div id="formContainer"></div>
-    </div>
+  </div>
 
+  <!-- PRINT SECTION (FULL WIDTH) -->
+  <div id="formSection" class="print-container" style="display:none;">
+    <button onclick="window.print()" class="submit-btn">Print</button>
+    <div id="formContainer"></div>
   </div>
 
   <!-- FOOTER -->
@@ -92,6 +92,16 @@
   </footer>
 
 </div>
+
+<script>
+const school_name = sessionStorage.getItem("school_name");
+const school = sessionStorage.getItem("school");
+
+const displayName = school_name || school;
+
+document.getElementById("schoolName").innerText = displayName;
+document.getElementById("schoolNameTop").innerText = displayName;
+</script>
 
 </body>
 </html>

@@ -5,6 +5,21 @@
   flex-direction: column;
 }
 
+/* SETTINGS AREA */
+.settings-container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 15px;
+}
+
+/* PRINT AREA (FULL WIDTH) */
+.print-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 20px 0;
+  background: #dcdcdc;
+}
+
 /* NAVBAR */
 nav {
   background: white;
@@ -67,12 +82,12 @@ nav {
 }
 
 /* CONTAINER */
-.container {
+/* .container {
   flex: 1;
   max-width: 900px;
   margin: 20px auto;
   padding: 15px;
-}
+} */
 
 /* CARD UPGRADE */
 .card {
