@@ -64,9 +64,13 @@ body {
 /* HEADER */
 .header {
   text-align: center;
-  background: #f0f0f0;   /* light grey background */
+  background: #f0f0f0;
   padding: 6px;
-  margin-bottom: 8px;
+
+  border: 1px solid black;   /* 🔥 add border */
+  border-bottom: 1px solid black;
+
+  margin: -10px -10px 8px -10px;  /* 🔥 stretch to edges */
 }
 
 .school-name {
@@ -246,4 +250,19 @@ body {
   button {
     display: none;
   }
+}
+
+@media print {
+
+  .header {
+    background: #e0e0e0 !important;  /* darker for print */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+}
+
+.reset-btn {
+  background: #6c757d;
+  margin-left: 10px;
 }

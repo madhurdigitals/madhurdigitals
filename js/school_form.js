@@ -370,3 +370,12 @@ function renderHalfRow(items) {
     </div>
   `;
 }
+
+function resetFields() {
+
+  // rebuild original config
+  buildFieldConfig();
+
+  // hide forms
+  document.getElementById("formSection").style.display = "none";
+}
