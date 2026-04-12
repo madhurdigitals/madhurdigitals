@@ -7,7 +7,9 @@ document.getElementById("schoolName").innerText = displayName;
 document.getElementById("schoolNameTop").innerText = displayName;
 
 let students = [];
-let currentPage = 1;
+if (typeof currentPage === "undefined") {
+  var currentPage = 1;
+}
 let rowsPerPage = 20; // default
 let headersGlobal = [];
 let filteredData = [];
