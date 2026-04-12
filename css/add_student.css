@@ -72,7 +72,8 @@ nav {
 
 /* CONTAINER */
 .container {
-  max-width: 900px;
+  width: 95%;
+  max-width: 100%;
   margin: 20px auto;
   padding: 15px;
 }
@@ -167,14 +168,15 @@ nav {
 .table-wrapper {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* TABLE */
 table {
   width: 100%;
   border-collapse: collapse;
-  overflow: hidden;
   border-radius: 10px;
+  table-layout: auto; /* 🔥 important */
 }
 
 th {
@@ -184,8 +186,23 @@ th {
 }
 
 th, td {
-  padding: 12px;
+  padding: 8px;
   text-align: center;
+  font-size: clamp(12px, 1vw, 16px); /* 🔥 responsive text */
+}
+
+thead {
+  position: sticky;
+  top: 0;
+  background: #f1f5f9;
+  z-index: 2;
+}
+
+td {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 tbody tr {
