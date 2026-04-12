@@ -7,7 +7,7 @@
 
 /* SETTINGS AREA */
 .settings-container {
-  max-width: 900px;
+  max-width: 1200x;
   margin: 20px auto;
   padding: 15px;
 }
@@ -155,10 +155,41 @@ body {
 
 /* FIELD SETTINGS */
 .field-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 30px 40px 1fr 140px;
   align-items: center;
-  gap: 10px;
-  margin: 8px 0;
+
+  gap: 12px;
+  padding: 10px 12px;
+
+  margin-bottom: 10px;
+
+  background: #f9fafb;
+  border-radius: 8px;
+  transition: 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.field-row:hover {
+  background: #eef2ff;
+}
+
+.field-row input[type="checkbox"] {
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+.field-row select {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+#fieldSettings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;  /* 🔥 2 columns */
+  gap: 10px 30px;
 }
 
 .field-row span {
@@ -321,7 +352,8 @@ body {
 
 .drag {
   cursor: grab;
-  font-size: 16px;
+  font-size: 18px;
+  color: #555;
 }
 
 
@@ -551,7 +583,7 @@ body {
   }
 
   .card {
-    padding: 12px;
+    padding: 30px;
   }
 
 }
