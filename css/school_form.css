@@ -42,7 +42,7 @@ body {
 .page {
   width: 210mm;
   height: 297mm;
-  padding: 10mm 20mm;
+  padding: 10mm 15mm;
   box-sizing: border-box;
 
   display: flex;
@@ -52,15 +52,15 @@ body {
 
 /* FORM */
 .form-card {
-  border: 2px solid black;   /* 🔥 main border */
+  border: 2px solid black;
   padding: 10px;
   box-sizing: border-box;
   border-radius: 4px;
-  height: 86mm;
-}
-.form-card {
+
   width: 100%;
   max-width: 100%;
+
+  height: 86mm;
   position: relative;
 }
 
@@ -70,8 +70,8 @@ body {
   content: "";
   position: absolute;
   bottom: -4mm;
-  left: 0;
-  right: 0;
+  left: 5%;
+  right: 5%;
   border-bottom: 1px dashed #999;
 }
 
@@ -122,18 +122,19 @@ body {
 
 .form-body {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 
 /* LEFT SIDE */
 .form-left {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
 }
 
 /* RIGHT SIDE */
 .form-right {
-  width: 35mm;
+  width: 38mm;   
 }
 
 /* PHOTO */
