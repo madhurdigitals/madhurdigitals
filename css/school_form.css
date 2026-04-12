@@ -67,10 +67,10 @@ body {
   background: #f0f0f0;
   padding: 6px;
 
-  border: 1px solid black;   /* 🔥 add border */
-  border-bottom: 1px solid black;
+  /* border: 1px solid black;   🔥 add border */
+  border-bottom: 2px solid black;
 
-  margin: -10px -10px 8px -10px;  /* 🔥 stretch to edges */
+  margin: -10px -10px 12px -10px;  /* 🔥 stretch to edges */
 }
 
 .school-name {
@@ -265,4 +265,23 @@ body {
 .reset-btn {
   background: #6c757d;
   margin-left: 10px;
+}
+
+.header.light {
+  background: #f0f0f0;
+}
+
+.header.medium {
+  background: #d9d9d9;
+}
+
+.header.dark {
+  background: #bfbfbf;
+}
+
+@media print {
+  .header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }

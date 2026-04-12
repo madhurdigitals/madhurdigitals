@@ -147,8 +147,16 @@ function addCustomField() {
 
   if (!val) return;
 
+  const key = val.toLowerCase().replace(/\s+/g, "_");
+
+  // 🔥 prevent duplicate
+  if (fieldConfig.some(f => f.key === key)) {
+    alert("Field already exists");
+    return;
+  }
+
   fieldConfig.push({
-    key: val.toLowerCase().replace(/\s+/g, "_"),
+    key: key,
     label: val,
     enabled: true,
     type: "full"
@@ -161,24 +169,25 @@ function addCustomField() {
 /* GENERATE */
 function generateForms() {
 
+  const color = document.getElementById("headerColor").value;
+
   document.getElementById("formSection").style.display = "block";
 
-  renderForms();
+  renderForms(color);
 }
 
 /* RENDER FORMS */
-function renderForms() {
+function renderForms(color) {
 
   const container = document.getElementById("formContainer");
 
-  const enabled = fieldConfig
-    .filter(f => f.enabled);
+  const enabled = fieldConfig.filter(f => f.enabled);
 
   let html = `
     <div class="page">
-      ${generateForm(enabled)}
-      ${generateForm(enabled)}
-      ${generateForm(enabled)}
+      ${generateForm(enabled, color)}
+      ${generateForm(enabled, color)}
+      ${generateForm(enabled, color)}
     </div>
   `;
 
@@ -186,7 +195,7 @@ function renderForms() {
 }
 
 /* SINGLE FORM */
-function generateForm(fields) {
+function generateForm(fields, color="light") {
 
   if (fields.length > 12) {
     alert("Maximum 12 fields allowed");
@@ -197,7 +206,7 @@ function generateForm(fields) {
     <div class="form-card">
 
       <!-- HEADER -->
-      <div class="header">
+      <div class="header ${color}">
 
         <div class="school-title">
           ${schoolInfo.school_name}
@@ -212,7 +221,7 @@ function generateForm(fields) {
         <div class="divider"></div>
 
         <div class="form-title">
-          STUDENT ADMISSION FORM
+          STUDENT ID CARD FORM
         </div>
 
       </div>
