@@ -170,13 +170,6 @@ function addCustomField() {
 function generateForms() {
 
   const color = document.getElementById("headerColor").value;
-  const fieldCount = fields.length;
-
-  let spacingClass = "normal";
-
-  if (fieldCount >= 9) spacingClass = "medium";
-  if (fieldCount >= 11) spacingClass = "tight";
-
   document.getElementById("formSection").style.display = "block";
 
   renderForms(color);
@@ -202,6 +195,12 @@ function renderForms(color) {
 
 /* SINGLE FORM */
 function generateForm(fields, color="light") {
+  const fieldCount = fields.length;
+
+  let spacingClass = "normal";
+
+  if (fieldCount >= 9) spacingClass = "medium";
+  if (fieldCount >= 11) spacingClass = "tight";
 
   if (fields.length > 12) {
     alert("Maximum 12 fields allowed");
