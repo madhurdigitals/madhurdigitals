@@ -1,4 +1,11 @@
-let school = sessionStorage.getItem("school");
+// let school = sessionStorage.getItem("school");
+const school_name = sessionStorage.getItem("school_name");
+const school = sessionStorage.getItem("school");
+
+const displayName = school_name || school;
+
+document.getElementById("schoolName").innerText = displayName;
+document.getElementById("schoolNameTop").innerText = displayName;
 let schoolInfo = null;
 
 let fieldConfig = [];
