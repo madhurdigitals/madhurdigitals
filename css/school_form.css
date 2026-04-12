@@ -81,6 +81,14 @@ nav {
   font-weight: 600;
 }
 
+#printSection,
+#printContainer,
+#print-container,
+.print-container {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
 /* CONTAINER */
 /* .container {
   flex: 1;
