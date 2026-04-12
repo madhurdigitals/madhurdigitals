@@ -170,6 +170,18 @@ body {
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
+.a4-wrapper {
+  width: 210mm;        /* 🔥 SAME AS A4 */
+  margin: 0 auto;      /* center */
+}
+
+/* Align button nicely */
+.print-btn {
+  display: block;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
 .field-row:hover {
   background: #eef2ff;
 }
