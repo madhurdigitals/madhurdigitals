@@ -56,11 +56,23 @@ body {
   padding: 10px;
   box-sizing: border-box;
   border-radius: 4px;
-  height: 90mm;
+  height: 86mm;
 }
 .form-card {
   width: 100%;
   max-width: 100%;
+  position: relative;
+}
+
+
+/*Psueso cut line */
+.form-card::after {
+  content: "";
+  position: absolute;
+  bottom: -4mm;
+  left: 0;
+  right: 0;
+  border-bottom: 1px dashed #999;
 }
 
 /* HEADER */
@@ -283,5 +295,11 @@ body {
 
 .header.dark {
   background: #bfbfbf;
+}
+
+@media print {
+  .form-card {
+    page-break-inside: avoid;
+  }
 }
 
