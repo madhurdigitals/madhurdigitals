@@ -85,7 +85,7 @@ function renderFieldSettings() {
   const container = document.getElementById("fieldSettings");
 
   container.innerHTML = fieldConfig.map((f, i) => `
-    <div class="field-row" data-index="${i}">
+    <div class="field-row" data-key="${f.key}">
 
       <span class="drag">☰</span>
 
@@ -119,13 +119,14 @@ function updateFieldOrder() {
   const newOrder = [];
 
   rows.forEach(row => {
-    const index = row.getAttribute("data-index");
-    newOrder.push(fieldConfig[index]);
+    const key = row.getAttribute("data-key");
+    const item = fieldConfig.find(f => f.key === key);
+    if (item) newOrder.push(item);
   });
 
   fieldConfig = newOrder;
 
-  renderFieldSettings();
+  renderForms(); // 🔥 update preview live
 }
 
 
@@ -227,40 +228,63 @@ function generateForm(fields) {
   // FIXED FIELDS (IN ORDER)
   // ========================
 
-  if (hasField(fields, "name")) {
-    html += fieldRow("Name");
-  }
+  let halfBuffer = [];
 
-  if (hasField(fields, "f_name")) {
-    html += fieldRow("Father Name");
-  }
+fields.forEach(f => {
 
-  if (hasField(fields, "class") || hasField(fields, "section")) {
-    html += splitRow("Class", "Section");
-  }
+  // MULTILINE
+  if (f.type === "multiline") {
 
-  if (hasField(fields, "dob") || hasField(fields, "transport")) {
-    html += splitRow("Date of Birth", "Transport", true);
-  }
+    // flush half buffer first
+    if (halfBuffer.length === 1) {
+      html += fieldRow(halfBuffer[0].label);
+      halfBuffer = [];
+    }
 
-  if (hasField(fields, "phone")) {
-    html += fieldRow("Phone");
-  }
-
-  if (hasField(fields, "address")) {
     html += `
       <div class="row address">
-        
         <div class="address-first-line">
-          <span>Address:</span>
+          <span>${f.label}:</span>
           <div class="line"></div>
         </div>
-
         <div class="address-line"></div>
-
       </div>
     `;
   }
+
+  // HALF
+  else if (f.type === "half") {
+
+    halfBuffer.push(f);
+
+    if (halfBuffer.length === 2) {
+      html += splitRow(
+        halfBuffer[0].label,
+        halfBuffer[1].label,
+        halfBuffer[0].key === "dob" || halfBuffer[1].key === "dob"
+      );
+      halfBuffer = [];
+    }
+  }
+
+  // FULL
+  else {
+
+    // flush half buffer first
+    if (halfBuffer.length === 1) {
+      html += fieldRow(halfBuffer[0].label);
+      halfBuffer = [];
+    }
+
+    html += fieldRow(f.label);
+  }
+
+});
+
+// leftover half
+if (halfBuffer.length === 1) {
+  html += fieldRow(halfBuffer[0].label);
+}
 
   // ========================
   // 🔥 CUSTOM FIELDS (IMPORTANT FIX)
@@ -304,10 +328,13 @@ function generateForm(fields) {
 /* HELPERS */
 
 function fieldRow(label) {
+
+  const isDOB = label.toLowerCase().includes("birth");
+
   return `
     <div class="row field">
       <span>${label}:</span>
-      <div class="line"></div>
+      <div class="line ${isDOB ? 'dob' : ''}"></div>
     </div>
   `;
 }
@@ -319,12 +346,12 @@ function splitRow(label1, label2, isDOB=false) {
 
       <div class="field">
         <span>${label1}:</span>
-        <div class="line ${isDOB ? 'dob' : ''}"></div>
+        <div class="line ${label1.toLowerCase().includes("birth") ? 'dob' : ''}"></div>
       </div>
 
       <div class="field">
         <span>${label2}:</span>
-        <div class="line"></div>
+        <div class="line ${label2.toLowerCase().includes("birth") ? 'dob' : ''}"></div>
       </div>
 
     </div>
