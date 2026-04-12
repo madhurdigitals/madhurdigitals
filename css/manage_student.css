@@ -69,7 +69,8 @@ nav {
 
 /* CONTAINER */
 .container {
-  max-width: 900px;
+  width: 100%;
+  max-width: 1400px;   /* increase limit */
   margin: 20px auto;
   padding: 15px;
 }
@@ -139,7 +140,7 @@ input:focus, select:focus {
 
 /* TABLE */
 table {
-  min-width: 700px;
+  min-width: 1200px;
   width: 100%;
   border-collapse: collapse;
   background: white;
@@ -152,8 +153,15 @@ table {
 }
 
 th, td {
-  padding: 8px;
+  padding: 6px;
+  font-size: 14px;
   border-bottom: 1px solid #ddd;
+}
+
+thead {
+  position: sticky;
+  top: 0;
+  background: #f1f3f5;
 }
 
 th {
