@@ -352,16 +352,22 @@ function prevPage() {
 function renderSmartTable() {
   const data = filteredData;
 
-  if (data.length <= 20) {
-    // ❌ NO PAGINATION
+  if (data.length <= rowsPerPage) {
     renderTable(data, headersGlobal);
     document.getElementById("pagination").innerHTML = "";
     document.getElementById("paginationTop").innerHTML = "";
     
   } else {
-    // ✅ PAGINATION
+    const totalPages = Math.ceil(data.length / rowsPerPage);
+
+    if (currentPage > totalPages) {
+      currentPage = totalPages || 1;
+    }
+
     const start = (currentPage - 1) * rowsPerPage;
-    const pageData = data.slice(start, start + rowsPerPage);
+    const end = Math.min(start + rowsPerPage, data.length);
+
+    const pageData = data.slice(start, end);
 
     renderTable(pageData, headersGlobal);
   }
