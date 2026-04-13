@@ -89,6 +89,8 @@ function renderMapping() {
     }).join("");
 
   // 🔥 APPLY AUTO MAP TO columnMap
+  columnMap = {}; // 🔥 RESET FIRST
+
   fields.forEach(f => {
     headers.forEach((h, i) => {
       const mapped = autoMapField(h);
@@ -106,14 +108,20 @@ let columnMap = {};
 
 function mapColumn(fieldKey, columnIndex) {
 
-  // 🔥 remove duplicate mapping (strict one-to-one)
+  columnIndex = Number(columnIndex); // 🔥 FIX (important)
+
+  // remove duplicate mapping
   for (let key in columnMap) {
-    if (columnMap[key] == columnIndex) {
+    if (columnMap[key] === columnIndex) {
       delete columnMap[key];
     }
   }
 
-  columnMap[fieldKey] = columnIndex;
+  if (columnIndex === "" || isNaN(columnIndex)) {
+    delete columnMap[fieldKey];
+  } else {
+    columnMap[fieldKey] = columnIndex;
+  }
 
   buildTable();
 }
