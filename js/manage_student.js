@@ -99,11 +99,9 @@ async function deleteStudent(id) {
 
   if (!confirm("Are you sure you want to delete this student?")) return;
 
-  // preserve filters
+  // ✅ ONLY keep existing filters
   const filters = {
-    name: document.getElementById("searchName").value,
-    class: document.getElementById("searchClass").value,
-    section: document.getElementById("searchSection").value
+    name: document.getElementById("searchName").value
   };
 
   const scrollPos = window.scrollY;
@@ -119,12 +117,9 @@ async function deleteStudent(id) {
 
   // restore filters
   document.getElementById("searchName").value = filters.name;
-  document.getElementById("searchClass").value = filters.class;
-  document.getElementById("searchSection").value = filters.section;
 
   applyFilter();
 
-  // restore scroll
   window.scrollTo(0, scrollPos);
 }
 
