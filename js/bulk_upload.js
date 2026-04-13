@@ -54,21 +54,43 @@ function handleFile(e) {
 
 // MAPPING UI
 function renderMapping() {
+
   const fields = schoolFields.map(f => ({
     original: f,
     key: normalizeKey(f)
   }));
 
+  // 🔹 1. Render dropdown UI
   document.getElementById("mappingBox").innerHTML =
-    headers.map((h, i) => `
-      <div>
-        ${h} →
-        <select onchange="mapColumn(${i}, this.value)">
-          <option value="">Ignore</option>
-          ${fields.map(f => `<option value="${f.key}">${f.original}</option>`).join("")}
-        </select>
-      </div>
-    `).join("");
+    headers.map((h, i) => {
+
+      const auto = autoMapField(h);
+
+      return `
+        <div>
+          ${h} →
+          <select onchange="mapColumn(${i}, this.value)">
+            <option value="">Ignore</option>
+            ${fields.map(f => `
+              <option value="${f.key}" ${auto === f.key ? "selected" : ""}>
+                ${f.original}
+              </option>
+            `).join("")}
+          </select>
+        </div>
+      `;
+    }).join("");
+
+  // 🔥 2. ADD STEP 4 HERE (IMPORTANT)
+  headers.forEach((h, i) => {
+    const auto = autoMapField(h);
+    if (auto) {
+      columnMap[i] = auto;
+    }
+  });
+
+  // 🔥 3. OPTIONAL (BUT RECOMMENDED)
+  buildTable();
 }
 
 // STORE MAPPING
@@ -168,7 +190,7 @@ function selectAll(el) {
 
 // SUBMIT
 async function submitData() {
-
+  if (!validateMapping()) return;
   const validRows = mappedData.filter(r => r.valid && r.selected);
 
   if (validRows.length === 0) {
@@ -381,4 +403,72 @@ function downloadExcel() {
   XLSX.writeFile(wb, fileName);
 }
 
+const FIELD_ALIASES = {
+  name: ["name", "student_name", "student", "full_name"],
 
+  father_s_name: [
+    "father_name",
+    "father",
+    "father_s_name",
+    "guardian_name"
+  ],
+
+  class: ["class", "std", "standard", "grade"],
+
+  section: ["section", "sec", "division"],
+
+  dob: ["dob", "date_of_birth", "birth_date"],
+
+  phone: ["phone", "mobile", "contact", "phone_number"],
+
+  address: ["address", "addr", "location", "residence"]
+};
+
+function autoMapField(header) {
+
+  const normalizedHeader = normalizeKey(header);
+
+  // 🔥 1. Exact match with school fields
+  for (let f of schoolFields) {
+    const key = normalizeKey(f);
+    if (normalizedHeader === key) return key;
+  }
+
+  // 🔥 2. Alias match
+  for (let fieldKey in FIELD_ALIASES) {
+    const aliases = FIELD_ALIASES[fieldKey];
+
+    if (aliases.includes(normalizedHeader)) {
+      return fieldKey;
+    }
+  }
+
+  // 🔥 3. Fuzzy match (partial)
+  for (let f of schoolFields) {
+    const key = normalizeKey(f);
+
+    if (
+      normalizedHeader.includes(key) ||
+      key.includes(normalizedHeader)
+    ) {
+      return key;
+    }
+  }
+
+  // ❌ No match
+  return "";
+}
+
+function validateMapping() {
+
+  const required = ["name", "class"];
+
+  for (let r of required) {
+    if (!Object.values(columnMap).includes(r)) {
+      alert(`Missing required field mapping: ${r}`);
+      return false;
+    }
+  }
+
+  return true;
+}
