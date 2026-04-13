@@ -326,16 +326,40 @@ async function submitData() {
 
 // SAMPLE
 function downloadSample() {
-  const sample = [
-    ["Name","Class","Section","Roll","Phone","Address"],
-    ["Aditya","1","A","1","9999999999","City"]
-  ];
+
+  if (!schoolFields || schoolFields.length === 0) {
+    alert("School fields not loaded");
+    return;
+  }
+
+  const school = sessionStorage.getItem("school") || "School";
+  const today = new Date().toISOString().split("T")[0];
+
+  // ✅ Header row (dynamic)
+  const sample = [schoolFields];
+
+  // ✅ Example row
+  const exampleRow = schoolFields.map(f => {
+    const key = normalizeKey(f);
+
+    if (key.includes("name")) return "John Doe";
+    if (key.includes("class")) return "1";
+    if (key.includes("section")) return "A";
+    if (key.includes("phone")) return "9999999999";
+    if (key.includes("dob")) return "01/01/2010";
+    if (key.includes("address")) return "City";
+    return "Sample";
+  });
+
+  sample.push(exampleRow);
 
   const ws = XLSX.utils.aoa_to_sheet(sample);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Sample");
 
-  XLSX.writeFile(wb, "sample.xlsx");
+  const fileName = `${school}_${today}_sample.xlsx`;
+
+  XLSX.writeFile(wb, fileName);
 }
 
 async function loadData() {
@@ -429,60 +453,95 @@ function downloadExcel() {
     return;
   }
 
-  // ✅ Get school name
   const school = sessionStorage.getItem("school") || "School";
-
-  // ✅ Get today date
   const today = new Date().toISOString().split("T")[0];
 
-  // =========================
-  // 📄 Sheet 1 → Student_data
-  // =========================
-  const studentData = mappedData
-    .filter(r => r.valid && r.selected)
-    .map(r => ({
-      Name: r.name || "",
-      Class: r.class || "",
-      Section: r.section || "",
-      Roll: r.roll || "",
-      Phone: r.phone || "",
-      Address: r.address || ""
-    }));
+  // ✅ Headers (dynamic)
+  const headers = schoolFields;
 
   // =========================
-  // 📄 Sheet 2 → Error_data_logs
+  // ✅ Split Data
   // =========================
-  const errorData = mappedData
-    .filter(r => !r.valid || !r.selected)
-    .map(r => ({
-      Name: r.name || "",
-      Class: r.class || "",
-      Section: r.section || "",
-      Roll: r.roll || "",
-      Phone: r.phone || "",
-      Address: r.address || "",
-      Status: !r.valid ? "Invalid" : "Not Selected"
-    }));
+  const validRows = [];
+  const invalidRows = [];
+
+  mappedData.forEach(r => {
+
+    let row = {};
+
+    schoolFields.forEach(f => {
+      const key = normalizeKey(f);
+      row[f] = r[key] || "";
+    });
+
+    if (r.valid && r.selected === true) {
+      validRows.push(row);
+    } else {
+      invalidRows.push(row);
+    }
+  });
 
   // =========================
-  // 📦 Create Workbook
+  // 📄 Build Sheet Data
+  // =========================
+  let sheetData = [];
+
+  // 🔹 Title: Valid Students
+  sheetData.push(["Valid Students"]);
+  sheetData.push(headers);
+
+  validRows.forEach(r => {
+    sheetData.push(headers.map(h => r[h]));
+  });
+
+  // 🔹 Space
+  sheetData.push([]);
+  sheetData.push([]);
+
+  // 🔹 Title: Invalid Students
+  const invalidStartRow = sheetData.length;
+
+  sheetData.push(["Invalid Students"]);
+  sheetData.push(headers);
+
+  invalidRows.forEach(r => {
+    sheetData.push(headers.map(h => r[h]));
+  });
+
+  // =========================
+  // 📦 Create Sheet
+  // =========================
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+  // =========================
+  // 🎨 Apply Yellow Style (Invalid Rows)
+  // =========================
+  const range = XLSX.utils.decode_range(ws['!ref']);
+
+  for (let R = invalidStartRow + 2; R <= range.e.r; ++R) {
+    for (let C = 0; C <= range.e.c; ++C) {
+
+      const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+
+      if (!ws[cellAddress]) continue;
+
+      ws[cellAddress].s = {
+        fill: {
+          patternType: "solid",
+          fgColor: { rgb: "FFFF00" }   // Yellow
+        }
+      };
+    }
+  }
+
+  // =========================
+  // 📦 Workbook
   // =========================
   const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Student_data");
 
-  // Sheet 1
-  const ws1 = XLSX.utils.json_to_sheet(studentData);
-  XLSX.utils.book_append_sheet(wb, ws1, "Student_data");
+  const fileName = `${school}_${today}_bulk_upload.xlsx`;
 
-  // Sheet 2
-  const ws2 = XLSX.utils.json_to_sheet(errorData);
-  XLSX.utils.book_append_sheet(wb, ws2, "Error_data_logs");
-
-  // =========================
-  // 📁 File Name
-  // =========================
-  const fileName = `${school}_${today}_bulk_upload_sheet.xlsx`;
-
-  // Download
   XLSX.writeFile(wb, fileName);
 }
 
