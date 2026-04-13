@@ -144,7 +144,10 @@ function mapColumn(fieldKey, columnIndex) {
 // BUILD TABLE
 function buildTable() {
 
-  mappedData = rawData.map(row => {
+  mappedData = rawData.map((row, i) => {
+
+    // 🔥 preserve old row data (VERY IMPORTANT)
+    let existing = mappedData[i] || {};
 
     let obj = {};
 
@@ -156,10 +159,21 @@ function buildTable() {
     });
 
     // ✅ validation
-    obj.valid = obj.name && obj.class;
+    obj.valid =
+      obj.name?.toString().trim() &&
+      obj.class?.toString().trim();
 
-    obj.selected = obj.valid;
-    obj.status = "pending";
+    // ✅ preserve selection (MAIN FIX)
+    obj.selected =
+      existing.selected !== undefined
+        ? existing.selected
+        : obj.valid;
+
+    // ✅ preserve status
+    obj.status = existing.status || "pending";
+
+    // ✅ preserve edited flag
+    obj.edited = existing.edited || false;
 
     return obj;
   });
@@ -255,7 +269,7 @@ function selectAll(el) {
 // SUBMIT
 async function submitData() {
   if (!validateMapping()) return;
-  const validRows = mappedData.filter(r => r.valid && r.selected);
+  const validRows = mappedData.filter(r => r.valid && r.selected === true);
 
   if (validRows.length === 0) {
     alert("No valid rows selected");
