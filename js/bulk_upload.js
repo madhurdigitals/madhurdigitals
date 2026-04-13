@@ -1,7 +1,13 @@
 let rawData = [];
 let mappedData = [];
 let headers = [];
-
+let schoolFields = [];
+function normalizeKey(str) {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "_")
+    .replace(/_+/g, "_");
+}
 const school = sessionStorage.getItem("school");
 document.addEventListener("DOMContentLoaded", function () {
   const fileInput = document.getElementById("fileInput");
@@ -40,7 +46,10 @@ function handleFile(e) {
 
 // MAPPING UI
 function renderMapping() {
-  const fields = ["name","class","section","roll","phone","address"];
+  const fields = schoolFields.map(f => ({
+    original: f,
+    key: normalizeKey(f)
+  }));
 
   document.getElementById("mappingBox").innerHTML =
     headers.map((h, i) => `
@@ -48,7 +57,7 @@ function renderMapping() {
         ${h} →
         <select onchange="mapColumn(${i}, this.value)">
           <option value="">Ignore</option>
-          ${fields.map(f => `<option value="${f}">${f}</option>`).join("")}
+          ${fields.map(f => `<option value="${f.key}">${f.original}</option>`).join("")}
         </select>
       </div>
     `).join("");
@@ -74,7 +83,9 @@ function buildTable() {
       if (field) obj[field] = row[i];
     });
 
+    // ✅ VALIDATION (YOUR RULE)
     obj.valid = obj.name && obj.class;
+
     obj.selected = obj.valid;
     obj.status = "pending";
 
@@ -87,26 +98,41 @@ function buildTable() {
 // RENDER TABLE
 function renderTable() {
 
+  // 🔥 dynamic headers
+  const headersHtml = schoolFields.map(f => `<th>${f}</th>`).join("");
+
   document.getElementById("tableHead").innerHTML = `
     <tr>
       <th><input type="checkbox" onclick="selectAll(this)"></th>
-      <th>Name</th><th>Class</th><th>Section</th>
-      <th>Roll</th><th>Phone</th><th>Address</th>
+      ${headersHtml}
     </tr>
   `;
 
   document.getElementById("tableBody").innerHTML =
-    mappedData.map((r, i) => `
-      <tr style="background: ${getRowColor(r)}">
-        <td><input type="checkbox" ${r.selected ? 'checked' : ''} onchange="toggleRow(${i}, this.checked)"></td>
-        <td contenteditable="true" oninput="editCell(${i}, 'name', this.innerText)">${r.name || ''}</td>
-        <td contenteditable="true" oninput="editCell(${i}, 'class', this.innerText)">${r.class || ''}</td>
-        <td contenteditable="true" oninput="editCell(${i}, 'section', this.innerText)">${r.section || ''}</td>
-        <td contenteditable="true" oninput="editCell(${i}, 'roll', this.innerText)">${r.roll || ''}</td>
-        <td contenteditable="true" oninput="editCell(${i}, 'phone', this.innerText)">${r.phone || ''}</td>
-        <td contenteditable="true" oninput="editCell(${i}, 'address', this.innerText)">${r.address || ''}</td>
-      </tr>
-    `).join("");
+    mappedData.map((r, i) => {
+
+      const cells = schoolFields.map(f => {
+        const key = normalizeKey(f);
+
+        return `
+          <td contenteditable="true"
+              oninput="editCell(${i}, '${key}', this.innerText)">
+              ${r[key] || ''}
+          </td>
+        `;
+      }).join("");
+
+      return `
+        <tr style="background: ${getRowColor(r)}">
+          <td>
+            <input type="checkbox"
+              ${r.selected ? 'checked' : ''}
+              onchange="toggleRow(${i}, this.checked)">
+          </td>
+          ${cells}
+        </tr>
+      `;
+    }).join("");
 }
 
 // EDIT
@@ -142,17 +168,44 @@ async function submitData() {
     return;
   }
 
-  const url = `${API_URL}?action=bulkUploadStudents&school=${school}&data=${encodeURIComponent(JSON.stringify(validRows))}`;
+  // 🔥 Build dynamic payload based on school fields
+  const payload = validRows.map(r => {
+    let obj = {};
 
-  const res = await fetch(url);
-  const result = await res.json();
+    schoolFields.forEach(f => {
+      const key = normalizeKey(f);
+      obj[key] = r[key] || "";
+    });
 
-  // ✅ Mark uploaded rows
-  mappedData.forEach(r => {
-    if (r.valid && r.selected) {
-      r.status = "uploaded";
-    }
+    return obj;
   });
+
+  try {
+
+    const url = `${API_URL}?action=bulkUploadStudents&school=${school}&data=${encodeURIComponent(JSON.stringify(payload))}`;
+
+    const res = await fetch(url);
+    const result = await res.json();
+
+    // ✅ Mark uploaded rows
+    mappedData.forEach(r => {
+      if (r.valid && r.selected) {
+        r.status = "uploaded";
+      }
+    });
+
+    renderTable();
+
+    // ✅ Disable button after upload
+    document.querySelector(".submit-btn").disabled = true;
+
+    alert(`Uploaded: ${result.added}`);
+
+  } catch (err) {
+    console.error("Bulk Upload Error:", err);
+    alert("Upload failed");
+  }
+}
 
   renderTable();
 
@@ -178,6 +231,16 @@ function downloadSample() {
 
 function loadData() {
   const file = document.getElementById("fileInput").files[0];
+  // 🔥 get school fields from cached data
+  const currentSchool = schoolsData.find(s => s.school === school);
+
+  if (!currentSchool) {
+    alert("School config not found");
+    return;
+  }
+
+  // convert to array
+  schoolFields = currentSchool.fields.split(",").map(f => f.trim());
 
   if (!file) {
     alert("Please select file first");
