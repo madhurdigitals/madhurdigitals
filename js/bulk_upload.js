@@ -220,7 +220,7 @@ async function submitData() {
   // ✅ Disable button
   document.querySelector(".submit-btn").disabled = true;
 
-  alert(`Uploaded: ${result.added}`);
+ 
 
 
 // SAMPLE
