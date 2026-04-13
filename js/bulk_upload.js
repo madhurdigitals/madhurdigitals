@@ -122,18 +122,19 @@ let columnMap = {};
 
 function mapColumn(fieldKey, columnIndex) {
 
-  columnIndex = Number(columnIndex); // 🔥 FIX (important)
-
-  // remove duplicate mapping
-  for (let key in columnMap) {
-    if (columnMap[key] === columnIndex) {
-      delete columnMap[key];
-    }
-  }
-
-  if (columnIndex === "" || isNaN(columnIndex)) {
+  // ✅ handle ignore properly
+  if (columnIndex === "") {
     delete columnMap[fieldKey];
   } else {
+    columnIndex = Number(columnIndex);
+
+    // remove duplicate mapping
+    for (let key in columnMap) {
+      if (columnMap[key] === columnIndex) {
+        delete columnMap[key];
+      }
+    }
+
     columnMap[fieldKey] = columnIndex;
   }
 
@@ -475,7 +476,12 @@ function downloadExcel() {
 
 
 function autoMapField(header) {
-
+  // ignore columns that are likely serial numbers
+  // if (
+  //   ["sr_no", "serial_no", "s_no", "sno"].includes(normalizedHeader)
+  // ) {
+  //   return "";
+  // }
   const normalizedHeader = normalizeKey(header);
 
   // 🔥 1. Exact match with school fields
@@ -497,10 +503,7 @@ function autoMapField(header) {
   for (let f of schoolFields) {
     const key = normalizeKey(f);
 
-    if (
-      normalizedHeader.includes(key) ||
-      key.includes(normalizedHeader)
-    ) {
+    if (normalizedHeader.startsWith(key) || key.startsWith(normalizedHeader)) {
       return key;
     }
   }
