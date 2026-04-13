@@ -9,17 +9,25 @@ function normalizeKey(str) {
     .replace(/_+/g, "_");
 }
 const school = sessionStorage.getItem("school");
-document.addEventListener("DOMContentLoaded", function () {
+// document.addEventListener("DOMContentLoaded", function () {
+//   const fileInput = document.getElementById("fileInput");
+//   const loadBtn = document.getElementById("loadBtn");
+
+//   fileInput.addEventListener("change", function () {
+//     if (fileInput.files.length > 0) {
+//       loadBtn.style.display = "inline-block";
+//     }
+//   });
+// });
+
+function showLoadBtn() {
   const fileInput = document.getElementById("fileInput");
   const loadBtn = document.getElementById("loadBtn");
 
-  fileInput.addEventListener("change", function () {
-    if (fileInput.files.length > 0) {
-      loadBtn.style.display = "inline-block";
-    }
-  });
-});
-
+  if (fileInput.files.length > 0) {
+    loadBtn.style.display = "inline-block";
+  }
+}
 
 // READ FILE
 // document.getElementById("fileInput").addEventListener("change", handleFile);
