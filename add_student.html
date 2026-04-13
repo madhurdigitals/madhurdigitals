@@ -271,7 +271,7 @@ async function loadData() {
         <td>${s["Class"] || ""}</td>
         <td>${s["Section"] || ""}</td>
         <td>
-          <button class="edit-btn" onclick="editRecent(this)">Edit</button>
+          <button class="edit-btn" onclick="editRecent(this, event)">Edit</button>
           <button class="delete-btn" onclick="deleteRecent(this)">Delete</button>
         </td>
       </tr>
@@ -280,7 +280,7 @@ async function loadData() {
 
 
 async function editRecent(btn, e) {
-  e.stopPropagation();   // 🔥 VERY IMPORTANT
+  if (e) e.stopPropagation();   // ✅ safe check
 
   const row = btn.closest("tr");
   const student_id = row.children[0].innerText;
