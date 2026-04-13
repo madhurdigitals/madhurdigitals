@@ -362,25 +362,4 @@ function downloadExcel() {
   XLSX.writeFile(wb, fileName);
 }
 
-  // Prepare data
-  const exportData = mappedData
-  .filter(r => r.selected)
-  .map(r => ({
-    Name: r.name || "",
-    Class: r.class || "",
-    Section: r.section || "",
-    Roll: r.roll || "",
-    Phone: r.phone || "",
-    Address: r.address || ""
-  }));
-
-  // Create worksheet
-  const ws = XLSX.utils.json_to_sheet(exportData);
-
-  // Create workbook
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Students");
-
-  // Download file
-  XLSX.writeFile(wb, "students_export.xlsx");
 
