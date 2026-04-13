@@ -399,81 +399,81 @@ async function loadEditData(student_id) {
   container.innerHTML = html;
 }
 
-  const currentSchool = schools.find(s => s.school === school);
-  if (!currentSchool) return;
+  // const currentSchool = schools.find(s => s.school === school);
+  // if (!currentSchool) return;
 
-  const fields = currentSchool.fields.split(",");
+  // const fields = currentSchool.fields.split(",");
 
-  let html = `
-    <div class="school-header">
-      <h3>Edit Student</h3>
-      <span class="close-btn" onclick="closeEditPopup()">✖</span>
-    </div>
-  `;
+  // let html = `
+  //   <div class="school-header">
+  //     <h3>Edit Student</h3>
+  //     <span class="close-btn" onclick="closeEditPopup()">✖</span>
+  //   </div>
+  // `;
 
-  html += `
-    <div class="form-row">
-      <label>Student ID</label>
-      <input value="${student_id}" disabled>
-    </div>
-  `;
+  // html += `
+  //   <div class="form-row">
+  //     <label>Student ID</label>
+  //     <input value="${student_id}" disabled>
+  //   </div>
+  // `;
 
-  fields.forEach((f, index) => {
-    const original = f.trim();
-    const key = normalizeKey(original);
+  // fields.forEach((f, index) => {
+  //   const original = f.trim();
+  //   const key = normalizeKey(original);
 
-    let value = row.children[index + 1]?.innerText || "";
+  //   let value = row.children[index + 1]?.innerText || "";
 
-    html += `<div class="form-row"><label>${original}</label>`;
+  //   html += `<div class="form-row"><label>${original}</label>`;
 
-    // CLASS DROPDOWN
-    if (key === "class") {
-      html += `
-        <select id="edit_${key}">
-          <option value="">Select Class</option>
-          ${CONFIG.classes.map(c =>
-            `<option value="${c}" ${c == value ? "selected" : ""}>${c}</option>`
-          ).join("")}
-        </select>
-      `;
-    }
+  //   // CLASS DROPDOWN
+  //   if (key === "class") {
+  //     html += `
+  //       <select id="edit_${key}">
+  //         <option value="">Select Class</option>
+  //         ${CONFIG.classes.map(c =>
+  //           `<option value="${c}" ${c == value ? "selected" : ""}>${c}</option>`
+  //         ).join("")}
+  //       </select>
+  //     `;
+  //   }
 
-    // SECTION DROPDOWN
-    else if (key === "section") {
-      html += `
-        <select id="edit_${key}">
-          <option value="">Select Section</option>
-          ${CONFIG.sections.map(s =>
-            `<option value="${s}" ${s == value ? "selected" : ""}>${s}</option>`
-          ).join("")}
-        </select>
-      `;
-    }
+  //   // SECTION DROPDOWN
+  //   else if (key === "section") {
+  //     html += `
+  //       <select id="edit_${key}">
+  //         <option value="">Select Section</option>
+  //         ${CONFIG.sections.map(s =>
+  //           `<option value="${s}" ${s == value ? "selected" : ""}>${s}</option>`
+  //         ).join("")}
+  //       </select>
+  //     `;
+  //   }
 
-    // NORMAL INPUT
-    else {
-      html += `<input id="edit_${key}" value="${value}">`;
-    }
+  //   // NORMAL INPUT
+  //   else {
+  //     html += `<input id="edit_${key}" value="${value}">`;
+  //   }
 
-    html += `</div>`;
-  });
+  //   html += `</div>`;
+  // });
 
-  html += `
-    <br>
-    <button class="submit-btn" onclick="saveEdit(${student_id})">Save</button>
-    <button class="clear-btn" onclick="closeEditPopup()">Cancel</button>
-  `;
+  // html += `
+  //   <br>
+  //   <button class="submit-btn" onclick="saveEdit(${student_id})">Save</button>
+  //   <button class="clear-btn" onclick="closeEditPopup()">Cancel</button>
+  // `;
 
-  container.innerHTML = html;
+  // container.innerHTML = html;
 
-  document.getElementById("editPopup").classList.add("active");
+  // document.getElementById("editPopup").classList.add("active");
 
-  setTimeout(() => {
-    document.getElementById("editPopup").classList.add("active");
-  }, 0);
+  // setTimeout(() => {
+  //   document.getElementById("editPopup").classList.add("active");
+  // }, 0);
   
-  // 🔥 BACKGROUND SYNC (latest data)
-  syncLatestData(student_id);
+  // // 🔥 BACKGROUND SYNC (latest data)
+  // syncLatestData(student_id);
 
 async function saveEdit(student_id) {
   let params = new URLSearchParams({
