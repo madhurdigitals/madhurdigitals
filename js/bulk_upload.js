@@ -491,7 +491,7 @@ function validateMapping() {
   const required = ["name", "class"];
 
   for (let r of required) {
-    if (!Object.values(columnMap).includes(r)) {
+    if (columnMap[r] === undefined) {   // ✅ FIXED
       alert(`Missing required field mapping: ${r}`);
       return false;
     }
