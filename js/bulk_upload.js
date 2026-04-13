@@ -628,28 +628,49 @@ function validateMapping() {
 }
 
 function formatDOB(value) {
-
   if (!value) return "";
+
+  // 🔥 Case 1: Excel numeric date (VERY COMMON)
+  if (typeof value === "number") {
+    const date = XLSX.SSF.parse_date_code(value);
+    if (!date) return "";
+
+    const day = String(date.d).padStart(2, "0");
+    const month = String(date.m).padStart(2, "0");
+    const year = date.y;
+
+    return `${day}/${month}/${year}`;
+  }
 
   let str = value.toString().trim();
 
-  // replace dash with slash
-  str = str.replace(/-/g, "/");
+  // 🔥 Case 2: ISO format (2021-12-06T18:30:00.000Z)
+  if (str.includes("T")) {
+    const d = new Date(str);
 
-  // split
+    if (isNaN(d)) return "";
+
+    return `${String(d.getDate()).padStart(2, "0")}/${
+      String(d.getMonth() + 1).padStart(2, "0")
+    }/${d.getFullYear()}`;
+  }
+
+  // 🔥 Case 3: YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const [y, m, d] = str.split("-");
+    return `${d}/${m}/${y}`;
+  }
+
+  // 🔥 Case 4: DD/MM/YYYY or DD-MM-YYYY
+  str = str.replace(/-/g, "/");
   let parts = str.split("/");
 
   if (parts.length !== 3) return str;
 
   let [day, month, year] = parts;
 
-  // pad single digit
   if (day.length === 1) day = "0" + day;
   if (month.length === 1) month = "0" + month;
-
-  // basic validation
-  if (year.length !== 4) return str;
-  if (Number(year) > 2100) return "";  // ❌ reject invalid like 9999
 
   return `${day}/${month}/${year}`;
 }
