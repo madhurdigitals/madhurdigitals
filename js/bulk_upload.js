@@ -60,20 +60,27 @@ function renderMapping() {
     key: normalizeKey(f)
   }));
 
-  // 🔹 1. Render dropdown UI
   document.getElementById("mappingBox").innerHTML =
-    headers.map((h, i) => {
+    fields.map(f => {
 
-      const auto = autoMapField(h);
+      // 🔥 auto detect best column
+      let autoIndex = "";
+
+      headers.forEach((h, i) => {
+        const mapped = autoMapField(h);
+        if (mapped === f.key && autoIndex === "") {
+          autoIndex = i;
+        }
+      });
 
       return `
         <div>
-          ${h} →
-          <select onchange="mapColumn(${i}, this.value)">
+          ${f.original} →
+          <select onchange="mapColumn('${f.key}', this.value)">
             <option value="">Ignore</option>
-            ${fields.map(f => `
-              <option value="${f.key}" ${auto === f.key ? "selected" : ""}>
-                ${f.original}
+            ${headers.map((h, i) => `
+              <option value="${i}" ${i == autoIndex ? "selected" : ""}>
+                ${h}
               </option>
             `).join("")}
           </select>
@@ -81,23 +88,33 @@ function renderMapping() {
       `;
     }).join("");
 
-  // 🔥 2. ADD STEP 4 HERE (IMPORTANT)
-  headers.forEach((h, i) => {
-    const auto = autoMapField(h);
-    if (auto) {
-      columnMap[i] = auto;
-    }
+  // 🔥 APPLY AUTO MAP TO columnMap
+  fields.forEach(f => {
+    headers.forEach((h, i) => {
+      const mapped = autoMapField(h);
+      if (mapped === f.key && columnMap[f.key] === undefined) {
+        columnMap[f.key] = i;
+      }
+    });
   });
 
-  // 🔥 3. OPTIONAL (BUT RECOMMENDED)
   buildTable();
 }
 
 // STORE MAPPING
 let columnMap = {};
 
-function mapColumn(index, field) {
-  columnMap[index] = field;
+function mapColumn(fieldKey, columnIndex) {
+
+  // 🔥 remove duplicate mapping (strict one-to-one)
+  for (let key in columnMap) {
+    if (columnMap[key] == columnIndex) {
+      delete columnMap[key];
+    }
+  }
+
+  columnMap[fieldKey] = columnIndex;
+
   buildTable();
 }
 
@@ -108,12 +125,14 @@ function buildTable() {
 
     let obj = {};
 
-    Object.keys(columnMap).forEach(i => {
-      const field = columnMap[i];
-      if (field) obj[field] = row[i];
+    schoolFields.forEach(f => {
+      const key = normalizeKey(f);
+      const colIndex = columnMap[key];
+
+      obj[key] = colIndex !== undefined ? row[colIndex] : "";
     });
 
-    // ✅ VALIDATION (YOUR RULE)
+    // ✅ validation
     obj.valid = obj.name && obj.class;
 
     obj.selected = obj.valid;
