@@ -221,7 +221,7 @@ async function submitData() {
   document.querySelector(".submit-btn").disabled = true;
 
   alert(`Uploaded: ${result.added}`);
-}
+
 
 // SAMPLE
 function downloadSample() {
