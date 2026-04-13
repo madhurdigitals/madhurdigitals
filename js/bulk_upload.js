@@ -177,7 +177,14 @@ function buildTable() {
       const key = normalizeKey(f);
       const colIndex = columnMap[key];
 
-      obj[key] = colIndex !== undefined ? row[colIndex] : "";
+      let value = colIndex !== undefined ? row[colIndex] : "";
+
+      // ✅ Apply DOB formatting
+      if (key === "dob") {
+        value = formatDOB(value);
+      }
+
+      obj[key] = value;
     });
 
     // ✅ FIXED → boolean
@@ -618,4 +625,31 @@ function validateMapping() {
   }
 
   return true;
+}
+
+function formatDOB(value) {
+
+  if (!value) return "";
+
+  let str = value.toString().trim();
+
+  // replace dash with slash
+  str = str.replace(/-/g, "/");
+
+  // split
+  let parts = str.split("/");
+
+  if (parts.length !== 3) return str;
+
+  let [day, month, year] = parts;
+
+  // pad single digit
+  if (day.length === 1) day = "0" + day;
+  if (month.length === 1) month = "0" + month;
+
+  // basic validation
+  if (year.length !== 4) return str;
+  if (Number(year) > 2100) return "";  // ❌ reject invalid like 9999
+
+  return `${day}/${month}/${year}`;
 }
