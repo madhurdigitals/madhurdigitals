@@ -294,14 +294,110 @@ async function editRecent(btn) {
 function openEditPopup(student_id, row) {
   const container = document.getElementById("editModalContent");
 
-  const raw = schoolsData;
+  // ✅ STEP 1: show loading UI
+  container.innerHTML = `
+    <div class="school-header">
+      <h3>Edit Student</h3>
+      <span class="close-btn" onclick="closeEditPopup()">✖</span>
+    </div>
+
+    <p style="text-align:center; margin-top:20px;">
+      ⏳ Loading student data...
+    </p>
+  `;
+
+  document.getElementById("editPopup").classList.add("active");
+
+  // ✅ STEP 2: fetch data
+  loadEditData(student_id);
+}
+
+async function loadEditData(student_id) {
+
+  const container = document.getElementById("editModalContent");
+
+  const raw = await getStudents(school);
   const headers = raw[0];
 
-  const schools = raw.slice(1).map(r => {
+  const students = raw.slice(1).map(r => {
     let obj = {};
     headers.forEach((h, i) => obj[h] = r[i]);
     return obj;
   });
+
+  const student = students.find(s => s["Student_ID"] == student_id);
+  if (!student) return;
+
+  const schoolRaw = schoolsData;
+  const schoolHeaders = schoolRaw[0];
+
+  const schools = schoolRaw.slice(1).map(r => {
+    let obj = {};
+    schoolHeaders.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+
+  const currentSchool = schools.find(s => s.school === school);
+  const fields = currentSchool.fields.split(",");
+
+  let html = `
+    <div class="school-header">
+      <h3>Edit Student</h3>
+      <span class="close-btn" onclick="closeEditPopup()">✖</span>
+    </div>
+  `;
+
+  // ✅ Student ID
+  html += `
+    <div class="form-row">
+      <label>Student ID</label>
+      <input value="${student_id}" disabled>
+    </div>
+  `;
+
+  fields.forEach(f => {
+    const original = f.trim();
+    const key = normalizeKey(original);
+
+    let value = student[original] || "";
+
+    html += `<div class="form-row"><label>${original}</label>`;
+
+    if (key === "class") {
+      html += `
+        <select id="edit_${key}">
+          ${CONFIG.classes.map(c =>
+            `<option value="${c}" ${c == value ? "selected" : ""}>${c}</option>`
+          ).join("")}
+        </select>
+      `;
+    }
+
+    else if (key === "section") {
+      html += `
+        <select id="edit_${key}">
+          ${CONFIG.sections.map(s =>
+            `<option value="${s}" ${s == value ? "selected" : ""}>${s}</option>`
+          ).join("")}
+        </select>
+      `;
+    }
+
+    else {
+      html += `<input id="edit_${key}" value="${value}">`;
+    }
+
+    html += `</div>`;
+  });
+
+  html += `
+    <br>
+    <button class="submit-btn" onclick="saveEdit(${student_id})">Save</button>
+    <button class="clear-btn" onclick="closeEditPopup()">Cancel</button>
+  `;
+
+  container.innerHTML = html;
+}
 
   const currentSchool = schools.find(s => s.school === school);
   if (!currentSchool) return;
@@ -312,6 +408,13 @@ function openEditPopup(student_id, row) {
     <div class="school-header">
       <h3>Edit Student</h3>
       <span class="close-btn" onclick="closeEditPopup()">✖</span>
+    </div>
+  `;
+
+  html += `
+    <div class="form-row">
+      <label>Student ID</label>
+      <input value="${student_id}" disabled>
     </div>
   `;
 
