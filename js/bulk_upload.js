@@ -157,7 +157,9 @@ function renderTable() {
 
   // 🔥 dynamic headers
   const headersHtml = schoolFields.map(f => `<th>${f}</th>`).join("");
-
+  if (columnMap[key] === undefined) {
+    return `<td style="background:#eee; color:#999">IGNORED</td>`;
+  }
   document.getElementById("tableHead").innerHTML = `
     <tr>
       <th><input type="checkbox" onclick="selectAll(this)"></th>
@@ -173,7 +175,7 @@ function renderTable() {
 
         return `
           <td contenteditable="true"
-              oninput="editCell(${i}, '${key}', this.innerText)">
+              oninput="editCell(${i}, '${key}', this.innerText, this)">
               ${r[key] || ''}
           </td>
         `;
@@ -193,11 +195,27 @@ function renderTable() {
 }
 
 // EDIT
-function editCell(i, field, value) {
+function editCell(i, field, value, el) {
+
+  // ✅ update data
   mappedData[i][field] = value;
-  mappedData[i].valid = mappedData[i].name && mappedData[i].class;
-  renderTable(); 
-  enableSubmit(); 
+
+  // ✅ validation
+  mappedData[i].valid =
+    mappedData[i].name?.toString().trim() &&
+    mappedData[i].class?.toString().trim();
+
+  // ✅ mark as edited
+  mappedData[i].edited = true;
+
+  // ✅ update row color dynamically
+  const row = el.parentElement;
+  row.style.background = getRowColor(mappedData[i]);
+
+  // ✅ highlight edited row (blue border)
+  row.style.outline = "2px solid #007bff";
+
+  enableSubmit();
 }
 
 // SELECT
@@ -231,7 +249,11 @@ async function submitData() {
 
     schoolFields.forEach(f => {
       const key = normalizeKey(f);
-      obj[key] = r[key] || "";
+
+      // ✅ ONLY include mapped fields
+      if (columnMap[key] !== undefined) {
+        obj[key] = r[key] || "";
+      }
     });
 
     return obj;
@@ -357,6 +379,10 @@ function getRowColor(r) {
 
   if (!r.valid) {
     return "#ffcccc";   // red
+  }
+
+  if (r.edited) {
+    return "#e6f0ff";   // 🔵 light blue (edited)
   }
 
   if (!r.selected) {
