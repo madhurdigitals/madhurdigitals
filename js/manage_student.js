@@ -68,8 +68,8 @@ function renderTable(data, headers) {
       }).join("")}
 
       <td>
-        <button onclick="openEdit(${s.student_ID})">Edit</button>
-        <button onclick="deleteStudent(${s.student_ID})">Delete</button>
+        <button onclick="openEdit('${s["Student_ID"]}')">Edit</button>
+        <button onclick="deleteStudent('${s["Student_ID"]}')">Delete</button>
       </td>
     </tr>
   `).join("");
@@ -124,7 +124,7 @@ async function deleteStudent(id) {
 }
 
 function openEdit(id) {
-  const student = students.find(s => s.student_ID == id);
+  const student = students.find(s => s["Student_ID"] == id);
 
   const container = document.getElementById("editPopup");
 

@@ -73,7 +73,7 @@
 
 <div id="schoolBox" class="school-box">
 
-  <div>
+  <div class="modal">
     <div class="school-header">
       <h3>Select School</h3>
       <span class="close-btn" onclick="hideSchoolSelector()">✖</span>
@@ -268,11 +268,46 @@ async function loadData() {
         <td>${s["Class"] || ""}</td>
         <td>${s["Section"] || ""}</td>
         <td>
-          <button class="edit-btn">Edit</button>
-          <button class="delete-btn">Delete</button>
+          <button onclick="editRecent(this)">Edit</button>
+          <button onclick="deleteRecent(this)">Delete</button>
         </td>
       </tr>
     `).join("");
+}
+
+
+function editRecent(btn) {
+  const row = btn.closest("tr");
+
+  const student_id = row.children[0].innerText;
+
+  if (!student_id) {
+    alert("Please wait... ID not generated yet");
+    return;
+  }
+
+  // redirect to manage page (best UX)
+  window.location.href = `manage_student.html?edit=${student_id}`;
+}
+
+async function deleteRecent(btn) {
+  const row = btn.closest("tr");
+  const student_id = row.children[0].innerText;
+
+  if (!student_id) {
+    alert("Please wait... ID not generated yet");
+    return;
+  }
+
+  if (!confirm("Delete this student?")) return;
+
+  const url = `${API_URL}?action=deleteStudent&school=${school}&student_id=${student_id}`;
+
+  await fetch(url);
+
+  row.remove();
+
+  showToast("Deleted successfully");
 }
 
 /* Load Schools + Pre-select */
@@ -339,12 +374,11 @@ document.addEventListener("keydown", function(e) {
 // Click outside
 document.addEventListener("click", function(e) {
   const box = document.getElementById("schoolBox");
-  const button = e.target.closest("button");
+  const modal = box.querySelector(".modal");
 
   if (
-    box.style.display === "block" &&
-    !box.contains(e.target) &&
-    !button
+    box.classList.contains("active") &&
+    !modal.contains(e.target)
   ) {
     hideSchoolSelector();
   }
