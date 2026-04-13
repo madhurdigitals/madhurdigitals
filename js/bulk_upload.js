@@ -2,6 +2,29 @@ let rawData = [];
 let mappedData = [];
 let headers = [];
 let schoolFields = [];
+
+const FIELD_ALIASES = {
+  name: ["name", "student_name", "student", "full_name"],
+
+  father_s_name: [
+    "father_name",
+    "father",
+    "father_s_name",
+    "guardian_name"
+  ],
+
+  class: ["class", "std", "standard", "grade"],
+
+  section: ["section", "sec", "division"],
+
+  dob: ["dob", "date_of_birth", "birth_date"],
+
+  phone: ["phone", "mobile", "contact", "phone_number"],
+
+  address: ["address", "addr", "location", "residence"]
+};
+
+
 function normalizeKey(str) {
   return str
     .toLowerCase()
@@ -9,16 +32,7 @@ function normalizeKey(str) {
     .replace(/_+/g, "_");
 }
 const school = sessionStorage.getItem("school");
-// document.addEventListener("DOMContentLoaded", function () {
-//   const fileInput = document.getElementById("fileInput");
-//   const loadBtn = document.getElementById("loadBtn");
 
-//   fileInput.addEventListener("change", function () {
-//     if (fileInput.files.length > 0) {
-//       loadBtn.style.display = "inline-block";
-//     }
-//   });
-// });
 
 function showLoadBtn() {
   const fileInput = document.getElementById("fileInput");
@@ -157,9 +171,7 @@ function renderTable() {
 
   // 🔥 dynamic headers
   const headersHtml = schoolFields.map(f => `<th>${f}</th>`).join("");
-  if (columnMap[key] === undefined) {
-    return `<td style="background:#eee; color:#999">IGNORED</td>`;
-  }
+  
   document.getElementById("tableHead").innerHTML = `
     <tr>
       <th><input type="checkbox" onclick="selectAll(this)"></th>
@@ -172,6 +184,11 @@ function renderTable() {
 
       const cells = schoolFields.map(f => {
         const key = normalizeKey(f);
+
+        // ✅ IGNORE UI FIX
+        if (columnMap[key] === undefined) {
+          return `<td style="background:#eee; color:#999">Ignored</td>`;
+        }
 
         return `
           <td contenteditable="true"
@@ -456,26 +473,6 @@ function downloadExcel() {
   XLSX.writeFile(wb, fileName);
 }
 
-const FIELD_ALIASES = {
-  name: ["name", "student_name", "student", "full_name"],
-
-  father_s_name: [
-    "father_name",
-    "father",
-    "father_s_name",
-    "guardian_name"
-  ],
-
-  class: ["class", "std", "standard", "grade"],
-
-  section: ["section", "sec", "division"],
-
-  dob: ["dob", "date_of_birth", "birth_date"],
-
-  phone: ["phone", "mobile", "contact", "phone_number"],
-
-  address: ["address", "addr", "location", "residence"]
-};
 
 function autoMapField(header) {
 
