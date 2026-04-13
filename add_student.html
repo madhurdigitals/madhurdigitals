@@ -88,6 +88,9 @@
   </div>
 
 </div>
+<div id="editPopup" class="school-box">
+  <div class="modal" id="editModalContent"></div>
+</div>
 
 
 <script>
@@ -268,17 +271,16 @@ async function loadData() {
         <td>${s["Class"] || ""}</td>
         <td>${s["Section"] || ""}</td>
         <td>
-          <button onclick="editRecent(this)">Edit</button>
-          <button onclick="deleteRecent(this)">Delete</button>
+          <button class="edit-btn" onclick="editRecent(this)">Edit</button>
+          <button class="delete-btn" onclick="deleteRecent(this)">Delete</button>
         </td>
       </tr>
     `).join("");
 }
 
 
-function editRecent(btn) {
+async function editRecent(btn) {
   const row = btn.closest("tr");
-
   const student_id = row.children[0].innerText;
 
   if (!student_id) {
@@ -286,8 +288,152 @@ function editRecent(btn) {
     return;
   }
 
-  // redirect to manage page (best UX)
-  window.location.href = `manage_student.html?edit=${student_id}`;
+  openEditPopup(student_id, row);
+}
+
+function openEditPopup(student_id, row) {
+  const container = document.getElementById("editModalContent");
+
+  const raw = schoolsData;
+  const headers = raw[0];
+
+  const schools = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+
+  const currentSchool = schools.find(s => s.school === school);
+  if (!currentSchool) return;
+
+  const fields = currentSchool.fields.split(",");
+
+  let html = `
+    <div class="school-header">
+      <h3>Edit Student</h3>
+      <span class="close-btn" onclick="closeEditPopup()">✖</span>
+    </div>
+  `;
+
+  fields.forEach((f, index) => {
+    const original = f.trim();
+    const key = normalizeKey(original);
+
+    let value = row.children[index + 1]?.innerText || "";
+
+    html += `<div class="form-row"><label>${original}</label>`;
+
+    // CLASS DROPDOWN
+    if (key === "class") {
+      html += `
+        <select id="edit_${key}">
+          <option value="">Select Class</option>
+          ${CONFIG.classes.map(c =>
+            `<option value="${c}" ${c == value ? "selected" : ""}>${c}</option>`
+          ).join("")}
+        </select>
+      `;
+    }
+
+    // SECTION DROPDOWN
+    else if (key === "section") {
+      html += `
+        <select id="edit_${key}">
+          <option value="">Select Section</option>
+          ${CONFIG.sections.map(s =>
+            `<option value="${s}" ${s == value ? "selected" : ""}>${s}</option>`
+          ).join("")}
+        </select>
+      `;
+    }
+
+    // NORMAL INPUT
+    else {
+      html += `<input id="edit_${key}" value="${value}">`;
+    }
+
+    html += `</div>`;
+  });
+
+  html += `
+    <br>
+    <button class="submit-btn" onclick="saveEdit(${student_id})">Save</button>
+    <button class="clear-btn" onclick="closeEditPopup()">Cancel</button>
+  `;
+
+  container.innerHTML = html;
+
+  document.getElementById("editPopup").classList.add("active");
+
+  // 🔥 BACKGROUND SYNC (latest data)
+  syncLatestData(student_id);
+}
+
+async function saveEdit(student_id) {
+  let params = new URLSearchParams({
+    action: "updateStudent",
+    school: school,
+    student_id: student_id
+  });
+
+  const raw = schoolsData;
+  const headers = raw[0];
+
+  const schools = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+
+  const currentSchool = schools.find(s => s.school === school);
+  const fields = currentSchool.fields.split(",");
+
+  fields.forEach(f => {
+    const key = normalizeKey(f.trim());
+    const el = document.getElementById(`edit_${key}`);
+
+    if (el) {
+      params.append(key, el.value || "");
+    }
+  });
+
+  await fetch(`${API_URL}?${params.toString()}`);
+
+  showToast("Updated successfully");
+
+  closeEditPopup();
+
+  loadData(); // refresh table
+}
+
+function closeEditPopup() {
+  document.getElementById("editPopup").classList.remove("active");
+}
+
+async function syncLatestData(student_id) {
+  try {
+    const raw = await getStudents(school);
+    const headers = raw[0];
+
+    const students = raw.slice(1).map(r => {
+      let obj = {};
+      headers.forEach((h, i) => obj[h] = r[i]);
+      return obj;
+    });
+
+    const student = students.find(s => s["Student_ID"] == student_id);
+    if (!student) return;
+
+    Object.keys(student).forEach(key => {
+      const input = document.getElementById(`edit_${normalizeKey(key)}`);
+      if (input) {
+        input.value = student[key] || "";
+      }
+    });
+
+  } catch (err) {
+    console.warn("Sync failed", err);
+  }
 }
 
 async function deleteRecent(btn) {
@@ -373,14 +519,25 @@ document.addEventListener("keydown", function(e) {
 
 // Click outside
 document.addEventListener("click", function(e) {
-  const box = document.getElementById("schoolBox");
-  const modal = box.querySelector(".modal");
+  const schoolBox = document.getElementById("schoolBox");
+  const editBox = document.getElementById("editPopup");
 
-  if (
-    box.classList.contains("active") &&
-    !modal.contains(e.target)
-  ) {
-    hideSchoolSelector();
+  // SCHOOL MODAL
+  if (schoolBox.classList.contains("active")) {
+    const modal = schoolBox.querySelector(".modal");
+
+    if (!modal.contains(e.target) && !e.target.closest("button")) {
+      hideSchoolSelector();
+    }
+  }
+
+  // EDIT MODAL
+  if (editBox.classList.contains("active")) {
+    const modal = editBox.querySelector(".modal");
+
+    if (!modal.contains(e.target)) {
+      closeEditPopup();
+    }
   }
 });
 
@@ -457,8 +614,8 @@ function addToRecentTable(data) {
       <td>${data.class || ""}</td>
       <td>${data.section || ""}</td>
       <td>
-        <button class="edit-btn">Edit</button>
-        <button class="delete-btn">Delete</button>
+        <button class="edit-btn" onclick="editRecent(this)">Edit</button>
+        <button class="delete-btn" onclick="deleteRecent(this)">Delete</button>
       </td>
     </tr>
   `;
