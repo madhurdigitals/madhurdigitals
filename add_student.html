@@ -251,6 +251,7 @@ async function loadData() {
   const raw = await getStudents(school);
 
   const headers = raw[0];
+
   const students = raw.slice(1).map(r => {
     let obj = {};
     headers.forEach((h, i) => obj[h] = r[i]);
@@ -262,7 +263,7 @@ async function loadData() {
   document.getElementById("recentTable").innerHTML =
     last3.map(s => `
       <tr>
-        <td>${s["student_ID"] || ""}</td>
+        <td>${s["Student_ID"] || ""}</td>
         <td>${s["Name"] || ""}</td>
         <td>${s["Class"] || ""}</td>
         <td>${s["Section"] || ""}</td>
