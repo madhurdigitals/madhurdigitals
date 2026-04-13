@@ -188,7 +188,8 @@ function renderTable() {
 
         // ✅ IGNORE UI FIX
         if (columnMap[key] === undefined) {
-          return `<td style="background:#eee; color:#999">Ignored</td>`;
+          return `<td>Ignored</td>`;
+          // return `<td style="background:#eee; color:#999">Ignored</td>`;
         }
 
         return `
