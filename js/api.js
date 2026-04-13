@@ -10,14 +10,8 @@ async function addStudent(data) {
     const params = new URLSearchParams({
       action: "addStudent",
       school: data.school,
-      school_id: data.school_id, 
-      name: data.name,
-      class: data.class,
-      section: data.section,
-      roll: data.roll,
-      phone: data.phone,
-      
-      address: data.address
+      school_id: data.school_id,
+      ...data   // 🔥 THIS IS THE MAGIC LINE
     });
 
     const url = `${API_URL}?${params.toString()}`;

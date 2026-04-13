@@ -107,6 +107,13 @@ function showToast(msg) {
   setTimeout(() => t.style.display = "none", 2000);
 }
 
+function normalizeKey(str) {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "_")
+    .replace(/_+/g, "_");
+}
+
 /* CLEAR */
 function clearForm() {
   const inputs = document.querySelectorAll("#dynamicForm input, #dynamicForm select");
@@ -160,18 +167,19 @@ async function submitStudent() {
   let valid = true;
 
   fields.forEach(f => {
-    f = f.trim().toLowerCase();
+    const original = f.trim();
+    const key = normalizeKey(original);
 
-    const el = document.getElementById(f);
+    const el = document.getElementById(key);
     if (!el) return;
 
     const value = el.value;
 
-    if (!value && (f === "name" || f === "class" || f === "section")) {
+    if (!value && (key === "name" || key === "class" || key === "section")) {
       valid = false;
     }
 
-    data[f] = value || "";   // 🔥 FIX undefined issue
+    data[key] = value || "";
   });
 
   if (!valid) {
@@ -354,18 +362,19 @@ async function renderDynamicForm() {
   container.innerHTML = "";
 
   fields.forEach(f => {
-    f = f.trim().toLowerCase();
+    const original = f.trim();
+    const key = normalizeKey(original);
 
     let html = `
       <div class="form-row">
-        <label>${f.toUpperCase()}</label>
-        <input id="${f}">
+        <label>${original}</label>
+        <input id="${key}">
       </div>
     `;
 
     // special case for class and section dropdown
     // 🔥 CLASS DROPDOWN
-    if (f === "class") {
+    if (key === "class") {
       html = `
         <div class="form-row">
           <label>Class</label>
@@ -378,7 +387,7 @@ async function renderDynamicForm() {
     }
 
     // 🔥 SECTION DROPDOWN
-    else if (f === "section") {
+    else if (key === "section") {
       html = `
         <div class="form-row">
           <label>Section</label>
@@ -398,9 +407,14 @@ function addToRecentTable(data) {
 
   const row = `
     <tr>
+      <td>${data.student_id || ""}</td>
       <td>${data.name || ""}</td>
       <td>${data.class || ""}</td>
       <td>${data.section || ""}</td>
+      <td>
+        <button class="edit-btn">Edit</button>
+        <button class="delete-btn">Delete</button>
+      </td>
     </tr>
   `;
 
