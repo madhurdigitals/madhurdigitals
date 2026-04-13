@@ -365,6 +365,10 @@ function openEditPopup(student_id, row) {
 
   document.getElementById("editPopup").classList.add("active");
 
+  setTimeout(() => {
+    document.getElementById("editPopup").classList.add("active");
+  }, 0);
+  
   // 🔥 BACKGROUND SYNC (latest data)
   syncLatestData(student_id);
 }
@@ -526,7 +530,7 @@ document.addEventListener("click", function(e) {
   if (schoolBox.classList.contains("active")) {
     const modal = schoolBox.querySelector(".modal");
 
-    if (!modal.contains(e.target) && !e.target.closest("button")) {
+    if (!modal.contains(e.target)) {
       hideSchoolSelector();
     }
   }
