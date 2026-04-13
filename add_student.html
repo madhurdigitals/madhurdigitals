@@ -279,7 +279,9 @@ async function loadData() {
 }
 
 
-async function editRecent(btn) {
+async function editRecent(btn, e) {
+  e.stopPropagation();   // 🔥 VERY IMPORTANT
+
   const row = btn.closest("tr");
   const student_id = row.children[0].innerText;
 
@@ -720,7 +722,7 @@ function addToRecentTable(data) {
       <td>${data.class || ""}</td>
       <td>${data.section || ""}</td>
       <td>
-        <button class="edit-btn" onclick="editRecent(this)">Edit</button>
+        <button class="edit-btn" onclick="editRecent(this, event)">Edit</button>
         <button class="delete-btn" onclick="deleteRecent(this)">Delete</button>
       </td>
     </tr>
