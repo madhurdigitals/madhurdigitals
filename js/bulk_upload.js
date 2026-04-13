@@ -146,7 +146,6 @@ function buildTable() {
 
   mappedData = rawData.map((row, i) => {
 
-    // 🔥 preserve old row data (VERY IMPORTANT)
     let existing = mappedData[i] || {};
 
     let obj = {};
@@ -158,21 +157,19 @@ function buildTable() {
       obj[key] = colIndex !== undefined ? row[colIndex] : "";
     });
 
-    // ✅ validation
-    obj.valid =
+    // ✅ FIXED → boolean
+    obj.valid = !!(
       obj.name?.toString().trim() &&
-      obj.class?.toString().trim();
+      obj.class?.toString().trim()
+    );
 
-    // ✅ preserve selection (MAIN FIX)
+    // ✅ FIXED → strict boolean
     obj.selected =
       existing.selected !== undefined
-        ? existing.selected
-        : obj.valid;
+        ? existing.selected === true
+        : obj.valid === true;
 
-    // ✅ preserve status
     obj.status = existing.status || "pending";
-
-    // ✅ preserve edited flag
     obj.edited = existing.edited || false;
 
     return obj;
@@ -218,7 +215,7 @@ function renderTable() {
         <tr style="background: ${getRowColor(r)}">
           <td>
             <input type="checkbox"
-              ${r.selected ? 'checked' : ''}
+              ${r.selected === true ? 'checked' : ''}
               onchange="toggleRow(${i}, this.checked)">
           </td>
           ${cells}
