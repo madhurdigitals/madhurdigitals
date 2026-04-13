@@ -190,12 +190,22 @@ async function submitStudent() {
 
   showToast("Student Added");
 
-  // ⚡ instant UI first
+  // ⚡ 1. Show instantly (without ID)
   addToRecentTable(data);
   clearForm();
 
-  // 🚀 backend runs in background
-  addStudent(data);
+  // 🚀 2. Call backend in background
+  addStudent(data).then(res => {
+    if (res && res.student_id) {
+
+      // ✅ update first row with real ID
+      const firstRow = document.querySelector("#recentTable tr");
+
+      if (firstRow) {
+        firstRow.children[0].innerText = res.student_id;
+      }
+    }
+  });
   
 
   isSubmitting = false;   // ✅ unlock
