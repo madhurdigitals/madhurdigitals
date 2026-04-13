@@ -3,6 +3,29 @@ let mappedData = [];
 let headers = [];
 let schoolFields = [];
 
+document.addEventListener("DOMContentLoaded", async () => {
+
+  const school = sessionStorage.getItem("school");
+
+  if (!school) {
+    alert("No school selected");
+    return;
+  }
+
+  await loadSchoolsData();
+
+  const currentSchool = schoolsData.find(s => s.school === school);
+
+  if (!currentSchool) {
+    alert("School config not found");
+    return;
+  }
+
+  schoolFields = currentSchool.fields.split(",").map(f => f.trim());
+
+  console.log("✅ School Fields Loaded:", schoolFields);
+});
+
 const FIELD_ALIASES = {
   name: ["name", "student_name", "student", "full_name"],
 
