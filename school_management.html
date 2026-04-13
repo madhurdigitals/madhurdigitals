@@ -211,6 +211,14 @@ async function updateSchoolData() {
   }
 }
 
+async function updateSchool(data) {
+  const url = `${API_URL}?action=updateSchool`;
+
+  const params = new URLSearchParams(data);
+
+  const res = await fetch(url + "&" + params.toString());
+  return res.json();
+}
 /* DELETE */
 async function deleteSchoolData(id) {
   if (!confirm("⚠️ This will delete all student data of this school. Continue?")) return;
