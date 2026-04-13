@@ -5,14 +5,14 @@ body {
 }
 
 /* NAV */
-/* NAVBAR */
 nav {
-  background: white;
+  background: #0d6efd;
+  color: white;
   padding: 12px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  flex-wrap: wrap;
 }
 
 .logo {
@@ -28,49 +28,23 @@ nav {
 .title-text {
   font-weight: bold;
   font-size: 18px;
-  color: #0d6efd;
 }
 
 .school-name {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 14px;
 }
 
 .nav-actions button {
   margin-left: 10px;
-  padding: 7px 14px;
-  border: 1px solid #0d6efd;
-  background: transparent;
-  color: #0d6efd;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
-  transition: 0.3s;
-}
-
-.nav-actions button:hover {
-  background: #0d6efd;
-  color: white;
-}
-
-/* HEADING */
-.heading-wrapper {
-  text-align: center;
-  margin-top: 15px;
-}
-
-.heading-badge {
-  display: inline-block;
-  padding: 8px 18px;
-  background: rgba(13, 110, 253, 0.1);
-  color: #0d6efd;
-  border-radius: 20px;
-  font-weight: 600;
 }
 
 /* CONTAINER */
 .container {
-  width: 100%;
-  max-width: 1400px;   /* increase limit */
+  max-width: 900px;
   margin: 20px auto;
   padding: 15px;
 }
@@ -82,7 +56,6 @@ nav {
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.08);
   margin-bottom: 20px;
-  overflow: visible;
 }
 
 /* FORM ROW */
@@ -140,28 +113,13 @@ input:focus, select:focus {
 
 /* TABLE */
 table {
-  min-width: 1200px;
   width: 100%;
   border-collapse: collapse;
-  background: white;
-}
-
-.table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  border-radius: 10px;
 }
 
 th, td {
-  padding: 6px;
-  font-size: 14px;
+  padding: 8px;
   border-bottom: 1px solid #ddd;
-}
-
-thead {
-  position: sticky;
-  top: 0;
-  background: #f1f3f5;
 }
 
 th {
@@ -263,8 +221,8 @@ input, select {
   border: 1px solid #ccc;
   max-height: 200px;
   overflow-y: auto;
-  width: 200px;
-  z-index: 9999;   /* 🔥 bring above everything */
+  width: 150px;
+  z-index: 1000;
 }
 
 .dropdown-content label {
@@ -276,85 +234,4 @@ input, select {
 #editPopup label {
   font-weight: 600;
   font-size: 13px;
-}
-
-.edit-btn {
-  padding: 6px 10px;
-  border: none;
-  background: #ffc107;
-  color: #000;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.delete-btn {
-  padding: 6px 10px;
-  border: none;
-  background: #dc3545;
-  color: white;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-th, td {
-  text-align: center;
-  vertical-align: middle;
-}
-
-html, body {
-  height: 100%;
-  margin: 0;
-}
-
-/* Wrapper */
-.page-wrapper {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Push content */
-.container {
-  flex: 1;
-}
-
-/* FOOTER */
-footer {
-  text-align: center;
-  padding: 15px;
-  background: #111;
-  color: white;
-  font-size: 14px;
-}
-
-/* Pagination container */
-#pagination, #paginationTop {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-/* Default buttons */
-.page-btn {
-  padding: 6px 10px;
-  border: 1px solid #0d6efd;
-  background: white;
-  color: #0d6efd;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-/* Hover */
-.page-btn:hover {
-  background: #0d6efd;
-  color: white;
-}
-
-/* ✅ ACTIVE PAGE */
-.active-page {
-  background: #0d6efd;
-  color: white;
-  font-weight: bold;
 }

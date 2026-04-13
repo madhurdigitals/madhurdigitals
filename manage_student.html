@@ -2,9 +2,9 @@
 <html>
 <head>
   <title>Manage Students</title>
-  <script src="js/protect.js" defer></script>
-  <script src="js/auth.js" defer></script>
-  <script src="js/api.js" defer></script>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/manage_student.js" defer></script>
 
   <link rel="stylesheet" href="css/manage_student.css">
@@ -13,28 +13,22 @@
 </head>
 
 <body>
-<div class="page-wrapper">
+
 <nav>
   <div class="logo">
     <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
     <div>
       <div class="title-text">Madhur Digitals</div>
-      <div class="school-name" id="schoolNameTop"></div>
+      <div id="schoolNameTop"></div>
     </div>
   </div>
 
   <div class="nav-actions">
-    <button onclick="changeSchool()">Change School</button>
-    <button onclick="location.href='dashboard.html'">Dashboard</button>
     <button onclick="logout()">Logout</button>
   </div>
 </nav>
 
-<div class="heading-wrapper">
-  <div class="heading-badge">
-    Manage Students - <span id="schoolName"></span>
-  </div>
-</div>
+<h2>Manage Students - <span id="schoolName"></span></h2>
 
 <div class="container">
 
@@ -43,7 +37,7 @@
     <h3>Filters</h3>
 
     <!-- Name -->
-    <input id="searchName" placeholder="🔍 Search student by name..." class="search-input">
+    <input id="searchName" placeholder="Search Name">
 
     <!-- Class-Section Filter -->
     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;">
@@ -62,17 +56,16 @@
     </div>
   </div>
 
- 
+  </div>
 
   <!-- Table -->
   <div class="card">
-    <div id="paginationTop" style="margin-bottom:10px;"></div>
-    <div class="table-wrapper">
-      <table>
-        <thead id="tableHead"></thead>
-        <tbody id="studentTable"></tbody>
-      </table>
-    </div>
+
+    <table>
+      <thead id="tableHead"></thead>
+      <tbody id="studentTable"></tbody>
+    </table>
+
     <!-- ✅ SINGLE pagination -->
     <div id="pagination" style="margin-top:10px;"></div>
 
@@ -87,25 +80,34 @@
 </div>
 
 <!-- EDIT POPUP -->
- <!-- <div id="editPopup" class="school-box"></div> -->
-<div id="schoolBox" class="school-box">
-  <div>
-    <div class="school-header">
-      <h3>Select School</h3>
-      <span class="close-btn" onclick="hideSchoolSelector()">✖</span>
-    </div>
+ <div id="editPopup" class="school-box"></div>
+<!-- <div id="editPopup" class="school-box">
 
-    <select id="schoolSelect">
-      <option value="">Loading...</option>
-    </select>
-
-    <br><br>
-    <button onclick="applySchoolChange()">Apply</button>
+  <div class="school-header">
+    <h3>Edit Student</h3>
+    <span class="close-btn" onclick="closeEdit()">✖</span>
   </div>
-</div>
-<footer>
-  © 2026 Madhur Digitals | All Rights Reserved
-</footer>
-</div>
+
+  <input id="editId" disabled placeholder="Student ID">
+  <input id="editName" placeholder="Name">
+  <input id="editClass" placeholder="Class">
+
+  <select id="editSection">
+    <option value="">Section</option>
+    <option>A</option>
+    <option>B</option>
+    <option>C</option>
+  </select>
+
+  <input id="editRoll" placeholder="Roll">
+  <input id="editPhone" placeholder="Phone">
+  <input id="editAddress" placeholder="Address">
+
+  <br><br>
+  <button onclick="saveEdit()">Save</button>
+  <button onclick="closeEdit()">Cancel</button>
+
+</div> -->
+
 </body>
 </html>

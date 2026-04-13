@@ -1,19 +1,14 @@
+let school = sessionStorage.getItem("school");
+
+document.getElementById("schoolName").innerText = school;
+document.getElementById("schoolNameTop").innerText = school;
+
 let students = [];
 let currentPage = 1;
 let rowsPerPage = 20; // default
 let headersGlobal = [];
 let filteredData = [];
 let selectedFilters = [];
-
-document.addEventListener("DOMContentLoaded", function () {
-let school = sessionStorage.getItem("school");
-let school_name = sessionStorage.getItem("school_name");
-
-const displayName = school_name || school;
-
-document.getElementById("schoolName").innerText = displayName;
-document.getElementById("schoolNameTop").innerText = displayName;
-
 
 // LOAD DATA
 async function loadStudents() {
@@ -282,14 +277,11 @@ async function saveEdit() {
 
 function renderPagination() {
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-
   const container = document.getElementById("pagination");
-  const containerTop = document.getElementById("paginationTop");
 
-  // hide if <=20
+  // 🔥 hide if <=100
   if (filteredData.length <= 20) {
     container.innerHTML = "";
-    containerTop.innerHTML = "";
     return;
   }
 
@@ -297,23 +289,18 @@ function renderPagination() {
 
   for (let i = 1; i <= totalPages; i++) {
     buttons += `
-      <button 
-        class="page-btn ${i === currentPage ? "active-page" : ""}"
-        onclick="goToPage(${i})">
+      <button onclick="goToPage(${i})"
+        ${i === currentPage ? "style='font-weight:bold'" : ""}>
         ${i}
       </button>
     `;
   }
 
-  const html = `
-    <button class="page-btn" onclick="prevPage()">⬅</button>
+  container.innerHTML = `
+    <button onclick="prevPage()">⬅</button>
     ${buttons}
-    <button class="page-btn" onclick="nextPage()">➡</button>
+    <button onclick="nextPage()">➡</button>
   `;
-
-  // ✅ SET BOTH
-  container.innerHTML = html;
-  containerTop.innerHTML = html;
 }
 
 function goToPage(page) {
@@ -352,22 +339,14 @@ function prevPage() {
 function renderSmartTable() {
   const data = filteredData;
 
-  if (data.length <= rowsPerPage) {
+  if (data.length <= 20) {
+    // ❌ NO PAGINATION
     renderTable(data, headersGlobal);
     document.getElementById("pagination").innerHTML = "";
-    document.getElementById("paginationTop").innerHTML = "";
-    
   } else {
-    const totalPages = Math.ceil(data.length / rowsPerPage);
-
-    if (currentPage > totalPages) {
-      currentPage = totalPages || 1;
-    }
-
+    // ✅ PAGINATION
     const start = (currentPage - 1) * rowsPerPage;
-    const end = Math.min(start + rowsPerPage, data.length);
-
-    const pageData = data.slice(start, end);
+    const pageData = data.slice(start, start + rowsPerPage);
 
     renderTable(pageData, headersGlobal);
   }
@@ -505,52 +484,5 @@ function toggleDropdown(id) {
   el.style.display = isOpen ? "none" : "block";
 }
 
-function changeSchool() {
-  document.getElementById("schoolBox").classList.add("active");
-}
-
-function hideSchoolSelector() {
-  document.getElementById("schoolBox").classList.remove("active");
-}
-
-async function loadSchools() {
-  const dropdown = document.getElementById("schoolSelect");
-
-  const raw = await getSchools();   // from api.js
-
-  const headers = raw[0];
-
-  const schools = raw.slice(1).map(r => {
-    let obj = {};
-    headers.forEach((h, i) => obj[h] = r[i]);
-    return obj;
-  });
-
-  dropdown.innerHTML = '<option value="">Select School</option>';
-
-  dropdown.innerHTML += schools.map(s => `
-    <option value="${s.school}">${s.school_name}</option>
-  `).join("");
-}
-loadSchools();
-
-function applySchoolChange() {
-  const dropdown = document.getElementById("schoolSelect");
-
-  const school = dropdown.value;
-  const school_name = dropdown.options[dropdown.selectedIndex].text;
-
-  if (!school) {
-    alert("Select school");
-    return;
-  }
-
-  sessionStorage.setItem("school", school);
-  sessionStorage.setItem("school_name", school_name);
-
-  location.reload();   // reload page
-}
-
 
 document.getElementById("searchName").addEventListener("input", applyFilter);
-});
