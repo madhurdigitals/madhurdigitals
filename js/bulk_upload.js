@@ -237,18 +237,14 @@ function downloadSample() {
   XLSX.writeFile(wb, "sample.xlsx");
 }
 
-function loadData() {
-  const file = document.getElementById("fileInput").files[0];
-  // 🔥 get school fields from cached data
-  const currentSchool = schoolsData.find(s => s.school === school);
+async function loadData() {
 
-  if (!currentSchool) {
-    alert("School config not found");
-    return;
+  // 🔥 ensure schools loaded
+  if (!schoolsData || schoolsData.length === 0) {
+    await loadSchoolsData();
   }
 
-  // convert to array
-  schoolFields = currentSchool.fields.split(",").map(f => f.trim());
+  const file = document.getElementById("fileInput").files[0];
 
   if (!file) {
     alert("Please select file first");
@@ -267,11 +263,34 @@ function loadData() {
     headers = json[0];
     rawData = json.slice(1).filter(r => r.some(cell => cell));
 
+    // 🔥 NOW SAFE
+    const currentSchool = schoolsData.find(s => s.school === school);
+
+    if (!currentSchool) {
+      alert("School config not found");
+      return;
+    }
+
+    schoolFields = currentSchool.fields.split(",").map(f => f.trim());
+
     renderMapping();
   };
 
   reader.readAsArrayBuffer(file);
 }
+
+async function loadSchoolsData() {
+  const raw = await getSchools();
+
+  const headers = raw[0];
+
+  schoolsData = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+}
+
 
 function enableSubmit() {
   document.querySelector(".submit-btn").disabled = false;
