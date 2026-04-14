@@ -15,22 +15,30 @@
 <body>
 
 <nav>
-  <div class="logo">
+  <div class="logo" onclick="goHome()" style="cursor:pointer;">
     <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
     <div>
       <div class="title-text">Madhur Digitals</div>
-      <div id="schoolNameTop"></div>
+      <div class="school-name" id="schoolNameTop"></div>
     </div>
   </div>
 
   <div class="nav-actions">
+    <button onclick="changeSchool()">Change School</button>
+    <button onclick="location.href='dashboard.html'">Dashboard</button>
     <button onclick="logout()">Logout</button>
   </div>
 </nav>
 
-<h2>Manage Students - <span id="schoolName"></span></h2>
+<!-- ✅ Heading Badge -->
+<div class="heading-wrapper">
+  <div class="heading-badge">
+    Manage Students: <span id="schoolName"></span>
+  </div>
+</div>
 
 <div class="container">
+  
 
   <!-- Filters -->
   <div class="card">
@@ -77,6 +85,23 @@
 
   </div>
 
+</div>
+
+<!-- SCHOOL SELECTOR -->
+<div id="schoolBox" class="school-box">
+  <div class="modal">
+    <div class="school-header">
+      <h3>Select School</h3>
+      <span class="close-btn" onclick="hideSchoolSelector()">✖</span>
+    </div>
+
+    <select id="schoolSelect">
+      <option>Loading...</option>
+    </select>
+
+    <br><br>
+    <button onclick="applySchoolChange()">Apply</button>
+  </div>
 </div>
 
 <!-- EDIT POPUP -->

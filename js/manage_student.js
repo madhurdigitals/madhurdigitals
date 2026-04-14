@@ -1,8 +1,10 @@
 let school = sessionStorage.getItem("school");
+let school_name = sessionStorage.getItem("school_name");
 
-document.getElementById("schoolName").innerText = school;
-document.getElementById("schoolNameTop").innerText = school;
+const displayName = school_name || school;
 
+document.getElementById("schoolName").innerText = displayName;
+document.getElementById("schoolNameTop").innerText = displayName;
 let students = [];
 let currentPage = 1;
 let rowsPerPage = 20; // default
@@ -40,6 +42,82 @@ async function loadStudents() {
 }
 
 loadStudents();
+
+function goHome() {
+  window.location.href = "index.html";
+}
+
+function changeSchool() {
+  document.getElementById("schoolBox").classList.add("active");
+}
+
+function hideSchoolSelector() {
+  document.getElementById("schoolBox").classList.remove("active");
+}
+
+async function loadSchools() {
+  const dropdown = document.getElementById("schoolSelect");
+
+  dropdown.innerHTML = "<option>Loading...</option>";
+
+  const raw = await getSchools();
+
+  if (!raw || raw.length === 0) {
+    dropdown.innerHTML = "<option>No Schools Found</option>";
+    return;
+  }
+
+  const headers = raw[0];
+
+  const schools = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+
+  dropdown.innerHTML = '<option value="">Select School</option>';
+
+  dropdown.innerHTML += schools.map(s => `
+    <option value="${s.school}" data-id="${s.school_id}">
+      ${s.school_name}
+    </option>
+  `).join("");
+
+  if (school) {
+    dropdown.value = school;
+  }
+}
+
+function applySchoolChange() {
+  const dropdown = document.getElementById("schoolSelect");
+  const selected = dropdown.options[dropdown.selectedIndex];
+
+  const newSchool = selected.value;
+  const newName = selected.textContent.trim();
+  const newId = selected.getAttribute("data-id");
+
+  if (!newSchool) {
+    alert("Please select a school");
+    return;
+  }
+
+  // ✅ Update session
+  sessionStorage.setItem("school", newSchool);
+  sessionStorage.setItem("school_name", newName);
+  sessionStorage.setItem("school_id", newId);
+
+  // ✅ Update UI
+  document.getElementById("schoolName").innerText = newName;
+  document.getElementById("schoolNameTop").innerText = newName;
+
+  school = newSchool;
+
+  hideSchoolSelector();
+
+  // ✅ Reload data (IMPORTANT)
+  loadStudents();
+}
+
 
 // RENDER TABLE
 function renderTable(data, headers) {
@@ -481,3 +559,5 @@ function toggleDropdown(id) {
 
 
 document.getElementById("searchName").addEventListener("input", applyFilter);
+
+loadSchools();
