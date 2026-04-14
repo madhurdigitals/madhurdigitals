@@ -64,21 +64,25 @@ async function getStudents(school) {
 function getSchools(forceRefresh = false) {
   return new Promise((resolve, reject) => {
 
-    // ✅ use cache if available
-    if (schoolCache && !forceRefresh) {
-      console.log("Using cached schools");
-      resolve(schoolCache);
+    // ✅ STEP 1: Check sessionStorage
+    const cached = sessionStorage.getItem("schools");
+
+    if (cached && !forceRefresh) {
+      console.log("Using session cached schools");
+      resolve(JSON.parse(cached));
       return;
     }
 
+    // ✅ STEP 2: JSONP call (same as before)
     const callbackName = "jsonpCallback_" + Date.now();
 
     window[callbackName] = function(data) {
-      console.log("Schools (JSONP):", data);
+      console.log("Schools (API):", data);
 
-      schoolCache = data;   // ✅ cache
+      // ✅ STEP 3: Store in sessionStorage
+      sessionStorage.setItem("schools", JSON.stringify(data));
+
       resolve(data);
-
       delete window[callbackName];
     };
 
