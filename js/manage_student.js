@@ -11,7 +11,7 @@ let rowsPerPage = 20; // default
 let headersGlobal = [];
 let filteredData = [];
 let selectedFilters = [];
-let schoolsData = [];
+// let schoolsData = [];
 
 function normalizeKey(str) {
   return str
