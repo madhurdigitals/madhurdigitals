@@ -286,3 +286,73 @@ nav {
   border-radius: 20px;
   font-weight: 600;
 }
+
+/* TABLE WRAPPER */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  border-radius: 10px;
+}
+
+/* HEADER */
+th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #374151;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* CELLS */
+th, td {
+  padding: 8px;
+  text-align: center;
+  font-size: clamp(12px, 1vw, 16px);
+}
+
+/* TEXT HANDLING */
+td {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ROW HOVER */
+tbody tr {
+  transition: 0.2s;
+}
+
+tbody tr:hover {
+  background: #f9fafb;
+  transform: scale(1.01);
+}
+
+/* BUTTONS */
+button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* EDIT */
+button[onclick*="openEdit"] {
+  background: #ffc107;
+  color: black;
+}
+
+/* DELETE */
+button[onclick*="deleteStudent"] {
+  background: #dc3545;
+  color: white;
+}

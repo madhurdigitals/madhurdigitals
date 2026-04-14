@@ -121,29 +121,25 @@ function applySchoolChange() {
 
 // RENDER TABLE
 function renderTable(data, headers) {
+
+  const visibleHeaders = headers.filter(h => {
+    const key = h.toLowerCase();
+    return !key.includes("address") && !key.includes("photo");
+  });
+
   const table = document.getElementById("studentTable");
   const thead = document.getElementById("tableHead");
 
   thead.innerHTML = `
     <tr>
-      ${headers.map(h => `<th>${h}</th>`).join("")}
+      ${visibleHeaders.map(h => `<th>${h}</th>`).join("")}
       <th>Action</th>
     </tr>
   `;
 
   table.innerHTML = data.map(s => `
     <tr>
-      ${headers.map(h => {
-
-        // 🔥 PHOTO PREVIEW
-        if (h === "Photo_Link" && s[h]) {
-          return `<td>
-            <img src="${s[h]}" width="40" height="40" style="border-radius:50%">
-          </td>`;
-        }
-
-        return `<td>${s[h] || ""}</td>`;
-      }).join("")}
+      ${visibleHeaders.map(h => `<td>${s[h] || ""}</td>`).join("")}
 
       <td>
         <button onclick="openEdit('${s["Student_ID"]}')">Edit</button>
@@ -152,6 +148,7 @@ function renderTable(data, headers) {
     </tr>
   `).join("");
 }
+
 
 function applyFilter() {
   const name = document.getElementById("searchName").value.toLowerCase();
