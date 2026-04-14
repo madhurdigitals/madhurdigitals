@@ -126,6 +126,41 @@ function applySchoolChange() {
   loadStudents();
 }
 
+function formatDOB(value) {
+  if (!value) return "";
+
+  let str = value.toString().trim();
+
+  // replace - with /
+  str = str.replace(/-/g, "/");
+
+  // remove all non-digits
+  let digits = str.replace(/\D/g, "");
+
+  // Case 1: 8 digit input (12072001)
+  if (digits.length === 8) {
+    let day = digits.substring(0, 2);
+    let month = digits.substring(2, 4);
+    let year = digits.substring(4, 8);
+
+    return `${day}/${month}/${year}`;
+  }
+
+  // Case 2: split input (12/7/2001 etc.)
+  let parts = str.split("/");
+
+  if (parts.length === 3) {
+    let [day, month, year] = parts;
+
+    day = String(day).padStart(2, "0");
+    month = String(month).padStart(2, "0");
+
+    return `${day}/${month}/${year}`;
+  }
+
+  return str;
+}
+
 
 // RENDER TABLE
 function renderTable(data, headers) {
