@@ -11,6 +11,14 @@ let rowsPerPage = 20; // default
 let headersGlobal = [];
 let filteredData = [];
 let selectedFilters = [];
+let schoolsData = [];
+
+function normalizeKey(str) {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "_")
+    .replace(/_+/g, "_");
+}
 
 // LOAD DATA
 async function loadStudents() {
@@ -198,11 +206,45 @@ async function deleteStudent(id) {
   window.scrollTo(0, scrollPos);
 }
 
-function openEdit(id) {
-  const student = students.find(s => s["Student_ID"] == id);
+async function openEdit(id) {
 
   const container = document.getElementById("editPopup");
 
+  // ✅ STEP 1: show loading
+  container.innerHTML = `
+    <div class="school-header">
+      <h3>Edit Student</h3>
+      <span class="close-btn" onclick="closeEdit()">✖</span>
+    </div>
+
+    <p style="text-align:center; margin-top:20px;">
+      ⏳ Loading student data...
+    </p>
+  `;
+  container.style.display = "block";
+
+  // ✅ STEP 2: ensure schools loaded
+  if (!schoolsData || schoolsData.length === 0) {
+    schoolsData = await getSchools();
+  }
+
+  // ✅ STEP 3: get student
+  const student = students.find(s => s["Student_ID"] == id);
+  if (!student) return;
+
+  // ✅ STEP 4: get school config
+  const headers = schoolsData[0];
+
+  const schools = schoolsData.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+
+  const currentSchool = schools.find(s => s.school === school);
+  const fields = currentSchool.fields.split(",");
+
+  // ✅ STEP 5: build UI
   let html = `
     <div class="school-header">
       <h3>Edit Student</h3>
@@ -210,33 +252,64 @@ function openEdit(id) {
     </div>
   `;
 
-  headersGlobal.forEach(h => {
+  // 🔥 Student ID (non-editable)
+  html += `
+    <label>Student ID</label>
+    <input value="${id}" disabled>
+  `;
 
-    if (h === "Timestamp") return;
+  fields.forEach(f => {
+    const original = f.trim();
+    const key = normalizeKey(original);
 
-    const label = h.replace(/_/g, " ");
+    let value = student[original] || "";
 
-    html += `<label style="display:block; margin-top:10px;">${label}</label>`;
-
-    // 🔥 student_ID (disabled but NO id needed)
-    if (h === "student_ID") {
-      html += `<input value="${student[h]}" disabled>`;
-      return;
+    // ✅ DOB format
+    if (key === "dob") {
+      value = formatDOB(value);
     }
 
-    // 🔥 ALL OTHER FIELDS MUST HAVE ID
-    html += `<input id="edit_${h}" value="${student[h] || ""}" placeholder="Enter ${label}">`;
+    html += `<label>${original}</label>`;
 
+    // ✅ CLASS dropdown
+    if (key === "class") {
+      html += `
+        <select id="edit_${key}">
+          ${CONFIG.classes.map(c =>
+            `<option value="${c}" ${c == value ? "selected" : ""}>${c}</option>`
+          ).join("")}
+        </select>
+      `;
+    }
+
+    // ✅ SECTION dropdown
+    else if (key === "section") {
+      html += `
+        <select id="edit_${key}">
+          ${CONFIG.sections.map(s =>
+            `<option value="${s}" ${s == value ? "selected" : ""}>${s}</option>`
+          ).join("")}
+        </select>
+      `;
+    }
+
+    // ✅ normal input
+    else {
+      html += `<input id="edit_${key}" value="${value}">`;
+    }
   });
 
   html += `
     <br><br>
-    <button onclick="saveEditDynamic(${student.student_ID})">Save</button>
+    <button onclick="saveEditDynamic(${id})">Save</button>
     <button onclick="closeEdit()">Cancel</button>
   `;
 
   container.innerHTML = html;
-  container.style.display = "block";
+
+  // ✅ attach DOB helpers
+  if (typeof attachDOBFormatterAll === "function") attachDOBFormatterAll();
+  if (typeof attachDOBPickerAll === "function") attachDOBPickerAll();
 }
 
 function closeEdit() {
@@ -245,48 +318,58 @@ function closeEdit() {
 
 async function saveEditDynamic(id) {
 
-  const filters = {
-    name: document.getElementById("searchName").value
-  };
-
-  const scrollPos = window.scrollY;
-
   let params = new URLSearchParams({
     action: "updateStudent",
     school: school,
     student_id: id
   });
 
-  headersGlobal.forEach(h => {
+  // ✅ ensure schools loaded
+  if (!schoolsData || schoolsData.length === 0) {
+    schoolsData = await getSchools();
+  }
 
-    if (h === "student_ID" || h === "Timestamp") return;
+  const headers = schoolsData[0];
 
-    const el = document.getElementById(`edit_${h}`);
+  const schools = schoolsData.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
 
-    // 🔥 SAFE CHECK (NO ERROR)
-    if (!el) {
-      console.warn(`Missing input for: ${h}`);
-      return;
+  const currentSchool = schools.find(s => s.school === school);
+  const fields = currentSchool.fields.split(",");
+
+  fields.forEach(f => {
+    const key = normalizeKey(f.trim());
+    const el = document.getElementById(`edit_${key}`);
+
+    if (!el) return;
+
+    let value = el.value || "";
+
+    if (key === "dob") {
+      value = formatDOB(value);
     }
 
-    params.append(h.toLowerCase(), el.value || "");
+    params.append(key, value);
   });
 
   const url = `${API_URL}?${params.toString()}`;
 
+  console.log("UPDATE URL:", url); // 🔥 debug
+
   try {
-    await fetch(url);
+    const res = await fetch(url);
+    const data = await res.json();
+
+    console.log("UPDATE RESPONSE:", data);
 
     closeEdit();
     await loadStudents();
 
-    document.getElementById("searchName").value = filters.name;
-    applyFilter();
-
-    window.scrollTo(0, scrollPos);
-
   } catch (err) {
-    console.error("Dynamic Update Error:", err);
+    console.error("Update Error:", err);
     alert("Failed to update student");
   }
 }
