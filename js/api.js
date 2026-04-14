@@ -9,8 +9,6 @@ async function addStudent(data) {
   try {
     const params = new URLSearchParams({
       action: "addStudent",
-      school: data.school,
-      school_id: data.school_id,
       ...data   // 🔥 THIS IS THE MAGIC LINE
     });
 

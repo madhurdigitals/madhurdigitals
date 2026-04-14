@@ -253,7 +253,7 @@ function applySchoolChange() {
   const dropdown = document.getElementById("schoolSelect");
   const selectedOption = dropdown.options[dropdown.selectedIndex];
 
-  school = selectedOption.value;   // ✅ update global
+  school = selectedOption.value.trim(); // normalize here only
   const school_name = selectedOption.textContent.trim();
   const school_id = selectedOption.getAttribute("data-id");
 
@@ -602,7 +602,7 @@ async function loadSchools() {
   dropdown.innerHTML = '<option value="">Select School</option>';
 
   dropdown.innerHTML += schools.map(s => `
-    <option value="${s.school.trim()}" data-id="${s.school_id}">
+    <option value="${s.school}" data-id="${s.school_id}">
       ${s.school_name}
     </option>
   `).join("");
