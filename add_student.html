@@ -93,6 +93,10 @@
 
 
 <script>
+const CONFIG = {
+  classes: ["1","2","3","4","5"],
+  sections: ["A","B","C"]
+};
 let school = sessionStorage.getItem("school");
 const school_name = sessionStorage.getItem("school_name");
 
@@ -431,8 +435,8 @@ async function loadEditData(student_id) {
   `;
 
   container.innerHTML = html;
-  attachDOBFormatterAll();
-  attachDOBPickerAll();
+  if (typeof attachDOBFormatterAll === "function") attachDOBFormatterAll();
+  if (typeof attachDOBPickerAll === "function") attachDOBPickerAll();
 }
 
 async function saveEdit(student_id) {

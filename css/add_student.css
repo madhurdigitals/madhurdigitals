@@ -257,6 +257,7 @@ tbody tr:hover {
   background: rgba(0,0,0,0.4);
 
   display: none;
+  pointer-events: none;
   justify-content: center;
   align-items: center;
 
@@ -275,6 +276,7 @@ body {
 /* show popup */
 .school-box.active {
   display: flex;
+  pointer-events: auto; 
 }
 
 /* inner modal */
