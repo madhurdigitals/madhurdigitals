@@ -93,7 +93,7 @@
 
 
 <script>
-const school = sessionStorage.getItem("school");
+let school = sessionStorage.getItem("school");
 const school_name = sessionStorage.getItem("school_name");
 
 const displayName = school_name || school;
@@ -253,27 +253,25 @@ function applySchoolChange() {
   const dropdown = document.getElementById("schoolSelect");
   const selectedOption = dropdown.options[dropdown.selectedIndex];
 
-  const school = selectedOption.value;
+  school = selectedOption.value;   // ✅ update global
   const school_name = selectedOption.textContent.trim();
+  const school_id = selectedOption.getAttribute("data-id");
 
   if (!school) {
     alert("Please select a school");
     return;
   }
 
-  // ✅ Store both values
   sessionStorage.setItem("school", school);
   sessionStorage.setItem("school_name", school_name);
+  sessionStorage.setItem("school_id", school_id);
 
-  // ✅ Update UI
   document.getElementById("schoolName").innerText = school_name;
   document.getElementById("schoolNameTop").innerText = school_name;
 
-  // ✅ Refresh page data
   renderDynamicForm();
   loadData();
 
-  // ✅ Close popup
   hideSchoolSelector();
 }
 
