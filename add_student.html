@@ -440,6 +440,7 @@ async function loadEditData(student_id) {
 }
 
 async function saveEdit(student_id) {
+
   let params = new URLSearchParams({
     action: "updateStudent",
     school: school,
@@ -473,13 +474,54 @@ async function saveEdit(student_id) {
     }
   });
 
-  await fetch(`${API_URL}?${params.toString()}`);
+  // 🔥 find row in table FIRST (for instant update)
+  const rows = document.querySelectorAll("#recentTable tr");
+  let targetRow = null;
+
+  rows.forEach(row => {
+    if (row.children[0].innerText == student_id) {
+      targetRow = row;
+    }
+  });
+
+  // ⚡ STEP 1: instant UI update
+  if (targetRow) {
+    targetRow.children[1].innerText = document.getElementById("edit_name")?.value || "";
+    targetRow.children[2].innerText = document.getElementById("edit_class")?.value || "";
+    targetRow.children[3].innerText = document.getElementById("edit_section")?.value || "";
+  }
 
   showToast("Updated successfully");
-
   closeEditPopup();
 
-  loadData(); // refresh table
+  // 🚀 STEP 2: backend update
+  await fetch(`${API_URL}?${params.toString()}`);
+
+  // 🔥 STEP 3: fetch latest backend data
+  const rawData = await getStudents(school);
+
+  const hdrs = rawData[0];
+  const students = rawData.slice(1).map(r => {
+    let obj = {};
+    hdrs.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+
+  const updated = students.find(s => s["Student_ID"] == student_id);
+
+  if (!updated || !targetRow) return;
+
+  // 🔥 STEP 4: patch with REAL backend data
+  targetRow.children[1].innerText = updated["Name"] || "";
+  targetRow.children[2].innerText = updated["Class"] || "";
+  targetRow.children[3].innerText = updated["Section"] || "";
+
+  // 🔥 STEP 5: highlight
+  targetRow.style.background = "#d1fae5";
+
+  setTimeout(() => {
+    targetRow.style.background = "";
+  }, 1000);
 }
 
 function closeEditPopup() {
