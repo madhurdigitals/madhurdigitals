@@ -129,3 +129,55 @@ async function addSchool(data) {
     alert("Failed to add school");
   }
 }
+
+function attachDOBFormatterAll() {
+  const inputs = document.querySelectorAll('input[id*="dob"]');
+
+  inputs.forEach(input => {
+    input.addEventListener("input", function () {
+      let value = this.value.replace(/\D/g, "");
+
+      if (value.length > 8) value = value.slice(0, 8);
+
+      let formatted = "";
+
+      if (value.length >= 2) {
+        formatted += value.substring(0, 2);
+      }
+      if (value.length >= 4) {
+        formatted += "/" + value.substring(2, 4);
+      } else if (value.length > 2) {
+        formatted += "/" + value.substring(2);
+      }
+      if (value.length >= 5) {
+        formatted += "/" + value.substring(4, 8);
+      }
+
+      this.value = formatted;
+    });
+  });
+}
+
+function attachDOBPickerAll() {
+  const inputs = document.querySelectorAll('input[id*="dob"]');
+
+  inputs.forEach(input => {
+    const hiddenDate = document.createElement("input");
+    hiddenDate.type = "date";
+    hiddenDate.style.position = "absolute";
+    hiddenDate.style.opacity = "0";
+
+    document.body.appendChild(hiddenDate);
+
+    input.addEventListener("focus", () => {
+      hiddenDate.click();
+    });
+
+    hiddenDate.addEventListener("change", function () {
+      if (!this.value) return;
+
+      const [y, m, d] = this.value.split("-");
+      input.value = `${d}/${m}/${y}`;
+    });
+  });
+}

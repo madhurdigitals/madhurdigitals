@@ -290,6 +290,10 @@ body {
   animation: popupFade 0.25s ease;
 }
 
+tr {
+  transition: background 0.5s ease;
+}
+
 @keyframes popupFade {
   from {
     opacity: 0;
