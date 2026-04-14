@@ -62,6 +62,7 @@
         </thead>
         <tbody id="recentTable"></tbody>
       </table>
+    </div>
     <div class="table-wrapper">
   </div>
 
@@ -366,6 +367,11 @@ async function loadEditData(student_id) {
     const key = normalizeKey(original);
 
     let value = student[original] || "";
+
+    // ✅ FIX DOB FORMAT
+    if (key === "dob") {
+      value = formatDOB(value);
+    }
 
     html += `<div class="form-row"><label>${original}</label>`;
 
