@@ -329,11 +329,11 @@ td {
 
 /* ROW HOVER */
 tbody tr {
-  transition: 0.2s;
+  transition: all 0.25s ease;
 }
 
 tbody tr:hover {
-  background: #f9fafb;
+  background: #e0f2fe;   /* 🔥 light blue highlight */
   transform: scale(1.01);
 }
 
