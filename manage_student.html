@@ -11,43 +11,38 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
 
-<div class="page-wrapper">
+<body>
 
 <nav>
   <div class="logo">
     <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
     <div>
       <div class="title-text">Madhur Digitals</div>
-      <div class="school-name" id="schoolNameTop"></div>
+      <div id="schoolNameTop"></div>
     </div>
   </div>
 
   <div class="nav-actions">
-    <button onclick="changeSchool()">Change School</button>
-    <button onclick="location.href='dashboard.html'">Dashboard</button>
     <button onclick="logout()">Logout</button>
   </div>
 </nav>
 
-<!-- ✅ SAME BADGE AS ADD STUDENT -->
-<div class="heading-wrapper">
-  <div class="heading-badge">
-    Manage Students - <span id="schoolName"></span>
-  </div>
-</div>
+<h2>Manage Students - <span id="schoolName"></span></h2>
 
 <div class="container">
 
-  <!-- FILTER CARD -->
+  <!-- Filters -->
   <div class="card">
     <h3>Filters</h3>
 
-    <input id="searchName" class="search-input" placeholder="Search Name">
+    <!-- Name -->
+    <input id="searchName" placeholder="Search Name">
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+    <!-- Class-Section Filter -->
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;">
 
+      <!-- Button -->
       <div class="dropdown">
         <button onclick="toggleDropdown('classSectionDropdown')">
           Select Class-Section
@@ -55,25 +50,28 @@
         <div id="classSectionDropdown" class="dropdown-content"></div>
       </div>
 
-      <div id="selectedChips"></div>
+      <!-- 🔥 Selected Chips -->
+      <div id="selectedChips" style="display:flex; gap:5px; flex-wrap:wrap;"></div>
 
     </div>
   </div>
 
-  <!-- TABLE CARD -->
+  </div>
+
+  <!-- Table -->
   <div class="card">
 
-    <div class="table-wrapper">
-      <table>
-        <thead id="tableHead"></thead>
-        <tbody id="studentTable"></tbody>
-      </table>
-    </div>
+    <table>
+      <thead id="tableHead"></thead>
+      <tbody id="studentTable"></tbody>
+    </table>
 
-    <div id="pagination"></div>
+    <!-- ✅ SINGLE pagination -->
+    <div id="pagination" style="margin-top:10px;"></div>
 
+    <!-- ✅ Jump to page -->
     <div style="margin-top:10px;">
-      <input type="number" id="pageInput" placeholder="Go to page">
+      <input type="number" id="pageInput" placeholder="Go to page" min="1">
       <button onclick="jumpToPage()">Go</button>
     </div>
 
@@ -81,18 +79,7 @@
 
 </div>
 
-<!-- ✅ SAME MODAL SYSTEM -->
-<div id="editPopup" class="school-box">
-  <div class="modal" id="editModalContent"></div>
-</div>
-
-<footer>
-  <div class="footer-inner">
-    © 2026 Madhur Digitals | All Rights Reserved
-  </div>
-</footer>
-
-</div>
-
+<!-- EDIT POPUP -->
+ <div id="editPopup" class="school-box"></div>
 </body>
 </html>
