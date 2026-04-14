@@ -423,7 +423,12 @@ async function saveEditDynamic(id) {
   if (targetRow) {
     const cells = targetRow.querySelectorAll("td");
 
-    headersGlobal.forEach((h, index) => {
+    const visibleHeaders = headersGlobal.filter(h => {
+      const key = h.toLowerCase();
+      return !key.includes("address") && !key.includes("photo");
+    });
+
+    visibleHeaders.forEach((h, index) => {
       const key = normalizeKey(h);
 
       if (updatedValues[key] !== undefined && cells[index]) {
@@ -454,7 +459,7 @@ async function saveEditDynamic(id) {
   if (updated && targetRow) {
     const cells = targetRow.querySelectorAll("td");
 
-    headersGlobal.forEach((h, index) => {
+    visibleHeaders.forEach((h, index) => {
       if (cells[index]) {
         cells[index].innerText = updated[h] || "";
       }
