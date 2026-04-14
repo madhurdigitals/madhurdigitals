@@ -641,3 +641,10 @@ function toggleDropdown(id) {
 document.getElementById("searchName").addEventListener("input", applyFilter);
 
 loadSchools();
+
+async function initSchools() {
+  const raw = await getSchools();
+  schoolsData = raw;
+}
+
+initSchools();
