@@ -775,13 +775,11 @@ function formatDOB(value) {
 
   // 🔥 Case 2: ISO format (2021-12-06T18:30:00.000Z)
   if (str.includes("T")) {
-    const d = new Date(str);
+    const datePart = str.split("T")[0]; // 👉 "2001-07-12"
 
-    if (isNaN(d)) return "";
+    const [year, month, day] = datePart.split("-");
 
-    return `${String(d.getDate()).padStart(2, "0")}/${
-      String(d.getMonth() + 1).padStart(2, "0")
-    }/${d.getFullYear()}`;
+    return `${day}/${month}/${year}`;
   }
 
   // 🔥 Case 3: YYYY-MM-DD
@@ -805,8 +803,6 @@ function formatDOB(value) {
 }
 
 </script>
-
-</div>
   <footer>
     <div class="footer-inner">
       © 2026 Madhur Digitals | All Rights Reserved
