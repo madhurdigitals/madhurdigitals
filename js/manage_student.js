@@ -245,7 +245,7 @@ async function openEdit(id) {
 
   const container = document.getElementById("editPopup");
 
-  // ✅ STEP 1: show loading
+  // ✅ STEP 1: loading UI
   container.innerHTML = `
     <div class="school-header">
       <h3>Edit Student</h3>
@@ -258,7 +258,7 @@ async function openEdit(id) {
   `;
   container.style.display = "block";
 
-  // ✅ STEP 2: ensure schools loaded
+  // ✅ STEP 2: ensure schoolsData loaded
   if (!schoolsData || schoolsData.length === 0) {
     schoolsData = await getSchools();
   }
@@ -277,9 +277,11 @@ async function openEdit(id) {
   });
 
   const currentSchool = schools.find(s => s.school === school);
+  if (!currentSchool) return;
+
   const fields = currentSchool.fields.split(",");
 
-  // ✅ STEP 5: build UI
+  // ✅ STEP 5: build UI (Add Student style)
   let html = `
     <div class="school-header">
       <h3>Edit Student</h3>
@@ -287,10 +289,12 @@ async function openEdit(id) {
     </div>
   `;
 
-  // 🔥 Student ID (non-editable)
+  // 🔥 Student ID (non-editable, styled)
   html += `
-    <label>Student ID</label>
-    <input value="${id}" disabled>
+    <div class="form-row">
+      <label>Student ID</label>
+      <input value="${id}" disabled>
+    </div>
   `;
 
   fields.forEach(f => {
@@ -299,12 +303,12 @@ async function openEdit(id) {
 
     let value = student[original] || "";
 
-    // ✅ DOB format
+    // ✅ format DOB
     if (key === "dob") {
       value = formatDOB(value);
     }
 
-    html += `<label>${original}</label>`;
+    html += `<div class="form-row"><label>${original}</label>`;
 
     // ✅ CLASS dropdown
     if (key === "class") {
@@ -328,16 +332,27 @@ async function openEdit(id) {
       `;
     }
 
+    // ✅ DOB input (formatted)
+    else if (key === "dob") {
+      html += `
+        <input id="edit_${key}" value="${value}" placeholder="DD/MM/YYYY" inputmode="numeric">
+      `;
+    }
+
     // ✅ normal input
     else {
       html += `<input id="edit_${key}" value="${value}">`;
     }
+
+    html += `</div>`;
   });
 
+  // ✅ buttons styled like add student
   html += `
-    <br><br>
-    <button onclick="saveEditDynamic(${id})">Save</button>
-    <button onclick="closeEdit()">Cancel</button>
+    <div class="btn-group">
+      <button class="submit-btn" onclick="saveEditDynamic(${id})">Save</button>
+      <button class="clear-btn" onclick="closeEdit()">Cancel</button>
+    </div>
   `;
 
   container.innerHTML = html;
@@ -375,6 +390,9 @@ async function saveEditDynamic(id) {
   const currentSchool = schools.find(s => s.school === school);
   const fields = currentSchool.fields.split(",");
 
+  // 🔥 STEP 1: collect values
+  let updatedValues = {};
+
   fields.forEach(f => {
     const key = normalizeKey(f.trim());
     const el = document.getElementById(`edit_${key}`);
@@ -388,24 +406,66 @@ async function saveEditDynamic(id) {
     }
 
     params.append(key, value);
+    updatedValues[key] = value;
   });
 
-  const url = `${API_URL}?${params.toString()}`;
+  // 🔥 STEP 2: find row
+  const rows = document.querySelectorAll("#studentTable tr");
+  let targetRow = null;
 
-  console.log("UPDATE URL:", url); // 🔥 debug
+  rows.forEach(row => {
+    if (row.innerHTML.includes(id)) {
+      targetRow = row;
+    }
+  });
 
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
+  // ⚡ STEP 3: instant UI update
+  if (targetRow) {
+    const cells = targetRow.querySelectorAll("td");
 
-    console.log("UPDATE RESPONSE:", data);
+    headersGlobal.forEach((h, index) => {
+      const key = normalizeKey(h);
 
-    closeEdit();
-    await loadStudents();
+      if (updatedValues[key] !== undefined && cells[index]) {
+        cells[index].innerText = updatedValues[key];
+      }
+    });
+  }
 
-  } catch (err) {
-    console.error("Update Error:", err);
-    alert("Failed to update student");
+  // ✅ close popup immediately
+  closeEdit();
+
+  // 🚀 STEP 4: backend update
+  await fetch(`${API_URL}?${params.toString()}`);
+
+  // 🔥 STEP 5: fetch latest backend data
+  const raw = await getStudents(school);
+
+  const hdrs = raw[0];
+  const studentsList = raw.slice(1).map(r => {
+    let obj = {};
+    hdrs.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+
+  const updated = studentsList.find(s => s["Student_ID"] == id);
+
+  // 🔥 STEP 6: patch with real backend data
+  if (updated && targetRow) {
+    const cells = targetRow.querySelectorAll("td");
+
+    headersGlobal.forEach((h, index) => {
+      if (cells[index]) {
+        cells[index].innerText = updated[h] || "";
+      }
+    });
+
+    // 🟢 STEP 7: green highlight
+    targetRow.style.background = "#d1fae5";
+
+    setTimeout(() => {
+      targetRow.style.background = "";
+    }, 1000);
   }
 }
 
