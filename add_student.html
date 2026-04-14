@@ -411,82 +411,6 @@ async function loadEditData(student_id) {
   container.innerHTML = html;
 }
 
-  // const currentSchool = schools.find(s => s.school === school);
-  // if (!currentSchool) return;
-
-  // const fields = currentSchool.fields.split(",");
-
-  // let html = `
-  //   <div class="school-header">
-  //     <h3>Edit Student</h3>
-  //     <span class="close-btn" onclick="closeEditPopup()">✖</span>
-  //   </div>
-  // `;
-
-  // html += `
-  //   <div class="form-row">
-  //     <label>Student ID</label>
-  //     <input value="${student_id}" disabled>
-  //   </div>
-  // `;
-
-  // fields.forEach((f, index) => {
-  //   const original = f.trim();
-  //   const key = normalizeKey(original);
-
-  //   let value = row.children[index + 1]?.innerText || "";
-
-  //   html += `<div class="form-row"><label>${original}</label>`;
-
-  //   // CLASS DROPDOWN
-  //   if (key === "class") {
-  //     html += `
-  //       <select id="edit_${key}">
-  //         <option value="">Select Class</option>
-  //         ${CONFIG.classes.map(c =>
-  //           `<option value="${c}" ${c == value ? "selected" : ""}>${c}</option>`
-  //         ).join("")}
-  //       </select>
-  //     `;
-  //   }
-
-  //   // SECTION DROPDOWN
-  //   else if (key === "section") {
-  //     html += `
-  //       <select id="edit_${key}">
-  //         <option value="">Select Section</option>
-  //         ${CONFIG.sections.map(s =>
-  //           `<option value="${s}" ${s == value ? "selected" : ""}>${s}</option>`
-  //         ).join("")}
-  //       </select>
-  //     `;
-  //   }
-
-  //   // NORMAL INPUT
-  //   else {
-  //     html += `<input id="edit_${key}" value="${value}">`;
-  //   }
-
-  //   html += `</div>`;
-  // });
-
-  // html += `
-  //   <br>
-  //   <button class="submit-btn" onclick="saveEdit(${student_id})">Save</button>
-  //   <button class="clear-btn" onclick="closeEditPopup()">Cancel</button>
-  // `;
-
-  // container.innerHTML = html;
-
-  // document.getElementById("editPopup").classList.add("active");
-
-  // setTimeout(() => {
-  //   document.getElementById("editPopup").classList.add("active");
-  // }, 0);
-  
-  // // 🔥 BACKGROUND SYNC (latest data)
-  // syncLatestData(student_id);
-
 async function saveEdit(student_id) {
   let params = new URLSearchParams({
     action: "updateStudent",
@@ -759,7 +683,7 @@ loadSchools();   // first load schools + form
 function formatDOB(value) {
   if (!value) return "";
 
-  // 🔥 Case 1: Excel numeric date (VERY COMMON)
+  // 🔥 Case 1: Excel numeric
   if (typeof value === "number") {
     const date = XLSX.SSF.parse_date_code(value);
     if (!date) return "";
@@ -773,12 +697,10 @@ function formatDOB(value) {
 
   let str = value.toString().trim();
 
-  // 🔥 Case 2: ISO format (2021-12-06T18:30:00.000Z)
+  // 🔥 Case 2: ISO format
   if (str.includes("T")) {
-    const datePart = str.split("T")[0]; // 👉 "2001-07-12"
-
+    const datePart = str.split("T")[0];
     const [year, month, day] = datePart.split("-");
-
     return `${day}/${month}/${year}`;
   }
 
@@ -788,16 +710,33 @@ function formatDOB(value) {
     return `${d}/${m}/${y}`;
   }
 
-  // 🔥 Case 4: DD/MM/YYYY or DD-MM-YYYY
+  // 🔥 Case 4: Already DD/MM or MM/DD → detect properly
   str = str.replace(/-/g, "/");
   let parts = str.split("/");
 
   if (parts.length !== 3) return str;
 
-  let [day, month, year] = parts;
+  let [p1, p2, year] = parts;
 
-  if (day.length === 1) day = "0" + day;
-  if (month.length === 1) month = "0" + month;
+  let day, month;
+
+  // 🔥 KEY LOGIC (THIS FIXES YOUR BUG)
+  if (parseInt(p1) > 12) {
+    // clearly DD/MM
+    day = p1;
+    month = p2;
+  } else if (parseInt(p2) > 12) {
+    // clearly MM/DD → swap
+    day = p2;
+    month = p1;
+  } else {
+    // ambiguous → assume DD/MM (India)
+    day = p1;
+    month = p2;
+  }
+
+  day = String(day).padStart(2, "0");
+  month = String(month).padStart(2, "0");
 
   return `${day}/${month}/${year}`;
 }
