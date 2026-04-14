@@ -389,6 +389,10 @@ async function saveEditDynamic(id) {
 
   const currentSchool = schools.find(s => s.school === school);
   const fields = currentSchool.fields.split(",");
+  const visibleHeaders = headersGlobal.filter(h => {
+    const key = h.toLowerCase();
+    return !key.includes("address") && !key.includes("photo");
+  });
 
   // 🔥 STEP 1: collect values
   let updatedValues = {};
