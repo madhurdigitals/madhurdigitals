@@ -683,62 +683,20 @@ loadSchools();   // first load schools + form
 function formatDOB(value) {
   if (!value) return "";
 
-  // 🔥 Case 1: Excel numeric
-  if (typeof value === "number") {
-    const date = XLSX.SSF.parse_date_code(value);
-    if (!date) return "";
-
-    const day = String(date.d).padStart(2, "0");
-    const month = String(date.m).padStart(2, "0");
-    const year = date.y;
-
-    return `${day}/${month}/${year}`;
-  }
-
   let str = value.toString().trim();
 
-  // 🔥 Case 2: ISO format
-  if (str.includes("T")) {
-    const datePart = str.split("T")[0];
-    const [year, month, day] = datePart.split("-");
-    return `${day}/${month}/${year}`;
+  // already correct format → return
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+    return str;
   }
 
-  // 🔥 Case 3: YYYY-MM-DD
+  // handle YYYY-MM-DD (from input type=date if used later)
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
     const [y, m, d] = str.split("-");
     return `${d}/${m}/${y}`;
   }
 
-  // 🔥 Case 4: Already DD/MM or MM/DD → detect properly
-  str = str.replace(/-/g, "/");
-  let parts = str.split("/");
-
-  if (parts.length !== 3) return str;
-
-  let [p1, p2, year] = parts;
-
-  let day, month;
-
-  // 🔥 KEY LOGIC (THIS FIXES YOUR BUG)
-  if (parseInt(p1) > 12) {
-    // clearly DD/MM
-    day = p1;
-    month = p2;
-  } else if (parseInt(p2) > 12) {
-    // clearly MM/DD → swap
-    day = p2;
-    month = p1;
-  } else {
-    // ambiguous → assume DD/MM (India)
-    day = p1;
-    month = p2;
-  }
-
-  day = String(day).padStart(2, "0");
-  month = String(month).padStart(2, "0");
-
-  return `${day}/${month}/${year}`;
+  return str; // fallback (no change)
 }
 
 </script>
