@@ -1,237 +1,113 @@
 body {
   font-family: 'Segoe UI', sans-serif;
   margin: 0;
-  background: #f5f7fb;
+  background: linear-gradient(135deg, #eef2ff, #f8fafc);
 }
 
-/* NAV */
+/* NAVBAR (same as add student) */
 nav {
-  background: #0d6efd;
-  color: white;
+  background: white;
   padding: 12px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.logo img {
-  width: 35px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .title-text {
   font-weight: bold;
   font-size: 18px;
+  color: #0d6efd;
 }
 
 .school-name {
-  font-size: 14px;
+  font-size: 13px;
+  color: #6b7280;
 }
 
-.nav-actions button {
-  margin-left: 10px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+/* BADGE */
+.heading-wrapper {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.heading-badge {
+  padding: 8px 18px;
+  background: rgba(13,110,253,0.1);
+  color: #0d6efd;
+  border-radius: 20px;
+  font-weight: 600;
 }
 
 /* CONTAINER */
 .container {
-  max-width: 900px;
+  width: 95%;
   margin: 20px auto;
-  padding: 15px;
 }
 
 /* CARD */
 .card {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-  margin-bottom: 20px;
-}
-
-/* FORM ROW */
-.form-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.form-row label {
-  width: 150px;
-  font-weight: 600;
-}
-
-.form-row input,
-.form-row select {
-  flex: 1;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-/* FOCUS EFFECT */
-input:focus, select:focus {
-  outline: none;
-  border: 2px solid #0d6efd;
-}
-
-/* BUTTONS */
-.btn-group {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.submit-btn {
-  flex: 1;
-  padding: 12px;
-  background: #0d6efd;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.clear-btn {
-  flex: 1;
-  padding: 12px;
-  background: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(10px);
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  margin-bottom: 25px;
 }
 
 /* TABLE */
+.table-wrapper {
+  overflow-x: auto;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
 }
 
+th {
+  background: #f1f5f9;
+  position: sticky;
+  top: 0;
+}
+
 th, td {
   padding: 8px;
-  border-bottom: 1px solid #ddd;
+  text-align: center;
 }
 
-th {
-  background: #f1f3f5;
+tbody tr:hover {
+  background: #f9fafb;
 }
 
-/* TOAST */
-#toast {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #28a745;
-  color: white;
-  padding: 10px 15px;
-  border-radius: 6px;
-  display: none;
+/* SEARCH */
+.search-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
 }
 
-/* MOBILE */
-@media (max-width: 600px) {
-  .form-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .form-row label {
-    width: 100%;
-    margin-bottom: 5px;
-  }
-
-  .btn-group {
-    flex-direction: column;
-  }
-
-  nav {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .nav-actions {
-    margin-top: 10px;
-  }
-}
-
-/* SCHOOL POPUP */
-
+/* POPUP (same system) */
 .school-box {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
   display: none;
-  position: fixed;   /* VERY IMPORTANT */
-  top: 30%;
-  left: 50%;
-  transform: translate(-50%, -30%);
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  z-index: 1000;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-}
-
-.school-header {
-  display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
 }
 
-.close-btn {
-  cursor: pointer;
-  font-size: 18px;
-  color: red;
+.school-box.active {
+  display: flex;
 }
 
-input, select {
-  margin: 5px;
-  padding: 8px;
-}
-
-#editPopup input, #editPopup select {
-  display: block;
-  width: 100%;
-  margin: 5px 0;
-  padding: 8px;
-}
-
-.dropdown {
-  position: relative;
-  display: inline-block;
-  margin-top: 10px;
-}
-
-.dropdown button {
-  padding: 8px;
-  width: 150px;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background: #fff;
-  border: 1px solid #ccc;
-  max-height: 200px;
-  overflow-y: auto;
-  width: 150px;
-  z-index: 1000;
-}
-
-.dropdown-content label {
-  display: block;
-  padding: 5px;
-  cursor: pointer;
-}
-
-#editPopup label {
-  font-weight: 600;
-  font-size: 13px;
+.modal {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  width: 350px;
 }
