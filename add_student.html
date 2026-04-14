@@ -615,12 +615,23 @@ async function renderDynamicForm() {
     const original = f.trim();
     const key = normalizeKey(original);
 
-    let html = `
-      <div class="form-row">
-        <label>${original}</label>
-        <input id="${key}">
-      </div>
-    `;
+    let html = "";
+
+    if (key === "dob") {
+      html = `
+        <div class="form-row">
+          <label>${original}</label>
+          <input id="${key}" placeholder="DD/MM/YYYY" inputmode="numeric">
+        </div>
+      `;
+    } else {
+      html = `
+        <div class="form-row">
+          <label>${original}</label>
+          <input id="${key}">
+        </div>
+      `;
+    }
 
     // special case for class and section dropdown
     // 🔥 CLASS DROPDOWN
@@ -650,6 +661,8 @@ async function renderDynamicForm() {
     }
     container.innerHTML += html;
   });
+  attachDOBFormatter();
+  attachDOBPicker();
 }
 
 function addToRecentTable(data) {
@@ -714,6 +727,59 @@ function formatDOB(value) {
 
   return str;
 }
+
+function attachDOBFormatter() {
+  const dobInput = document.getElementById("dob");
+  if (!dobInput) return;
+
+  dobInput.addEventListener("input", function () {
+    let value = this.value.replace(/\D/g, ""); // only digits
+
+    if (value.length > 8) value = value.slice(0, 8);
+
+    let formatted = "";
+
+    if (value.length >= 2) {
+      formatted += value.substring(0, 2);
+    }
+    if (value.length >= 4) {
+      formatted += "/" + value.substring(2, 4);
+    } else if (value.length > 2) {
+      formatted += "/" + value.substring(2);
+    }
+    if (value.length >= 5) {
+      formatted += "/" + value.substring(4, 8);
+    }
+
+    this.value = formatted;
+  });
+}
+
+function attachDOBPicker() {
+  const dobInput = document.getElementById("dob");
+  if (!dobInput) return;
+
+  const hiddenDate = document.createElement("input");
+  hiddenDate.type = "date";
+  hiddenDate.style.position = "absolute";
+  hiddenDate.style.opacity = "0";
+  hiddenDate.style.pointerEvents = "none";
+
+  document.body.appendChild(hiddenDate);
+
+  // open picker on click
+  dobInput.addEventListener("focus", () => {
+    hiddenDate.click();
+  });
+
+  hiddenDate.addEventListener("change", function () {
+    if (!this.value) return;
+
+    const [y, m, d] = this.value.split("-");
+    dobInput.value = `${d}/${m}/${y}`;
+  });
+}
+
 </script>
   <footer>
     <div class="footer-inner">
