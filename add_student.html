@@ -151,7 +151,7 @@ async function submitStudent() {
     return obj;
   });
 
-  const currentSchool = schools.find(s => s.school.trim().toLowerCase() === school.trim().toLowerCase());
+  const currentSchool = schools.find(s => s.school === school);
 
   if (!currentSchool) {
     showToast("School config not found");
@@ -253,7 +253,7 @@ function applySchoolChange() {
   const dropdown = document.getElementById("schoolSelect");
   const selectedOption = dropdown.options[dropdown.selectedIndex];
 
-  school = selectedOption.value.trim(); // normalize here only
+  school = selectedOption.value;
   const school_name = selectedOption.textContent.trim();
   const school_id = selectedOption.getAttribute("data-id");
 
@@ -366,7 +366,7 @@ async function loadEditData(student_id) {
     return obj;
   });
 
-  const currentSchool = schools.find(s => s.school.trim().toLowerCase() === school.trim().toLowerCase());
+  const currentSchool = schools.find(s => s.school === school);
   const fields = currentSchool.fields.split(",");
 
   let html = `
@@ -452,7 +452,7 @@ async function saveEdit(student_id) {
     return obj;
   });
 
-  const currentSchool = schools.find(s => s.school.trim().toLowerCase() === school.trim().toLowerCase());
+  const currentSchool = schools.find(s => s.school === school);
   const fields = currentSchool.fields.split(",");
 
   fields.forEach(f => {
@@ -668,7 +668,7 @@ async function renderDynamicForm() {
   });
 
   // find current school
-  const currentSchool = schools.find(s => s.school.trim().toLowerCase() === school.trim().toLowerCase());
+  const currentSchool = schools.find(s => s.school === school);
 
   if (!currentSchool) return;
 
