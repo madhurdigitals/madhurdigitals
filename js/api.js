@@ -137,23 +137,36 @@ function attachDOBFormatterAll() {
 
   inputs.forEach(input => {
 
-    // 🔥 Allow only numbers while typing
+    // ✅ Allow only numbers (max 8)
     input.addEventListener("input", function () {
       this.value = this.value.replace(/\D/g, "").slice(0, 8);
+      this.style.border = ""; // reset while typing
     });
 
-    // 🔥 Format AFTER typing (on blur)
+    // 🔥 VALIDATION ON BLUR
     input.addEventListener("blur", function () {
 
-      let value = this.value;
+      const value = this.value;
 
-      if (value.length === 8) {
-        const day = value.substring(0, 2);
-        const month = value.substring(2, 4);
-        const year = value.substring(4, 8);
+      // ❌ INVALID
+      if (value.length !== 8) {
+        this.style.border = "2px solid red";
 
-        this.value = `${day}/${month}/${year}`;
+        // optional toast (clean UX)
+        if (value.length > 0) {
+          showToast("Enter valid DOB (DDMMYYYY)");
+        }
+
+        return;
       }
+
+      // ✅ VALID → FORMAT
+      const day = value.substring(0, 2);
+      const month = value.substring(2, 4);
+      const year = value.substring(4, 8);
+
+      this.value = `${day}/${month}/${year}`;
+      this.style.border = "";
     });
 
   });

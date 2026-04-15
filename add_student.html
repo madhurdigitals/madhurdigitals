@@ -206,8 +206,24 @@ async function submitStudent() {
     }
 
     if (key === "dob") {
+
+      const digits = value.replace(/\D/g, "");
+
+      if (digits.length !== 8) {
+        valid = false;
+
+        const el = document.getElementById(key);
+        if (el) {
+          el.style.border = "2px solid red";
+        }
+
+        showToast("Enter valid DOB (DDMMYYYY)");
+        return;
+      }
+
       data[key] = formatDOB(value);
-    } else {
+    } 
+    else {
       data[key] = value || "";
     }
   });
