@@ -113,6 +113,7 @@ nav {
 .form-row select,
 .form-row textarea {
   flex: 1;
+  min-width: 0;  
   padding: 11px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
@@ -332,14 +333,14 @@ tr {
 
   .form-row {
     display: flex;
-    flex-direction: row;   /* 🔥 inline layout */
+    flex-direction: row;
     align-items: center;
-    gap: 10px;
+    gap: 6px;   /* tighter spacing */
   }
 
   .form-row label {
-    width: 110px;   /* fixed label width */
     font-size: 14px;
+    white-space: nowrap;
   }
 
   .form-row input,
