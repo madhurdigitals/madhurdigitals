@@ -438,7 +438,7 @@ async function loadEditData(student_id) {
       value = formatDOB(value);
     }
 
-    html += `<div class="form-row"><label>${original}</label>`;
+    html += `<div class="form-row"><label>${original} :</label>`;
 
     if (key === "class") {
       html += `
@@ -758,7 +758,7 @@ async function renderDynamicForm() {
     if (key === "dob") {
       html = `
         <div class="form-row">
-          <label>${original}</label>
+          <label>${original} :</label>
           <div style="display:flex; gap:5px; width:100%;">
             <input id="${key}" type="text" inputmode="numeric" maxlength="8" placeholder="DDMMYYYY">
             <button type="button" onclick="openDOBPicker('${key}')">📅</button>
@@ -771,7 +771,7 @@ async function renderDynamicForm() {
     else if (key.includes("phone") || key.includes("contact")) {
       html = `
         <div class="form-row">
-          <label>${original}</label>
+          <label>${original} :</label>
           <input id="${key}" inputmode="numeric" maxlength="10">
         </div>
       `;
@@ -781,7 +781,7 @@ async function renderDynamicForm() {
     else if (key.includes("address")) {
       html = `
         <div class="form-row">
-          <label>${original}</label>
+          <label>${original} :</label>
           <textarea id="${key}" rows="1"></textarea>
         </div>
       `;
@@ -801,7 +801,7 @@ async function renderDynamicForm() {
     else {
       html = `
         <div class="form-row">
-          <label>${original}</label>
+          <label>${original} :</label>
           <input id="${key}">
         </div>
       `;

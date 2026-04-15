@@ -216,13 +216,23 @@ function openDOBPicker(inputId) {
   const hidden = document.createElement("input");
   hidden.type = "date";
 
+  // 🔥 required for browser
+  hidden.style.position = "fixed";
+  hidden.style.opacity = "0";
+  hidden.style.pointerEvents = "none";
+
+  document.body.appendChild(hidden);
+
+  hidden.focus();   // 🔥 important
+  hidden.click();
+
   hidden.onchange = function () {
     if (!this.value) return;
 
     const [y, m, d] = this.value.split("-");
     input.value = `${d}/${m}/${y}`;
-  };
 
-  hidden.click();
+    document.body.removeChild(hidden);
+  };
 }
 
