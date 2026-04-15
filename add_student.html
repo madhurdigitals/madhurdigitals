@@ -177,8 +177,17 @@ async function submitStudent() {
 
     const value = el.value;
 
-    if (!value && (key === "name" || key === "class" || key === "section")) {
+    if (!value && (key === "name" || key === "class")) {
       valid = false;
+
+      const el = document.getElementById(key);
+      if (el) {
+        el.style.border = "2px solid red";
+
+        setTimeout(() => {
+          el.style.border = "";
+        }, 2000);
+      }
     }
 
     if (key === "dob") {
@@ -451,7 +460,7 @@ async function loadEditData(student_id) {
 
   container.innerHTML = html;
   if (typeof attachDOBFormatterAll === "function") attachDOBFormatterAll();
-  if (typeof attachDOBPickerAll === "function") attachDOBPickerAll();
+  
 }
 
 async function saveEdit(student_id) {
@@ -758,7 +767,15 @@ async function renderDynamicForm() {
       html = `
         <div class="form-row">
           <label>${original}</label>
-          <textarea id="${key}" rows="1"></textarea>
+          <textarea id="${key}" rows="1" style="
+            width:100%;
+            padding:11px;
+            border-radius:8px;
+            border:1px solid #d1d5db;
+            background:#f9fafb;
+            font-family:inherit;
+            resize:none;
+          "></textarea>
         </div>
       `;
     }

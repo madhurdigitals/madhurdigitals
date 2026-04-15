@@ -137,25 +137,21 @@ function attachDOBFormatterAll() {
 
   inputs.forEach(input => {
     input.addEventListener("input", function () {
-      let value = this.value.replace(/\D/g, "");
 
-      if (value.length > 8) value = value.slice(0, 8);
+      let cursorPos = this.selectionStart;
+
+      let raw = this.value.replace(/\D/g, "").slice(0, 8);
 
       let formatted = "";
 
-      if (value.length >= 2) {
-        formatted += value.substring(0, 2);
-      }
-      if (value.length >= 4) {
-        formatted += "/" + value.substring(2, 4);
-      } else if (value.length > 2) {
-        formatted += "/" + value.substring(2);
-      }
-      if (value.length >= 5) {
-        formatted += "/" + value.substring(4, 8);
-      }
+      if (raw.length >= 2) formatted += raw.substring(0, 2);
+      if (raw.length >= 3) formatted += "/" + raw.substring(2, 4);
+      if (raw.length >= 5) formatted += "/" + raw.substring(4, 8);
 
       this.value = formatted;
+
+      // 🔥 FIX cursor jump
+      this.setSelectionRange(cursorPos, cursorPos);
     });
   });
 }
@@ -205,12 +201,18 @@ function attachEnterNavigation() {
 function openDOBPicker(inputId) {
   const hidden = document.createElement("input");
   hidden.type = "date";
+  hidden.style.position = "absolute";
+  hidden.style.opacity = "0";
+
+  document.body.appendChild(hidden);
 
   hidden.onchange = function () {
     if (!this.value) return;
 
     const [y, m, d] = this.value.split("-");
     document.getElementById(inputId).value = `${d}/${m}/${y}`;
+
+    document.body.removeChild(hidden);
   };
 
   hidden.click();
