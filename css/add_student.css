@@ -59,6 +59,8 @@ nav {
 .heading-wrapper {
   text-align: center;
   margin-top: 15px;
+  position: relative;
+  z-index: 1;
 }
 
 .heading-badge {
@@ -276,7 +278,7 @@ body {
 
 .card {
   position: relative;
-  z-index: 1;
+  z-index: 10;
 }
 
 /* show popup */
@@ -469,4 +471,9 @@ footer {
   margin: auto;
   padding: 15px 20px;
   text-align: center;
+}
+
+#dynamicForm {
+  position: relative;
+  z-index: 10;
 }

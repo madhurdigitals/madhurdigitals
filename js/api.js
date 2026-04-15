@@ -184,16 +184,25 @@ function attachAutoExpand() {
 }
 
 function attachEnterNavigation() {
-  const inputs = document.querySelectorAll("#dynamicForm input, #dynamicForm select, #dynamicForm textarea");
+  const inputs = document.querySelectorAll(
+    "#dynamicForm input, #dynamicForm select, #dynamicForm textarea"
+  );
 
   inputs.forEach((el, index) => {
     el.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
+
+      // 🔥 ONLY handle Enter for INPUT fields (not textarea)
+      if (e.key === "Enter" && el.tagName !== "TEXTAREA") {
+
         e.preventDefault();
 
         const next = inputs[index + 1];
-        if (next) next.focus();
+
+        if (next) {
+          next.focus();
+        }
       }
+
     });
   });
 }
