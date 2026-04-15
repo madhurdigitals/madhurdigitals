@@ -118,17 +118,32 @@ function normalizeKey(str) {
 
 /* CLEAR */
 function clearForm() {
-  const inputs = document.querySelectorAll("#dynamicForm input, #dynamicForm select");
+  const inputs = document.querySelectorAll(
+    "#dynamicForm input, #dynamicForm select, #dynamicForm textarea"
+  );
 
   inputs.forEach(el => {
     const id = el.id;
 
-    // ❌ DO NOT CLEAR these
+    // ❌ Do not clear class & section
     if (id === "class" || id === "section") return;
 
-    // ✅ CLEAR everything else
-    el.value = "";
+    if (el.tagName === "SELECT") {
+      el.selectedIndex = 0;
+    } else {
+      el.value = "";
+    }
+
+    // 🔥 Reset textarea height
+    if (el.tagName === "TEXTAREA") {
+      el.style.height = "auto";
+    }
+
+    // 🔥 Remove any red border (validation reset)
+    el.style.border = "";
   });
+
+  // ✅ Focus first field
   document.getElementById("name")?.focus();
 }
 
@@ -767,15 +782,7 @@ async function renderDynamicForm() {
       html = `
         <div class="form-row">
           <label>${original}</label>
-          <textarea id="${key}" rows="1" style="
-            width:100%;
-            padding:11px;
-            border-radius:8px;
-            border:1px solid #d1d5db;
-            background:#f9fafb;
-            font-family:inherit;
-            resize:none;
-          "></textarea>
+          <textarea id="${key}" rows="1"></textarea>
         </div>
       `;
     }
