@@ -211,28 +211,42 @@ function attachEnterNavigation() {
 }
 
 function openDOBPicker(inputId) {
-  const input = document.getElementById(inputId);
+  const targetInput = document.getElementById(inputId);
 
-  const hidden = document.createElement("input");
-  hidden.type = "date";
+  // 🔥 Create real visible date input
+  const picker = document.createElement("input");
+  picker.type = "date";
 
-  // 🔥 required for browser
-  hidden.style.position = "fixed";
-  hidden.style.opacity = "0";
-  hidden.style.pointerEvents = "none";
+  // Position near the input
+  const rect = targetInput.getBoundingClientRect();
 
-  document.body.appendChild(hidden);
+  picker.style.position = "absolute";
+  picker.style.top = rect.bottom + window.scrollY + "px";
+  picker.style.left = rect.left + "px";
+  picker.style.zIndex = 9999;
+  picker.style.padding = "8px";
 
-  hidden.focus();   // 🔥 important
-  hidden.click();
+  document.body.appendChild(picker);
 
-  hidden.onchange = function () {
+  picker.focus(); // ✅ this works
+
+  picker.onchange = function () {
     if (!this.value) return;
 
     const [y, m, d] = this.value.split("-");
-    input.value = `${d}/${m}/${y}`;
+    targetInput.value = `${d}/${m}/${y}`;
 
-    document.body.removeChild(hidden);
+    document.body.removeChild(picker);
+  };
+
+  // Remove if user clicks elsewhere
+  picker.onblur = function () {
+    setTimeout(() => {
+      if (document.body.contains(picker)) {
+        document.body.removeChild(picker);
+      }
+    }, 200);
   };
 }
+
 
