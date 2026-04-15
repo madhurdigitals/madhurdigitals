@@ -160,26 +160,59 @@ function attachDOBFormatterAll() {
   });
 }
 
-function attachDOBPickerAll() {
-  const inputs = document.querySelectorAll('input[id*="dob"]');
+function attachPhoneValidation() {
+  const inputs = document.querySelectorAll('input[id*="phone"], input[id*="contact"]');
 
   inputs.forEach(input => {
-    const hiddenDate = document.createElement("input");
-    hiddenDate.type = "date";
-    hiddenDate.style.position = "absolute";
-    hiddenDate.style.opacity = "0";
+    input.addEventListener("input", function () {
+      this.value = this.value.replace(/\D/g, "").slice(0, 10);
 
-    document.body.appendChild(hiddenDate);
-
-    input.addEventListener("focus", () => {
-      hiddenDate.click();
-    });
-
-    hiddenDate.addEventListener("change", function () {
-      if (!this.value) return;
-
-      const [y, m, d] = this.value.split("-");
-      input.value = `${d}/${m}/${y}`;
+      if (this.value.length === 10) {
+        this.style.border = "2px solid green";
+      } else {
+        this.style.border = "";
+      }
     });
   });
 }
+
+function attachAutoExpand() {
+  const textareas = document.querySelectorAll("textarea");
+
+  textareas.forEach(t => {
+    t.addEventListener("input", function () {
+      this.style.height = "auto";
+      this.style.height = this.scrollHeight + "px";
+    });
+  });
+}
+
+function attachEnterNavigation() {
+  const inputs = document.querySelectorAll("#dynamicForm input, #dynamicForm select, #dynamicForm textarea");
+
+  inputs.forEach((el, index) => {
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+
+        const next = inputs[index + 1];
+        if (next) next.focus();
+      }
+    });
+  });
+}
+
+function openDOBPicker(inputId) {
+  const hidden = document.createElement("input");
+  hidden.type = "date";
+
+  hidden.onchange = function () {
+    if (!this.value) return;
+
+    const [y, m, d] = this.value.split("-");
+    document.getElementById(inputId).value = `${d}/${m}/${y}`;
+  };
+
+  hidden.click();
+}
+

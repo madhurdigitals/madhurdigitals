@@ -188,6 +188,25 @@ async function submitStudent() {
     }
   });
 
+  // 🔥 PHONE VALIDATION
+  Object.keys(data).forEach(k => {
+    if (k.includes("phone") || k.includes("contact")) {
+      const val = data[k];
+
+      if (val && val.length !== 10) {
+        showToast("Please enter a valid 10-digit number");
+
+        const el = document.getElementById(k);
+        if (el) {
+          el.style.border = "2px solid red";
+          setTimeout(() => el.style.border = "", 2000);
+        }
+
+        valid = false;
+      }
+    }
+  });
+
   if (!valid) {
     showToast("Fill required fields");
     isSubmitting = false;
@@ -657,7 +676,7 @@ document.addEventListener("click", function(e) {
 
 async function renderDynamicForm() {
 
-  const raw = schoolsData;  // get data from Google Sheet
+  const raw = schoolsData;
 
   const headers = raw[0];
 
@@ -667,9 +686,7 @@ async function renderDynamicForm() {
     return obj;
   });
 
-  // find current school
   const currentSchool = schools.find(s => s.school === school);
-
   if (!currentSchool) return;
 
   const fields = currentSchool.fields.split(",");
@@ -677,20 +694,87 @@ async function renderDynamicForm() {
   const container = document.getElementById("dynamicForm");
   container.innerHTML = "";
 
-  fields.forEach(f => {
+  fields.forEach((f) => {
+
     const original = f.trim();
     const key = normalizeKey(original);
 
     let html = "";
 
+    // 🔥 CLASS + SECTION SAME ROW
+    if (key === "class" && fields.map(x => x.trim().toLowerCase()).includes("section")) {
+
+      html = `
+        <div class="form-row double">
+          <div>
+            <label>Class *</label>
+            <select id="class">
+              <option value="">Select</option>
+              ${CONFIG.classes.map(c => `<option value="${c}">${c}</option>`).join("")}
+            </select>
+          </div>
+
+          <div>
+            <label>Section</label>
+            <select id="section">
+              <option value="">Select</option>
+              ${CONFIG.sections.map(s => `<option value="${s}">${s}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML += html;
+      return; // skip section
+    }
+
+    if (key === "section") return;
+
+    // 🔥 DOB FIELD
     if (key === "dob") {
       html = `
         <div class="form-row">
           <label>${original}</label>
-          <input id="${key}" placeholder="DD/MM/YYYY" inputmode="numeric">
+          <div style="display:flex; gap:5px; width:100%;">
+            <input id="${key}" maxlength="10" inputmode="numeric" placeholder="DD/MM/YYYY">
+            <button type="button" onclick="openDOBPicker('${key}')">📅</button>
+          </div>
         </div>
       `;
-    } else {
+    }
+
+    // 🔥 PHONE FIELD
+    else if (key.includes("phone") || key.includes("contact")) {
+      html = `
+        <div class="form-row">
+          <label>${original}</label>
+          <input id="${key}" inputmode="numeric" maxlength="10">
+        </div>
+      `;
+    }
+
+    // 🔥 ADDRESS FIELD
+    else if (key.includes("address")) {
+      html = `
+        <div class="form-row">
+          <label>${original}</label>
+          <textarea id="${key}" rows="1"></textarea>
+        </div>
+      `;
+    }
+
+    // 🔥 NAME REQUIRED
+    else if (key === "name") {
+      html = `
+        <div class="form-row">
+          <label>${original} *</label>
+          <input id="${key}">
+        </div>
+      `;
+    }
+
+    // 🔥 DEFAULT FIELD
+    else {
       html = `
         <div class="form-row">
           <label>${original}</label>
@@ -699,36 +783,14 @@ async function renderDynamicForm() {
       `;
     }
 
-    // special case for class and section dropdown
-    // 🔥 CLASS DROPDOWN
-    if (key === "class") {
-      html = `
-        <div class="form-row">
-          <label>Class</label>
-          <select id="class">
-            <option value="">Select Class</option>
-            ${CONFIG.classes.map(c => `<option value="${c}">${c}</option>`).join("")}
-          </select>
-        </div>
-      `;
-    }
-
-    // 🔥 SECTION DROPDOWN
-    else if (key === "section") {
-      html = `
-        <div class="form-row">
-          <label>Section</label>
-          <select id="section">
-            <option value="">Select Section</option>
-            ${CONFIG.sections.map(s => `<option value="${s}">${s}</option>`).join("")}
-          </select>
-        </div>
-      `;
-    }
     container.innerHTML += html;
   });
+
+  // ✅ Attach all behaviors
   attachDOBFormatterAll();
-  attachDOBPickerAll();
+  attachPhoneValidation();
+  attachAutoExpand();
+  attachEnterNavigation();
 }
 
 function addToRecentTable(data) {

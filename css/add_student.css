@@ -323,12 +323,31 @@ tr {
 @media (max-width: 600px) {
 
   .form-row {
-    flex-direction: column;
-    align-items: flex-start;
+    display: flex;
+    flex-direction: row;   /* 🔥 inline layout */
+    align-items: center;
+    gap: 10px;
   }
 
   .form-row label {
-    width: 100%;
+    width: 110px;   /* fixed label width */
+    font-size: 14px;
+  }
+
+  .form-row input,
+  .form-row select,
+  .form-row textarea {
+    flex: 1;
+  }
+
+  /* Class + Section in same row */
+  .form-row.double {
+    display: flex;
+    gap: 10px;
+  }
+
+  .form-row.double > div {
+    flex: 1;
   }
 
   .btn-group {
