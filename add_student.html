@@ -778,10 +778,7 @@ async function renderDynamicForm() {
       html = `
         <div class="form-row">
           <label>${original} :</label>
-          <div style="display:flex; gap:5px; width:100%;">
-            <input id="${key}" type="text" inputmode="numeric" maxlength="8" placeholder="DDMMYYYY">
-            <button type="button" onclick="openDOBPicker('${key}')">📅</button>
-          </div>
+          <input id="${key}" type="text" inputmode="numeric" maxlength="8" placeholder="DDMMYYYY">
         </div>
       `;
     }

@@ -236,43 +236,4 @@ function attachEnterNavigation() {
   });
 }
 
-function openDOBPicker(inputId) {
-  const targetInput = document.getElementById(inputId);
-
-  // 🔥 Create real visible date input
-  const picker = document.createElement("input");
-  picker.type = "date";
-
-  // Position near the input
-  const rect = targetInput.getBoundingClientRect();
-
-  picker.style.position = "absolute";
-  picker.style.top = rect.bottom + window.scrollY + "px";
-  picker.style.left = rect.left + "px";
-  picker.style.zIndex = 9999;
-  picker.style.padding = "8px";
-
-  document.body.appendChild(picker);
-
-  picker.focus(); // ✅ this works
-
-  picker.onchange = function () {
-    if (!this.value) return;
-
-    const [y, m, d] = this.value.split("-");
-    targetInput.value = `${d}/${m}/${y}`;
-
-    document.body.removeChild(picker);
-  };
-
-  // Remove if user clicks elsewhere
-  picker.onblur = function () {
-    setTimeout(() => {
-      if (document.body.contains(picker)) {
-        document.body.removeChild(picker);
-      }
-    }, 200);
-  };
-}
-
 
