@@ -152,8 +152,10 @@ let isSubmitting = false;
 
 async function submitStudent() {
   const btn = document.querySelector(".submit-btn");
+
+  if (isSubmitting) return;
+
   btn.disabled = true;
-  if (isSubmitting) return;   // 🚫 prevent double click
   isSubmitting = true;
 
   const raw = schoolsData;
@@ -218,7 +220,7 @@ async function submitStudent() {
         }
 
         showToast("Enter valid DOB (DDMMYYYY)");
-        return;
+        // return;
       }
 
       data[key] = formatDOB(value);
@@ -250,6 +252,7 @@ async function submitStudent() {
   if (!valid) {
     showToast("Fill required fields");
     isSubmitting = false;
+    btn.disabled = false;   // 🔥 ADD THIS
     return;
   }
 

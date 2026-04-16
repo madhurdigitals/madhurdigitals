@@ -176,15 +176,28 @@ function attachPhoneValidation() {
   const inputs = document.querySelectorAll('input[id*="phone"], input[id*="contact"]');
 
   inputs.forEach(input => {
+
+    // ✅ Only digits, max 10
     input.addEventListener("input", function () {
       this.value = this.value.replace(/\D/g, "").slice(0, 10);
+      this.style.border = ""; // reset while typing
+    });
 
-      if (this.value.length === 10) {
-        this.style.border = "2px solid green";
+    // 🔥 VALIDATE ON BLUR
+    input.addEventListener("blur", function () {
+      const value = this.value;
+
+      if (value.length !== 10) {
+        this.style.border = "2px solid red";
+
+        if (value.length > 0) {
+          showToast("Enter valid 10-digit number");
+        }
       } else {
         this.style.border = "";
       }
     });
+
   });
 }
 
