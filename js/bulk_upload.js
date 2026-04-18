@@ -296,6 +296,7 @@ function selectAll(el) {
 // SUBMIT
 async function submitData() {
   if (!validateMapping()) return;
+
   const validRows = mappedData.filter(r => r.valid && r.selected === true);
 
   if (validRows.length === 0) {
@@ -303,14 +304,28 @@ async function submitData() {
     return;
   }
 
+  // 🔥 STEP 2.1: Get existing students before upload
+  const existingData = await getStudents(school);
+
+  // Extract student IDs (assuming first column is student_id)
+  const existingIds = new Set(
+    existingData.slice(1).map(row => row[0]) // skip header row
+  );
+
+  const countBefore = existingIds.size;
+
+  // 🔒 Disable button permanently
+  const submitBtn = document.querySelector(".submit-btn");
+  submitBtn.disabled = true;
+  submitBtn.innerText = "Uploading...";
+
   // 🔥 Build dynamic payload based on school fields
   const payload = validRows.map(r => {
     let obj = {};
-    
+
     schoolFields.forEach(f => {
       const key = normalizeKey(f);
 
-      // ✅ ONLY include mapped fields
       if (columnMap[key] !== undefined) {
         obj[key] = r[key] || "";
       }
@@ -319,6 +334,7 @@ async function submitData() {
     return obj;
   });
 
+  // 🔥 Clean data
   payload.forEach(obj => {
     if (obj.phone) {
       obj.phone = obj.phone.toString().replace(/\n/g, "").trim();
@@ -330,8 +346,10 @@ async function submitData() {
 
   try {
 
-    const res = await fetch(API_URL, {
+    // 🚀 Send POST request (no-cors)
+    await fetch(API_URL, {
       method: "POST",
+      mode: "no-cors",
       headers: {
         "Content-Type": "application/json"
       },
@@ -341,35 +359,80 @@ async function submitData() {
         data: payload
       })
     });
-    const result = await res.json();
 
-    // ✅ Mark uploaded rows
-    mappedData.forEach(r => {
-      if (r.valid && r.selected) {
-        r.status = "uploaded";
+    // ⛔ DO NOT mark uploaded yet (we'll verify in next step)
+    // ⛔ DO NOT show success yet
+
+    console.log("Upload request sent, waiting for verification...");
+    // 🔥 STEP 2.3: Smart Polling
+    const maxTime = 180000; // 3 minutes
+    const interval = 5000;  // 5 seconds
+
+    let elapsed = 0;
+    let newStudents = [];
+
+    while (elapsed < maxTime) {
+
+      // wait 5 seconds
+      await new Promise(resolve => setTimeout(resolve, interval));
+
+      elapsed += interval;
+
+      // fetch latest data
+      const updatedData = await getStudents(school);
+
+      const updatedRows = updatedData.slice(1); // skip header
+
+      // find new students using ID comparison
+      newStudents = updatedRows.filter(row => !existingIds.has(row[0]));
+
+      if (newStudents.length > 0) {
+        console.log("New students detected:", newStudents.length);
+        break;
       }
-    });
 
-    renderTable();
+      console.log("Waiting for data...", elapsed / 1000, "sec");
+    }
 
-    // ✅ Disable button after upload
-    document.querySelector(".submit-btn").disabled = true;
+        // 🔥 Handle result after polling
 
-    alert(`Uploaded: ${result.added}`);
+    if (newStudents.length === 0) {
+      alert("Upload is taking longer than expected. Please refresh later.");
+      return;
+    }
+
+    const uploadedCount = newStudents.length;
+    const selectedCount = validRows.length;
+
+    // 🔥 Partial failure check
+    if (uploadedCount < selectedCount) {
+      alert(`Uploaded ${uploadedCount} students. Some records may have failed.`);
+    } else {
+      alert(`Uploaded ${uploadedCount} students successfully`);
+    }
+        // 🔥 SHOW ONLY NEWLY UPLOADED STUDENTS
+
+    // Convert newStudents to rawData format
+    rawData = newStudents.map(row => row.slice(1)); 
+
+    // Rebuild table using your existing system
+    buildTable();
+
+    // 🔥 Apply green highlight + border
+    setTimeout(() => {
+      const rows = document.querySelectorAll("#tableBody tr");
+
+      rows.forEach(row => {
+        row.style.background = "#ccffcc";
+        row.style.border = "2px solid green";
+      });
+    }, 100);
 
   } catch (err) {
     console.error("Bulk Upload Error:", err);
     alert("Upload failed");
   }
 }
-
-  renderTable();
-
-  // ✅ Disable button
-  document.querySelector(".submit-btn").disabled = true;
-
- 
-
 
 // SAMPLE
 function downloadSample() {
