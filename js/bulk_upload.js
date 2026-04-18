@@ -370,6 +370,7 @@ async function submitData() {
 
     let elapsed = 0;
     let newStudents = [];
+    let updatedData = [];
 
     while (elapsed < maxTime) {
 
@@ -379,7 +380,7 @@ async function submitData() {
       elapsed += interval;
 
       // fetch latest data
-      const updatedData = await getStudents(school);
+      updatedData = await getStudents(school);
 
       const updatedRows = updatedData.slice(1); // skip header
 
