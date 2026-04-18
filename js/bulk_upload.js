@@ -306,7 +306,7 @@ async function submitData() {
   // 🔥 Build dynamic payload based on school fields
   const payload = validRows.map(r => {
     let obj = {};
-
+    
     schoolFields.forEach(f => {
       const key = normalizeKey(f);
 
@@ -319,11 +319,28 @@ async function submitData() {
     return obj;
   });
 
+  payload.forEach(obj => {
+    if (obj.phone) {
+      obj.phone = obj.phone.toString().replace(/\n/g, "").trim();
+    }
+    if (obj.address) {
+      obj.address = obj.address.replace(/\n/g, " ").trim();
+    }
+  });
+
   try {
 
-    const url = `${API_URL}?action=bulkUploadStudents&school=${school}&data=${encodeURIComponent(JSON.stringify(payload))}`;
-
-    const res = await fetch(url);
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        action: "bulkUploadStudents",
+        school: school,
+        data: payload
+      })
+    });
     const result = await res.json();
 
     // ✅ Mark uploaded rows
