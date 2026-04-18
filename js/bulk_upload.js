@@ -435,13 +435,7 @@ async function submitData() {
     // 🔥 Map dynamically using normalized keys
     rawData = newStudentObjects.map(student => {
       // 🔥 Reset and rebuild mapping for reconstructed data
-    // 🔥 Reset and rebuild mapping for reconstructed data
-    columnMap = {};
-
-    schoolFields.forEach((f, index) => {
-      const key = normalizeKey(f);
-      columnMap[key] = index;
-    });  
+      
 
       return schoolFields.map(f => {
 
@@ -479,7 +473,13 @@ async function submitData() {
 
     });
   
+    // 🔥 rebuild columnMap ONCE (correct place)
+    columnMap = {};
 
+    schoolFields.forEach((f, index) => {
+      const key = normalizeKey(f);
+      columnMap[key] = index;
+    });
     // 🔥 STEP 4: Rebuild table
     buildTable();
 
