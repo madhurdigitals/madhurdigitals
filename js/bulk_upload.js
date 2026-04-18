@@ -425,10 +425,22 @@ async function submitData() {
     });
 
     // 🔥 STEP 3: Convert to rawData based on schoolFields
+    // 🔥 Normalize headers map
+    const headerMap = {};
+    headers.forEach(h => {
+      headerMap[normalizeKey(h)] = h;
+    });
+
+    // 🔥 Map dynamically using normalized keys
     rawData = newStudentObjects.map(student => {
 
       return schoolFields.map(f => {
-        return student[f] || "";  // dynamic mapping
+        const key = normalizeKey(f);
+
+        // find matching header
+        const actualHeader = headerMap[key];
+
+        return actualHeader ? (student[actualHeader] || "") : "";
       });
 
     });
