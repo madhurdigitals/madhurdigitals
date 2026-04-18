@@ -413,9 +413,26 @@ async function submitData() {
         // 🔥 SHOW ONLY NEWLY UPLOADED STUDENTS
 
     // Convert newStudents to rawData format
-    rawData = newStudents.map(row => row.slice(1)); 
+    // 🔥 STEP 1: Get headers dynamically
+    const headers = updatedData[0]; // from polling fetch
 
-    // Rebuild table using your existing system
+    // 🔥 STEP 2: Convert rows → objects (like manage_student.js)
+    const newStudentObjects = newStudents.map(row => {
+      let obj = {};
+      headers.forEach((h, i) => obj[h] = row[i]);
+      return obj;
+    });
+
+    // 🔥 STEP 3: Convert to rawData based on schoolFields
+    rawData = newStudentObjects.map(student => {
+
+      return schoolFields.map(f => {
+        return student[f] || "";  // dynamic mapping
+      });
+
+    });
+
+    // 🔥 STEP 4: Rebuild table
     buildTable();
 
     // 🔥 Apply green highlight + border
