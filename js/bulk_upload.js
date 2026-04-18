@@ -33,7 +33,8 @@ const FIELD_ALIASES = {
     "father_name",
     "father",
     "father_s_name",
-    "guardian_name"
+    "guardian_name",
+    "Father's Name"
   ],
 
   class: ["class", "std", "standard", "grade"],
@@ -435,10 +436,32 @@ async function submitData() {
     rawData = newStudentObjects.map(student => {
 
       return schoolFields.map(f => {
+
         const key = normalizeKey(f);
 
-        // find matching header
-        const actualHeader = headerMap[key];
+        let actualHeader = headerMap[key];
+
+        // 🔥 1. If exact match not found → try smart mapping
+        if (!actualHeader) {
+          for (let h in headerMap) {
+
+            // normalize DB header key
+            const normalizedHeader = normalizeKey(h);
+
+            // use your existing smart function
+            const mapped = autoMapField(h);
+
+            if (mapped === key) {
+              actualHeader = headerMap[h];
+              break;
+            }
+          }
+        }
+
+        // 🔥 2. Debug (very useful)
+        if (!actualHeader) {
+          console.warn("❌ Missing mapping for:", key);
+        }
 
         return actualHeader ? (student[actualHeader] || "") : "";
       });
