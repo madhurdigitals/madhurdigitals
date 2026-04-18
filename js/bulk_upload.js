@@ -439,26 +439,29 @@ async function submitData() {
 
         const key = normalizeKey(f);
 
-        let actualHeader = headerMap[key];
+        let actualHeader = "";
 
-        // 🔥 1. If exact match not found → try smart mapping
+        // 🔥 STEP 1: Exact match (fast)
+        for (let h of headers) {
+          if (normalizeKey(h) === key) {
+            actualHeader = h;
+            break;
+          }
+        }
+
+        // 🔥 STEP 2: Smart match using autoMapField (IMPORTANT FIX)
         if (!actualHeader) {
-          for (let h in headerMap) {
-
-            // normalize DB header key
-            const normalizedHeader = normalizeKey(h);
-
-            // use your existing smart function
-            const mapped = autoMapField(h);
+          for (let h of headers) {
+            const mapped = autoMapField(h);  // ✅ ORIGINAL header used
 
             if (mapped === key) {
-              actualHeader = headerMap[h];
+              actualHeader = h;
               break;
             }
           }
         }
 
-        // 🔥 2. Debug (very useful)
+        // 🔥 STEP 3: Debug (optional but very useful)
         if (!actualHeader) {
           console.warn("❌ Missing mapping for:", key);
         }
