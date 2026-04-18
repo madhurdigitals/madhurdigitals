@@ -470,6 +470,7 @@ async function submitData() {
       });
 
     });
+    columnMap = {};
 
     // 🔥 STEP 4: Rebuild table
     buildTable();
