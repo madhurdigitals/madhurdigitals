@@ -128,11 +128,7 @@ function renderMapping() {
 
   // 🔥 APPLY AUTO MAP TO columnMap
   columnMap = {}; // 🔥 RESET FIRST
-  
-  schoolFields.forEach((f, index) => {
-    const key = normalizeKey(f);
-    columnMap[key] = index;
-  });
+
   fields.forEach(f => {
     headers.forEach((h, i) => {
       const mapped = autoMapField(h);
@@ -438,6 +434,14 @@ async function submitData() {
 
     // 🔥 Map dynamically using normalized keys
     rawData = newStudentObjects.map(student => {
+      // 🔥 Reset and rebuild mapping for reconstructed data
+    // 🔥 Reset and rebuild mapping for reconstructed data
+    columnMap = {};
+
+    schoolFields.forEach((f, index) => {
+      const key = normalizeKey(f);
+      columnMap[key] = index;
+    });  
 
       return schoolFields.map(f => {
 
@@ -474,7 +478,7 @@ async function submitData() {
       });
 
     });
-    columnMap = {};
+  
 
     // 🔥 STEP 4: Rebuild table
     buildTable();
