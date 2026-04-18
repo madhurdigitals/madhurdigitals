@@ -128,7 +128,11 @@ function renderMapping() {
 
   // 🔥 APPLY AUTO MAP TO columnMap
   columnMap = {}; // 🔥 RESET FIRST
-
+  
+  schoolFields.forEach((f, index) => {
+    const key = normalizeKey(f);
+    columnMap[key] = index;
+  });
   fields.forEach(f => {
     headers.forEach((h, i) => {
       const mapped = autoMapField(h);
