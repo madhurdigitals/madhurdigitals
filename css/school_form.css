@@ -228,6 +228,19 @@ body {
   justify-content: space-between;
 }
 
+@media print {
+  .page {
+    display: block;   /* 🔥 disable flex only in print */
+  }
+}
+
+@media print {
+  .form-card {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
 /* FORM */
 .form-card {
   border: 2px solid black;
@@ -246,7 +259,7 @@ body {
 .form-card::after {
   content: "";
   position: absolute;
-  bottom: -4mm;
+  bottom: 0;   /* 🔥 FIX: keep inside, not outside */
   left: 5%;
   right: 5%;
   border-bottom: 1px dashed #999;
@@ -431,7 +444,6 @@ body {
 
   html, body {
     width: 210mm;
-    height: 297mm;
   }
 
   #formSection {
@@ -440,7 +452,13 @@ body {
 
   .page {
     page-break-after: always;
-    
+    break-after: page;
+  }
+}
+
+@media print {
+  html {
+    zoom: 100%;
   }
 }
 
@@ -460,7 +478,6 @@ body {
 
   body * {
     visibility: hidden;
-    margin: 0;
   }
 
   #formSection, #formSection * {
@@ -476,6 +493,10 @@ body {
 
   button {
     display: none;
+  }
+
+  body {
+    margin: 0;   /* ✅ moved here */
   }
 }
 
