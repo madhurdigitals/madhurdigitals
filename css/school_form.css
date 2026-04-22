@@ -211,7 +211,7 @@ body {
 /* A4 SHEET */
 .page {
   width: 210mm;
-  height: 297mm;
+  height: auto !important;
 
   margin: 20px auto; /* spacing on screen */
 
@@ -451,7 +451,9 @@ body {
   .page {
     page-break-after: always;
     break-after: page;
+
     display: block;
+    height: auto;   /* 🔥 MOST IMPORTANT FIX */
   }
 
   /* 🔥 ADD THIS PART */
