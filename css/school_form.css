@@ -228,11 +228,7 @@ body {
   justify-content: space-between;
 }
 
-@media print {
-  .page {
-    display: block;   /* 🔥 disable flex only in print */
-  }
-}
+
 
 @media print {
   .form-card {
@@ -254,31 +250,17 @@ body {
   position: relative;
 }
 
-@media print {
-  .form-card {
-    margin-bottom: 8mm;   /* 🔥 creates gap */
-  }
+.form-card::after {
+  content: "";
+  position: absolute;
+  bottom: -4mm;
+  left: 5%;
+  right: 5%;
+  border-bottom: 1px dashed #999;
+}
 
-  .form-card:last-child {
-    margin-bottom: 0;
-  }
-}     
-
-
-/*Psueso cut line */
-@media print {
-  .form-card::after {
-    content: "";
-    position: absolute;
-    bottom: -4mm;   /* 🔥 move into gap */
-    left: 5%;
-    right: 5%;
-    border-bottom: 1px dashed #999;
-  }
-
-  .form-card:last-child::after {
-    display: none;
-  }
+.form-card:last-child::after {
+  display: none;
 }
 
 /* HEADER */
@@ -469,13 +451,25 @@ body {
   .page {
     page-break-after: always;
     break-after: page;
+    display: block;
   }
+
+  /* 🔥 ADD THIS PART */
+  .form-card {
+    margin-bottom: 8mm;
+  }
+
+  .form-card:last-child {
+    margin-bottom: 0;
+  }
+
 }
 
 @media print {
   html {
     zoom: 100%;
   }
+  
 }
 
 @media print {
@@ -491,17 +485,12 @@ body {
 }
 /* PRINT ONLY FORM */
 @media print {
-
-  body * {
-    visibility: hidden;
-  }
-
+  
   #formSection, #formSection * {
     visibility: visible;
   }
 
   #formSection {
-    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
