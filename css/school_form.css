@@ -248,7 +248,7 @@ body {
   box-sizing: border-box;
   border-radius: 4px;
   width: 100%;          /* 🔥 Auto width */
-  height: 86mm;
+  height: 84mm;
   
   margin: 0;  /* remove auto */
   position: relative;
