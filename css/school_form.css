@@ -254,15 +254,31 @@ body {
   position: relative;
 }
 
+@media print {
+  .form-card {
+    margin-bottom: 8mm;   /* 🔥 creates gap */
+  }
+
+  .form-card:last-child {
+    margin-bottom: 0;
+  }
+}     
+
 
 /*Psueso cut line */
-.form-card::after {
-  content: "";
-  position: absolute;
-  bottom: 0;   /* 🔥 FIX: keep inside, not outside */
-  left: 5%;
-  right: 5%;
-  border-bottom: 1px dashed #999;
+@media print {
+  .form-card::after {
+    content: "";
+    position: absolute;
+    bottom: -4mm;   /* 🔥 move into gap */
+    left: 5%;
+    right: 5%;
+    border-bottom: 1px dashed #999;
+  }
+
+  .form-card:last-child::after {
+    display: none;
+  }
 }
 
 /* HEADER */
@@ -537,12 +553,6 @@ body {
 
 .header.dark {
   background-color: #bfbfbf !important;
-}
-
-@media print {
-  .form-card {
-    page-break-inside: avoid;
-  }
 }
 
 /* DEFAULT */
