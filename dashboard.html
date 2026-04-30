@@ -76,6 +76,29 @@
    <button onclick="continueAction()">Continue</button>
 </div>
 
+<div id="customSchoolPopup" class="school-box" style="display:none;">
+  <h3>New School Form</h3>
+
+  <input id="cs_name" placeholder="School Name *"><br><br>
+  <input id="cs_address" placeholder="Address"><br><br>
+  <input id="cs_contact" placeholder="Contact"><br><br>
+  <input id="cs_session" placeholder="Session"><br><br>
+
+  <select id="cs_type" onchange="handleTypeChange()">
+    <option value="student">Student ID Card Form</option>
+    <option value="teacher">Teacher ID Card Form</option>
+    <option value="other">Other</option>
+  </select>
+
+  <br><br>
+
+  <input id="cs_custom_title" placeholder="Enter custom title" style="display:none;">
+
+  <br><br>
+
+  <button onclick="submitCustomSchool()">Continue</button>
+</div>
+
 <script>
 let school = sessionStorage.getItem("school");
 let school_name = sessionStorage.getItem("school_name");
@@ -94,7 +117,10 @@ async function loadSchools() {
 
   const dropdown = document.getElementById("schoolSelect");
 
-  dropdown.innerHTML = '<option value="">Select School</option>';
+  dropdown.innerHTML = `
+    <option value="__other__">Other School (Generate form for new school)</option>
+    <option value="">Select School</option>
+  `;
 
   dropdown.innerHTML += schools.map(s => `
     <option value="${s.school}" data-id="${s.school_id}">
@@ -117,21 +143,29 @@ function continueAction() {
   const dropdown = document.getElementById("schoolSelect");
   const selectedOption = dropdown.options[dropdown.selectedIndex];
 
-  const school = selectedOption.value;
+  const selectedValue = selectedOption.value;
+
+  // 🔥 FIX: check selected value, not sessionStorage
+  if (selectedValue === "__other__") {
+    showCustomSchoolPopup();
+    return;
+  }
+
+  const school = selectedValue;
   const school_id = selectedOption.getAttribute("data-id");
 
   if (!school) {
     alert("Please select a school");
     return;
   }
-  
+
   const school_name = selectedOption.textContent.trim();
 
   sessionStorage.setItem("school", school);
   sessionStorage.setItem("school_id", school_id);
   sessionStorage.setItem("school_name", school_name);
 
-  // ✅ Redirect based on mode
+  // Redirect
   if (mode === "add") {
     window.location.href = "add_student.html";
   } 
@@ -142,7 +176,7 @@ function continueAction() {
     window.location.href = "print_student.html";
   }
   else if (mode === "bulk") {
-    window.location.href = "bulk_upload.html";   // ✅ NEW
+    window.location.href = "bulk_upload.html";
   }
   else if (mode === "form") {
     window.location.href = "school_form.html";
@@ -199,6 +233,50 @@ window.addEventListener("pageshow", function () {
 window.onload = function () {
   hideSchoolSelector();
 };
+
+function showCustomSchoolPopup() {
+  document.getElementById("schoolBox").style.display = "none";
+  document.getElementById("customSchoolPopup").style.display = "block";
+}
+
+function handleTypeChange() {
+  const type = document.getElementById("cs_type").value;
+  const input = document.getElementById("cs_custom_title");
+
+  input.style.display = (type === "other") ? "block" : "none";
+}
+
+function submitCustomSchool() {
+
+  const name = document.getElementById("cs_name").value.trim();
+  if (!name) {
+    alert("School name is required");
+    return;
+  }
+
+  const type = document.getElementById("cs_type").value;
+
+  let title = "STUDENT ID CARD FORM";
+
+  if (type === "teacher") {
+    title = "TEACHER ID CARD FORM";
+  } else if (type === "other") {
+    title = document.getElementById("cs_custom_title").value.trim() || "CUSTOM FORM";
+  }
+
+  const data = {
+    school_name: name,
+    address: document.getElementById("cs_address").value.trim(),
+    contact: document.getElementById("cs_contact").value.trim(),
+    session: document.getElementById("cs_session").value.trim(),
+    form_title: title,
+    isCustom: true
+  };
+
+  sessionStorage.setItem("custom_school", JSON.stringify(data));
+
+  window.location.href = "school_form.html";
+}
 
 </script>
 

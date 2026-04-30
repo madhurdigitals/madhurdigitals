@@ -35,8 +35,35 @@ const defaultFieldTypes = {
   address: "multiline"
 };
 
+const customSchool = JSON.parse(sessionStorage.getItem("custom_school") || "null");
+
 /* LOAD SCHOOL */
 async function loadSchool() {
+
+  // 🔥 1. CHECK CUSTOM SCHOOL FIRST
+  if (customSchool && customSchool.isCustom) {
+
+    schoolInfo = {
+      school_name: customSchool.school_name,
+      address: customSchool.address || "",
+      contact: customSchool.contact || "",
+      fields: "name,f_name,class,section,dob,transport,phone,address"
+    };
+
+    // ✅ Set UI
+    document.getElementById("schoolName").innerText = customSchool.school_name;
+    document.getElementById("schoolNameTop").innerText = customSchool.school_name;
+
+    // ✅ Store custom title globally
+    window.customFormTitle = customSchool.form_title;
+
+    // ✅ Build fields like normal
+    buildFieldConfig();
+
+    return; // ⛔ STOP — do not call API
+  }
+
+  // 🔥 2. NORMAL FLOW (EXISTING SCHOOL)
 
   const raw = await getSchools(true);
 
@@ -57,6 +84,13 @@ async function loadSchool() {
     alert("School not found");
     return;
   }
+
+  // ✅ Set UI
+  document.getElementById("schoolName").innerText = schoolInfo.school_name;
+  document.getElementById("schoolNameTop").innerText = schoolInfo.school_name;
+
+  // ✅ Default title
+  window.customFormTitle = "STUDENT ID CARD FORM";
 
   buildFieldConfig();
 }
@@ -233,7 +267,7 @@ function generateForm(fields, color="light") {
         <div class="divider"></div>
 
         <div class="form-title">
-          STUDENT ID CARD FORM
+          ${window.customFormTitle || "STUDENT ID CARD FORM"}
         </div>
 
       </div>
