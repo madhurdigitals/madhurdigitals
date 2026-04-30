@@ -143,6 +143,11 @@ async function loadSchools(mode) {
 function showSchoolSelector(selectedMode) {
   mode = selectedMode;
 
+  const dropdown = document.getElementById("schoolSelect");
+
+  // 🔥 CLEAR IMMEDIATELY (prevents flicker)
+  dropdown.innerHTML = `<option value="">Loading schools...</option>`;
+
   document.getElementById("schoolBox").style.display = "block";
   document.getElementById("overlay").style.display = "block";
 
