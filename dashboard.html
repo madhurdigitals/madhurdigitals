@@ -104,7 +104,8 @@ let school = sessionStorage.getItem("school");
 let school_name = sessionStorage.getItem("school_name");
 let mode = "";
 // Load schools
-async function loadSchools() {
+async function loadSchools(mode) {
+
   const raw = await getSchools();
 
   const headers = raw[0];
@@ -117,11 +118,20 @@ async function loadSchools() {
 
   const dropdown = document.getElementById("schoolSelect");
 
-  dropdown.innerHTML = `
-    <option value="__other__">Other School (Generate form for new school)</option>
-    <option value="">Select School</option>
-  `;
+  // 🔥 Reset dropdown
+  dropdown.innerHTML = "";
 
+  // 🔥 Only for School Forms
+  if (mode === "form") {
+    dropdown.innerHTML += `
+      <option value="__other__">Other School (Generate form for new school)</option>
+    `;
+  }
+
+  // Default option
+  dropdown.innerHTML += `<option value="">Select School</option>`;
+
+  // Add real schools
   dropdown.innerHTML += schools.map(s => `
     <option value="${s.school}" data-id="${s.school_id}">
       ${s.school_name}
@@ -129,12 +139,14 @@ async function loadSchools() {
   `).join("");
 }
 
-loadSchools();
-
 // Show selector
 function showSchoolSelector(selectedMode) {
-  mode = selectedMode;   // dynamic mode
+  mode = selectedMode;
+
   document.getElementById("schoolBox").style.display = "block";
+
+  // 🔥 Load dropdown based on mode
+  loadSchools(mode);
 }
 
 // Continue
