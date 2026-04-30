@@ -267,7 +267,7 @@ function generateForm(fields, color="light") {
         <div class="divider"></div>
 
         <div class="form-title">
-          ${window.customFormTitle || "STUDENT ID CARD FORM"}
+          ${(window.customFormTitle || "STUDENT ID CARD FORM").toUpperCase()}
         </div>
 
       </div>
@@ -431,7 +431,7 @@ async function downloadPDF() {
 
   // 🔥 High quality capture
   const canvas = await html2canvas(page, {
-    scale: 3,           // quality boost
+    scale: 4,           // quality boost
     useCORS: true
   });
 
