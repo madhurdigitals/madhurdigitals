@@ -383,3 +383,41 @@ function resetFields() {
   // hide forms
   document.getElementById("formSection").style.display = "none";
 }
+
+async function downloadPDF() {
+
+  const { jsPDF } = window.jspdf;
+
+  const page = document.querySelector(".page");
+
+  if (!page) {
+    alert("Generate forms first");
+    return;
+  }
+
+  // 🔥 High quality capture
+  const canvas = await html2canvas(page, {
+    scale: 3,           // quality boost
+    useCORS: true
+  });
+
+  const imgData = canvas.toDataURL("image/png");
+
+  // A4 size in mm
+  const pdf = new jsPDF("p", "mm", "a4");
+
+  const pageWidth = 210;
+  const pageHeight = 297;
+
+  // Fit image exactly into A4
+  pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pageHeight);
+
+  // 🔥 FILE NAME LOGIC
+  let name = (schoolInfo?.school_name || "school")
+    .replace(/[\\/:*?"<>|]/g, "")  // remove invalid chars
+    .trim();
+
+  if (!name) name = "school";
+
+  pdf.save(`${name}_form.pdf`);
+}
