@@ -121,16 +121,15 @@ async function loadSchools(mode) {
   // 🔥 Reset dropdown
   dropdown.innerHTML = "";
 
+  // Default option
+  dropdown.innerHTML += `<option value="">Select School</option>`;
   // 🔥 Only for School Forms
   if (mode === "form") {
     dropdown.innerHTML += `
       <option value="__other__">Other School (Generate form for new school)</option>
     `;
   }
-
-  // Default option
-  dropdown.innerHTML += `<option value="">Select School</option>`;
-
+  
   // Add real schools
   dropdown.innerHTML += schools.map(s => `
     <option value="${s.school}" data-id="${s.school_id}">
@@ -208,8 +207,7 @@ function goPrint() {
 
 // Hide popup
 function hideSchoolSelector() {
-  document.getElementById("schoolBox").style.display = "none";
-  mode = "";
+  hideAllPopups();
 }
 
 function goToSchoolManagement() {
@@ -219,23 +217,41 @@ function goToSchoolManagement() {
 // ESC key close
 document.addEventListener("keydown", function(e) {
   if (e.key === "Escape") {
-    hideSchoolSelector();
+    hideAllPopups();
   }
 });
 
 // Click outside close
 document.addEventListener("click", function(e) {
-  const box = document.getElementById("schoolBox");
+
+  const schoolBox = document.getElementById("schoolBox");
+  const customBox = document.getElementById("customSchoolPopup");
   const card = e.target.closest(".card");
 
+  // If school selector open
   if (
-    box.style.display === "block" &&
-    !box.contains(e.target) &&
+    schoolBox.style.display === "block" &&
+    !schoolBox.contains(e.target) &&
     !card
   ) {
-    hideSchoolSelector();
+    hideAllPopups();
   }
+
+  // If custom popup open
+  if (
+    customBox.style.display === "block" &&
+    !customBox.contains(e.target)
+  ) {
+    hideAllPopups();
+  }
+
 });
+
+function hideAllPopups() {
+  document.getElementById("schoolBox").style.display = "none";
+  document.getElementById("customSchoolPopup").style.display = "none";
+  mode = "";
+}
 
 // Always reset popup when page loads (important fix)
 window.addEventListener("pageshow", function () {
