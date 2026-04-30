@@ -143,8 +143,8 @@ function showSchoolSelector(selectedMode) {
   mode = selectedMode;
 
   document.getElementById("schoolBox").style.display = "block";
+  document.getElementById("overlay").style.display = "block";
 
-  // 🔥 Load dropdown based on mode
   loadSchools(mode);
 }
 
@@ -250,6 +250,7 @@ document.addEventListener("click", function(e) {
 function hideAllPopups() {
   document.getElementById("schoolBox").style.display = "none";
   document.getElementById("customSchoolPopup").style.display = "none";
+  document.getElementById("overlay").style.display = "none";
   mode = "";
 }
 
@@ -262,9 +263,12 @@ window.onload = function () {
   hideSchoolSelector();
 };
 
+document.getElementById("overlay").addEventListener("click", hideAllPopups);
+
 function showCustomSchoolPopup() {
   document.getElementById("schoolBox").style.display = "none";
   document.getElementById("customSchoolPopup").style.display = "block";
+  document.getElementById("overlay").style.display = "block";
 }
 
 function handleTypeChange() {
@@ -307,6 +311,6 @@ function submitCustomSchool() {
 }
 
 </script>
-
+<div id="overlay" class="overlay" style="display:none;"></div>
 </body>
 </html>
