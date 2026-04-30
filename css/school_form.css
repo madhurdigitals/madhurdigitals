@@ -235,7 +235,7 @@ body {
   box-sizing: border-box;
   border-radius: 4px;
   width: 100%;          /* 🔥 Auto width */
-  height: 86mm;
+  height: 84mm;
   
   margin: 0;  /* remove auto */
   position: relative;
@@ -429,19 +429,26 @@ body {
 
 @media print {
 
-  html, body {
-    width: 210mm;
-    height: 297mm;
+  @page {
+    size: A4;
+    margin: 0;
   }
 
-  #formSection {
-    width: 210mm;
+  body {
+    background: none;
   }
 
   .page {
-    page-break-after: always;
-    
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    page-break-after: avoid;
   }
+
+  .form-card {
+    page-break-inside: avoid;
+  }
+
 }
 
 @media print {
