@@ -168,3 +168,22 @@ nav {
   position: fixed;
   z-index: 1000;
 }
+
+.overlay {
+  transition: 0.3s ease;
+}
+
+.school-box {
+  animation: popupFade 0.25s ease;
+}
+
+@keyframes popupFade {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

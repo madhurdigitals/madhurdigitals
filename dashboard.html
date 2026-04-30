@@ -99,6 +99,7 @@
   <button onclick="submitCustomSchool()">Continue</button>
 </div>
 
+<div id="overlay" class="overlay" style="display:none;"></div>
 <script>
 let school = sessionStorage.getItem("school");
 let school_name = sessionStorage.getItem("school_name");
@@ -226,22 +227,17 @@ document.addEventListener("click", function(e) {
 
   const schoolBox = document.getElementById("schoolBox");
   const customBox = document.getElementById("customSchoolPopup");
-  const card = e.target.closest(".card");
 
-  // If school selector open
-  if (
-    schoolBox.style.display === "block" &&
-    !schoolBox.contains(e.target) &&
-    !card
-  ) {
-    hideAllPopups();
+  const isInsideSchoolBox = schoolBox.contains(e.target);
+  const isInsideCustomBox = customBox.contains(e.target);
+  const isCardClick = e.target.closest(".card");
+
+  // 🔥 Ignore clicks inside popups or on cards
+  if (isInsideSchoolBox || isInsideCustomBox || isCardClick) {
+    return;
   }
 
-  // If custom popup open
-  if (
-    customBox.style.display === "block" &&
-    !customBox.contains(e.target)
-  ) {
+  if (schoolBox.style.display === "block" || customBox.style.display === "block") {
     hideAllPopups();
   }
 
@@ -263,7 +259,12 @@ window.onload = function () {
   hideSchoolSelector();
 };
 
-document.getElementById("overlay").addEventListener("click", hideAllPopups);
+window.addEventListener("DOMContentLoaded", function () {
+  const overlay = document.getElementById("overlay");
+  if (overlay) {
+    overlay.addEventListener("click", hideAllPopups);
+  }
+});
 
 function showCustomSchoolPopup() {
   document.getElementById("schoolBox").style.display = "none";
@@ -311,6 +312,6 @@ function submitCustomSchool() {
 }
 
 </script>
-<div id="overlay" class="overlay" style="display:none;"></div>
+
 </body>
 </html>
