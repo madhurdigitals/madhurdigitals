@@ -211,7 +211,7 @@ body {
 /* A4 SHEET */
 .page {
   width: 210mm;
-  height: auto !important;
+  height: 297mm;
 
   margin: 20px auto; /* spacing on screen */
 
@@ -228,15 +228,6 @@ body {
   justify-content: space-between;
 }
 
-
-
-@media print {
-  .form-card {
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-}
-
 /* FORM */
 .form-card {
   border: 2px solid black;
@@ -244,12 +235,14 @@ body {
   box-sizing: border-box;
   border-radius: 4px;
   width: 100%;          /* 🔥 Auto width */
-  height: 84mm;
+  height: 86mm;
   
   margin: 0;  /* remove auto */
   position: relative;
 }
 
+
+/*Psueso cut line */
 .form-card::after {
   content: "";
   position: absolute;
@@ -257,10 +250,6 @@ body {
   left: 5%;
   right: 5%;
   border-bottom: 1px dashed #999;
-}
-
-.form-card:last-child::after {
-  display: none;
 }
 
 /* HEADER */
@@ -442,6 +431,7 @@ body {
 
   html, body {
     width: 210mm;
+    height: 297mm;
   }
 
   #formSection {
@@ -450,28 +440,8 @@ body {
 
   .page {
     page-break-after: always;
-    break-after: page;
-
-    display: block;
-    height: auto;   /* 🔥 MOST IMPORTANT FIX */
+    
   }
-
-  /* 🔥 ADD THIS PART */
-  .form-card {
-    margin-bottom: 8mm;
-  }
-
-  .form-card:last-child {
-    margin-bottom: 0;
-  }
-
-}
-
-@media print {
-  html {
-    zoom: 100%;
-  }
-  
 }
 
 @media print {
@@ -487,12 +457,18 @@ body {
 }
 /* PRINT ONLY FORM */
 @media print {
-  
+
+  body * {
+    visibility: hidden;
+    margin: 0;
+  }
+
   #formSection, #formSection * {
     visibility: visible;
   }
 
   #formSection {
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -500,10 +476,6 @@ body {
 
   button {
     display: none;
-  }
-
-  body {
-    margin: 0;   /* ✅ moved here */
   }
 }
 
@@ -544,6 +516,12 @@ body {
 
 .header.dark {
   background-color: #bfbfbf !important;
+}
+
+@media print {
+  .form-card {
+    page-break-inside: avoid;
+  }
 }
 
 /* DEFAULT */
