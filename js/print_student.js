@@ -25,6 +25,7 @@ async function loadStudents() {
   renderSmartTable();
   renderPagination();
   generateClassSectionOptions();
+  generateFieldSelector();
 }
 
 loadStudents();
@@ -60,6 +61,35 @@ function renderTable(data, headers) {
 
   attachCheckboxEvents();
 }
+
+function generateFieldSelector() {
+
+  const container = document.getElementById("fieldSelector");
+
+  const fields = headersGlobal.filter(h => {
+    const key = h.toLowerCase();
+    return !key.includes("photo");
+  });
+
+  // default = all selected
+  selectedFields = [...fields];
+
+  container.innerHTML = fields.map(f => `
+    <label>
+      <input type="checkbox" value="${f}" checked>
+      ${f}
+    </label>
+  `).join("");
+
+  container.querySelectorAll("input").forEach(cb => {
+    cb.addEventListener("change", () => {
+      selectedFields = [...container.querySelectorAll("input:checked")]
+        .map(i => i.value);
+    });
+  });
+
+}
+
 
 function renderSmartTable() {
   const data = filtered;
@@ -261,19 +291,19 @@ function renderCards(data) {
 
             <div class="right">
 
-              <div class="name">${s.Name}</div>
+              ${selectedFields.map((f, i) => {
 
-              <div class="line">
-                <span>Class:</span> ${s.Class}-${s.Section}
-              </div>
+                if (i === 0) {
+                  return `<div class="name">${s[f] || ""}</div>`;
+                }
 
-              <div class="line">
-                <span>ID:</span> ${s.Student_ID}
-              </div>
+                return `
+                  <div class="line">
+                    <span>${f}:</span> ${s[f] || ""}
+                  </div>
+                `;
 
-              <div class="line">
-                <span>Phone:</span> ${s.Phone || ""}
-              </div>
+              }).join("")}
 
             </div>
 
@@ -321,4 +351,30 @@ function generateClassSectionOptions() {
   document.querySelectorAll(".csCheck").forEach(cb => {
     cb.addEventListener("change", applyFilter);
   });
+}
+
+async function downloadCardsPDF() {
+
+  const { jsPDF } = window.jspdf;
+
+  const pages = document.querySelectorAll(".page");
+
+  if (pages.length === 0) {
+    alert("Generate cards first");
+    return;
+  }
+
+  const pdf = new jsPDF("p", "mm", "a4");
+
+  for (let i = 0; i < pages.length; i++) {
+
+    const canvas = await html2canvas(pages[i], { scale: 2 });
+    const img = canvas.toDataURL("image/png");
+
+    if (i !== 0) pdf.addPage();
+
+    pdf.addImage(img, "PNG", 0, 0, 210, 297);
+  }
+
+  pdf.save(`${school}_students.pdf`);
 }

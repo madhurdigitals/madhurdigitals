@@ -6,6 +6,8 @@
   <script src="js/protect.js"></script>
   <script src="js/api.js"></script>
   <script src="js/print_student.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <link rel="stylesheet" href="css/print_student.css">
 
@@ -23,6 +25,10 @@
 
     <!-- Search -->
     <input id="searchName" placeholder="Search Name">
+    <div style="margin-top:15px;">
+      <b>Select Fields for Card:</b>
+      <div id="fieldSelector" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:5px;"></div>
+    </div>
 
     <!-- Class Section Dropdown -->
     <div style="margin-top:10px;">
@@ -61,6 +67,7 @@
 
     <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px;">
       <button onclick="window.print()" class="submit-btn">Print</button>
+      <button onclick="downloadCardsPDF()" class="submit-btn">Download PDF</button>
     </div>
 
     <div id="cardContainer"></div>
