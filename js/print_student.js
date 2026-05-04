@@ -1,5 +1,8 @@
 let students = [];
 let filtered = [];
+let headersGlobal = [];
+let currentPage = 1;
+let rowsPerPage = 20;
 
 const school = sessionStorage.getItem("school");
 
@@ -9,66 +12,202 @@ async function loadStudents() {
 
   const headers = raw[0];
 
+  headersGlobal = headers.filter(h => h !== "Timestamp");
+
   students = raw.slice(1).map(r => {
     let obj = {};
     headers.forEach((h, i) => obj[h] = r[i]);
     return obj;
   });
 
-  filtered = students;
-  renderTable(filtered);
+  filtered = [...students];
+
+  renderSmartTable();
+  renderPagination();
   generateClassSectionOptions();
 }
 
 loadStudents();
 
 // RENDER TABLE
-function renderTable(data) {
-  document.getElementById("studentTable").innerHTML =
-    data.map(s => `
-      <tr>
-        <td><input type="checkbox" class="rowCheck" value="${s.student_ID}"></td>
-        <td>${s.student_ID}</td>
-        <td>${s.Name}</td>
-        <td>${s.Class}</td>
-        <td>${s.Section}</td>
-        <td>${s.Roll}</td>
-      </tr>
-    `).join("");
+function renderTable(data, headers) {
+
+  const visibleHeaders = headers.filter(h => {
+    const key = h.toLowerCase();
+    return !key.includes("address") && !key.includes("photo");
+  });
+
+  const thead = document.querySelector("thead");
+  const tbody = document.getElementById("studentTable");
+
+  // HEADER
+  thead.innerHTML = `
+    <tr>
+      <th><input type="checkbox" id="selectAll" checked></th>
+      ${visibleHeaders.map(h => `<th>${h}</th>`).join("")}
+    </tr>
+  `;
+
+  // BODY
+  tbody.innerHTML = data.map(s => `
+    <tr>
+      <td>
+        <input type="checkbox" class="rowCheck" value="${s.Student_ID}" checked>
+      </td>
+      ${visibleHeaders.map(h => `<td>${s[h] || ""}</td>`).join("")}
+    </tr>
+  `).join("");
+
+  attachCheckboxEvents();
 }
 
-// FILTER
+function renderSmartTable() {
+  const data = filtered;
+
+  if (data.length <= rowsPerPage) {
+    renderTable(data, headersGlobal);
+    document.getElementById("pagination").innerHTML = "";
+  } else {
+    const start = (currentPage - 1) * rowsPerPage;
+    const pageData = data.slice(start, start + rowsPerPage);
+
+    renderTable(pageData, headersGlobal);
+  }
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filtered.length / rowsPerPage);
+  const container = document.getElementById("pagination");
+
+  if (filtered.length <= rowsPerPage) {
+    container.innerHTML = "";
+    return;
+  }
+
+  let buttons = "";
+
+  for (let i = 1; i <= totalPages; i++) {
+    buttons += `
+      <button onclick="goToPage(${i})"
+        ${i === currentPage ? "style='font-weight:bold'" : ""}>
+        ${i}
+      </button>
+    `;
+  }
+
+  container.innerHTML = `
+    <button onclick="prevPage()">⬅</button>
+    ${buttons}
+    <button onclick="nextPage()">➡</button>
+  `;
+}
+
+function goToPage(page) {
+  currentPage = page;
+  renderSmartTable();
+  renderPagination();
+}
+
+function nextPage() {
+  const totalPages = Math.ceil(filtered.length / rowsPerPage);
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderSmartTable();
+    renderPagination();
+  }
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    renderSmartTable();
+    renderPagination();
+  }
+}
+
+function attachCheckboxEvents() {
+
+  const selectAll = document.getElementById("selectAll");
+
+  if (selectAll) {
+    selectAll.addEventListener("change", function () {
+      const checked = this.checked;
+
+      document.querySelectorAll(".rowCheck").forEach(cb => {
+        cb.checked = checked;
+      });
+    });
+  }
+
+  document.querySelectorAll(".rowCheck").forEach(cb => {
+    cb.addEventListener("change", () => {
+
+      const all = document.querySelectorAll(".rowCheck");
+      const checked = document.querySelectorAll(".rowCheck:checked");
+
+      selectAll.checked = all.length === checked.length;
+    });
+  });
+}
+
+// EVENTS
+document.getElementById("searchName")
+  .addEventListener("input", applyFilter);
+
+
 function applyFilter() {
 
-  const name = searchName.value.toLowerCase();
+  const name = document.getElementById("searchName").value.toLowerCase();
 
   const selectedCS = [...document.querySelectorAll(".csCheck:checked")]
     .map(cb => cb.value);
 
   filtered = students.filter(s => {
 
-    const cs = `${s.Class}-${s.Section}`;
+    const cs = s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`;
 
     return (
-      s.Name.toLowerCase().includes(name) &&
+      (s.Name || "").toLowerCase().includes(name) &&
       (selectedCS.length === 0 || selectedCS.includes(cs))
     );
   });
 
-  renderTable(filtered);
+  currentPage = 1; // 🔥 VERY IMPORTANT
+
+  renderSmartTable();   
+  renderPagination();  
 }
 
-// EVENTS
-searchName.addEventListener("input", applyFilter);
-searchClass.addEventListener("input", applyFilter);
-searchSection.addEventListener("change", applyFilter);
+function toggleDropdown(id, event) {
 
-// SELECT ALL
-document.getElementById("selectAll").addEventListener("change", function() {
-  const checked = this.checked;
-  document.querySelectorAll(".rowCheck").forEach(cb => {
-    cb.checked = checked;
+  event.stopPropagation(); // 🔥 important
+
+  const el = document.getElementById(id);
+
+  const isOpen = el.style.display === "block";
+
+  document.querySelectorAll(".dropdown-content")
+    .forEach(d => d.style.display = "none");
+
+  el.style.display = isOpen ? "none" : "block";
+}
+
+document.addEventListener("click", function (e) {
+
+  const dropdowns = document.querySelectorAll(".dropdown");
+
+  dropdowns.forEach(container => {
+
+    if (dropdown && !container.contains(e.target)) {
+      dropdown.style.display = "none";
+    }
+
+    if (!container.contains(e.target)) {
+      dropdown.style.display = "none";
+    }
+
   });
+
 });
 
 // GENERATE CARDS
@@ -83,7 +222,7 @@ function generateCards() {
   }
 
   const selected = filtered.filter(s =>
-    selectedIds.includes(Number(s.student_ID))
+    selectedIds.includes(Number(s.Student_ID))
   );
 
   document.getElementById("cardSection").style.display = "block";
@@ -119,7 +258,7 @@ function renderCards(data) {
           <div class="info">
             <b>${s.Name}</b><br>
             Class: ${s.Class}-${s.Section}<br>
-            ID: ${s.student_ID}<br>
+            ID: ${s.Student_ID}<br>
             Phone: ${s.Phone || ""}<br>
             Address: ${truncate(s.Address || "")}
           </div>
@@ -139,8 +278,18 @@ function truncate(text) {
 function generateClassSectionOptions() {
 
   const unique = [...new Set(
-    students.map(s => `${s.Class}-${s.Section}`)
-  )];
+    students.map(s => s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`)
+  )].sort((a, b) => {
+
+    const [c1, s1] = a.split("-");
+    const [c2, s2] = b.split("-");
+
+    // sort by class (numeric)
+    if (c1 != c2) return Number(c1) - Number(c2);
+
+    // then by section (A, B, C...)
+    return (s1 || "").localeCompare(s2 || "");
+  });
 
   const container = document.getElementById("classSectionOptions");
 
