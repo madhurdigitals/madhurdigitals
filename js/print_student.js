@@ -242,31 +242,36 @@ function renderCards(data) {
   }
 
   container.innerHTML = pages.map(page => `
+
     <div class="page">
 
       ${page.map(s => `
-        <div class="card">
 
-          <div class="school">
-            ${school} Public School<br>
-            Address Line<br>
-            Contact: 9999999999
+        <div class="id-card">
+
+          <div class="card-header">
+            ${school}
           </div>
 
-          <img src="https://via.placeholder.com/80" class="photo">
+          <div class="card-body">
 
-          <div class="info">
-            <b>${s.Name}</b><br>
-            Class: ${s.Class}-${s.Section}<br>
-            ID: ${s.Student_ID}<br>
-            Phone: ${s.Phone || ""}<br>
-            Address: ${truncate(s.Address || "")}
+            <div class="photo-box"></div>
+
+            <div class="card-info">
+              <div><b>Name:</b> ${s.Name}</div>
+              <div><b>Class:</b> ${s.Class}-${s.Section}</div>
+              <div><b>ID:</b> ${s.Student_ID}</div>
+              <div><b>Phone:</b> ${s.Phone || ""}</div>
+            </div>
+
           </div>
 
         </div>
+
       `).join("")}
 
     </div>
+
   `).join("");
 }
 
