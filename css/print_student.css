@@ -1,91 +1,240 @@
+/* GLOBAL */
 body {
-  font-family: Arial;
+  font-family: 'Segoe UI', sans-serif;
   margin: 0;
   background: #f5f7fb;
 }
 
+/* HEADING */
+h2 {
+  text-align: center;
+  margin-top: 20px;
+  color: #0d6efd;
+}
+
+/* CONTAINER */
 .container {
-  max-width: 1000px;
-  margin: auto;
+  max-width: 1100px;
+  margin: 20px auto;
   padding: 15px;
 }
 
+/* CARD */
 .card {
   background: white;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 10px;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
 }
 
-input, select {
-  padding: 8px;
-  margin: 5px;
+/* INPUT */
+input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
+input:focus {
+  outline: none;
+  border: 2px solid #0d6efd;
+}
+
+/* DROPDOWN */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #0d6efd;
+  background: white;
+  color: #0d6efd;
+  cursor: pointer;
+}
+
+.dropdown button:hover {
+  background: #0d6efd;
+  color: white;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ccc;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 180px;
+  z-index: 1000;
+  border-radius: 6px;
+}
+
+.dropdown-content label {
+  display: block;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.dropdown-content label:hover {
+  background: #f1f5f9;
+}
+
+/* TABLE WRAPPER */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* TABLE */
 table {
   width: 100%;
   border-collapse: collapse;
+  border-radius: 10px;
 }
 
+/* HEADER */
+th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #374151;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* CELLS */
 th, td {
-  padding: 8px;
+  padding: 10px;
+  text-align: center;
   border-bottom: 1px solid #ddd;
+  font-size: 14px;
 }
 
+/* TEXT CONTROL */
+td {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* HOVER EFFECT */
+tbody tr:hover {
+  background: #e0f2fe;
+  transform: scale(1.01);
+}
+
+/* CHECKBOX */
+input[type="checkbox"] {
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+/* PAGINATION */
+#pagination {
+  text-align: center;
+  margin-top: 10px;
+}
+
+#pagination button {
+  margin: 3px;
+  padding: 6px 10px;
+  border-radius: 5px;
+  border: 1px solid #0d6efd;
+  background: white;
+  cursor: pointer;
+}
+
+#pagination button:hover {
+  background: #0d6efd;
+  color: white;
+}
+
+/* BUTTON */
 .submit-btn {
-  padding: 10px 20px;
+  padding: 12px;
   background: #0d6efd;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  width: 100%;
 }
 
-/* PRINT GRID */
+.submit-btn:hover {
+  background: #0b5ed7;
+}
+
+/* ========================= */
+/* 🔥 CARD PRINT SECTION */
+/* ========================= */
+
 .page {
-  width: 210mm;
-  height: 297mm;
   display: grid;
-  grid-template-columns: repeat(2, 86mm);
-  grid-auto-rows: 54mm;
-  gap: 6mm;
-  justify-content: center;
-  align-content: center;
-  page-break-after: always;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 30px;
 }
 
 /* CARD */
 .card {
-  width: 86mm;
-  height: 54mm;
-  border: 1px solid black;
-  padding: 5px;
-  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 10px;
+  background: white;
   text-align: center;
-  font-size: 10px;
-}
-.photo {
-  width: 60px;
-  height: 60px;
-  margin: 5px auto;
 }
 
-.school {
+/* SCHOOL HEADER */
+.card .school {
+  font-size: 12px;
   font-weight: bold;
-  font-size: 10px;
+  margin-bottom: 5px;
 }
 
+/* PHOTO */
+.photo {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin: 5px 0;
+}
+
+/* INFO */
 .info {
-  font-size: 10px;
+  font-size: 12px;
+  text-align: left;
 }
 
+/* ========================= */
 /* PRINT MODE */
+/* ========================= */
+
 @media print {
-  button {
-    display: none;
-  }
 
   body {
-    margin: 0;
+    background: white;
   }
+
+  .card,
+  .submit-btn,
+  #pagination,
+  input,
+  .dropdown {
+    display: none !important;
+  }
+
+  #cardSection {
+    display: block !important;
+  }
+
+  .page {
+    page-break-after: always;
+  }
+
 }
