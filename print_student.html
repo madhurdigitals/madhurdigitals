@@ -53,10 +53,18 @@
         justify-content:center;
         margin-bottom:10px;
         position:relative;
+        width:100%;
       ">
 
         <!-- LEFT: Global checkbox -->
-        <div style="position:absolute; left:0; display:flex; align-items:center; gap:6px;">
+        <div style="
+          position:absolute;
+          left:0;
+          display:flex;
+          align-items:center;
+          gap:6px;
+          white-space: nowrap;
+        ">
           <input type="checkbox" id="globalSelect">
           <label for="globalSelect">Select / Deselect All</label>
         </div>
