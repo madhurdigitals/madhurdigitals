@@ -458,12 +458,15 @@ async function downloadCardsPDF() {
 
   const { jsPDF } = window.jspdf;
 
-  const pages = document.querySelectorAll(".page");
-
-  if (pages.length === 0) {
+  if (cardPages.length === 0) {
     alert("Generate cards first");
     return;
   }
+
+  // render ALL pages first
+  renderAllCardPages();
+
+  const pages = document.querySelectorAll(".page");
 
   const pdf = new jsPDF("p", "mm", "a4");
 
@@ -478,6 +481,9 @@ async function downloadCardsPDF() {
   }
 
   pdf.save(`${school}_students.pdf`);
+
+  // restore UI view
+  renderCardPage();
 }
 
 function renderCardPage() {
@@ -589,4 +595,105 @@ function renderCardPagination() {
 function goToCardPage(page) {
   currentCardPage = page;
   renderCardPage();
+}
+
+function renderAllCardPages() {
+
+  const container = document.getElementById("cardContainer");
+
+  container.innerHTML = cardPages.map(page => `
+
+    <div class="page">
+
+      ${page.map(s => `
+
+        <div class="id-card">
+
+          <div class="card-header">
+
+            <div class="school-name">
+              ${schoolInfo.school_name || school}
+            </div>
+
+            <div class="school-meta">
+              ${schoolInfo.address || ""}
+            </div>
+
+            <div class="school-meta">
+              ${schoolInfo.contact || ""}
+            </div>
+
+          </div>
+
+          <div class="card-body">
+
+            <div class="left">
+              <div class="photo-box"></div>
+            </div>
+
+            <div class="right">
+
+              ${selectedFields.map((f, i) => {
+
+                if (i === 0) {
+                  return `<div class="name">${s[f] || ""}</div>`;
+                }
+
+                if (f === "Class" && selectedFields.includes("Section")) {
+
+                  const cls = s.Class || "";
+                  const sec = s.Section || "";
+
+                  let value = "";
+
+                  if (cls && sec) value = `${cls} - ${sec}`;
+                  else if (cls) value = cls;
+                  else if (sec) value = sec;
+
+                  return `
+                    <div class="line">
+                      <span>Class:</span> ${value}
+                    </div>
+                  `;
+                }
+
+                if (f === "Section" && selectedFields.includes("Class")) {
+                  return "";
+                }
+
+                return `
+                  <div class="line">
+                    <span>${f}:</span> ${s[f] || ""}
+                  </div>
+                `;
+
+              }).join("")}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      `).join("")}
+
+    </div>
+
+  `).join("");
+}
+
+function printAllCards() {
+
+  // render ALL pages
+  renderAllCardPages();
+
+  setTimeout(() => {
+    window.print();
+
+    // restore current page view after print
+    setTimeout(() => {
+      renderCardPage();
+    }, 500);
+
+  }, 200);
 }
