@@ -255,13 +255,26 @@ function renderCards(data) {
 
           <div class="card-body">
 
-            <div class="photo-box"></div>
+            <div class="left">
+              <div class="photo-box"></div>
+            </div>
 
-            <div class="card-info">
-              <div><b>Name:</b> ${s.Name}</div>
-              <div><b>Class:</b> ${s.Class}-${s.Section}</div>
-              <div><b>ID:</b> ${s.Student_ID}</div>
-              <div><b>Phone:</b> ${s.Phone || ""}</div>
+            <div class="right">
+
+              <div class="name">${s.Name}</div>
+
+              <div class="line">
+                <span>Class:</span> ${s.Class}-${s.Section}
+              </div>
+
+              <div class="line">
+                <span>ID:</span> ${s.Student_ID}
+              </div>
+
+              <div class="line">
+                <span>Phone:</span> ${s.Phone || ""}
+              </div>
+
             </div>
 
           </div>
