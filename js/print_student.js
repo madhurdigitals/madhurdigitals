@@ -4,6 +4,11 @@ let headersGlobal = [];
 let currentPage = 1;
 let rowsPerPage = 20;
 let schoolInfo = {};
+let selectedStudentIds = new Set();
+let cardPages = [];
+let currentCardPage = 1;
+
+
 
 const school = sessionStorage.getItem("school");
 
@@ -22,7 +27,9 @@ async function loadStudents() {
   });
 
   filtered = [...students];
-
+  students.forEach(s => {
+    selectedStudentIds.add(Number(s.Student_ID));
+  });
   renderSmartTable();
   renderPagination();
   generateClassSectionOptions();
@@ -162,23 +169,50 @@ function attachCheckboxEvents() {
   const selectAll = document.getElementById("selectAll");
 
   if (selectAll) {
+
+    selectAll.checked = document.querySelectorAll(".rowCheck")
+      .length === document.querySelectorAll(".rowCheck:checked").length;
+
     selectAll.addEventListener("change", function () {
+
       const checked = this.checked;
 
       document.querySelectorAll(".rowCheck").forEach(cb => {
+
+        const id = Number(cb.value);
+
         cb.checked = checked;
+
+        if (checked) {
+          selectedStudentIds.add(id);
+        } else {
+          selectedStudentIds.delete(id);
+        }
+
       });
+
     });
+
   }
 
   document.querySelectorAll(".rowCheck").forEach(cb => {
+
+    const id = Number(cb.value);
+
+    // restore state when rendering
+    cb.checked = selectedStudentIds.has(id);
+
     cb.addEventListener("change", () => {
 
-      const all = document.querySelectorAll(".rowCheck");
-      const checked = document.querySelectorAll(".rowCheck:checked");
+      if (cb.checked) {
+        selectedStudentIds.add(id);
+      } else {
+        selectedStudentIds.delete(id);
+      }
 
-      selectAll.checked = all.length === checked.length;
+      updateSelectAllState();
     });
+
   });
 }
 
@@ -245,8 +279,9 @@ document.addEventListener("click", function (e) {
 // GENERATE CARDS
 function generateCards() {
 
-  const selectedIds = [...document.querySelectorAll(".rowCheck:checked")]
-    .map(cb => Number(cb.value));
+  const selected = students.filter(s =>
+    selectedStudentIds.has(Number(s.Student_ID))
+  );
 
   if (selectedIds.length === 0) {
     alert("Select at least one student");
@@ -259,7 +294,19 @@ function generateCards() {
 
   document.getElementById("cardSection").style.display = "block";
 
-  renderCards(selected);
+  // 🔥 CREATE PAGES (10 per page)
+  cardPages = [];
+
+  for (let i = 0; i < selected.length; i += 10) {
+    cardPages.push(selected.slice(i, i + 10));
+  }
+
+  // reset page
+  currentCardPage = 1;
+
+  // render first page
+  renderCardPage();
+  renderCardPagination();
 }
 
 async function loadSchoolInfo() {
@@ -327,10 +374,36 @@ function renderCards(data) {
 
               ${selectedFields.map((f, i) => {
 
+                // 🔥 NAME (first field)
                 if (i === 0) {
                   return `<div class="name">${s[f] || ""}</div>`;
                 }
 
+                // 🔥 COMBINE CLASS + SECTION
+                if (f === "Class" && selectedFields.includes("Section")) {
+
+                  const cls = s.Class || "";
+                  const sec = s.Section || "";
+
+                  let value = "";
+
+                  if (cls && sec) value = `${cls} - ${sec}`;
+                  else if (cls) value = cls;
+                  else if (sec) value = sec;
+
+                  return `
+                    <div class="line">
+                      <span>Class:</span> ${value}
+                    </div>
+                  `;
+                }
+
+                // ❌ SKIP SECTION (already merged)
+                if (f === "Section" && selectedFields.includes("Class")) {
+                  return "";
+                }
+
+                // 🔥 DEFAULT FIELD
                 return `
                   <div class="line">
                     <span>${f}:</span> ${s[f] || ""}
@@ -411,4 +484,78 @@ async function downloadCardsPDF() {
   }
 
   pdf.save(`${school}_students.pdf`);
+}
+
+function renderCardPage() {
+
+  const container = document.getElementById("cardContainer");
+
+  const pageData = cardPages[currentCardPage - 1] || [];
+
+  container.innerHTML = `
+    <div class="page">
+
+      ${pageData.map(s => `
+
+        <div class="id-card">
+
+          <div class="card-header">
+            ${schoolInfo.school_name || school}
+          </div>
+
+          <div class="card-body">
+
+            <div class="left">
+              <div class="photo-box"></div>
+            </div>
+
+            <div class="right">
+
+              ${selectedFields.map((f, i) => {
+
+                if (i === 0) {
+                  return `<div class="name">${s[f] || ""}</div>`;
+                }
+
+                return `
+                  <div class="line">
+                    <span>${f}:</span> ${s[f] || ""}
+                  </div>
+                `;
+
+              }).join("")}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      `).join("")}
+
+    </div>
+  `;
+}
+
+function renderCardPagination() {
+
+  const container = document.getElementById("cardPagination");
+
+  let buttons = "";
+
+  for (let i = 1; i <= cardPages.length; i++) {
+    buttons += `
+      <button onclick="goToCardPage(${i})"
+        ${i === currentCardPage ? "style='font-weight:bold'" : ""}>
+        ${i}
+      </button>
+    `;
+  }
+
+  container.innerHTML = buttons;
+}
+
+function goToCardPage(page) {
+  currentCardPage = page;
+  renderCardPage();
 }
