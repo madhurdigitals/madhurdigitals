@@ -243,17 +243,16 @@ input[type="checkbox"] {
 .page {
   width: 210mm;
   height: 297mm;
-  margin: 0 auto;
+  margin: 5mm auto;   /* 🔥 added top-bottom margin */
 
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-
-  /* 🔥 EXACT 5 ROWS */
   grid-template-rows: repeat(5, 1fr);
 
-  gap: 4mm;
+  gap: 6mm;           /* 🔥 increased spacing between cards */
 
-  padding: 5mm;   /* reduced */
+  padding: 8mm;       /* 🔥 more breathing space */
+
   box-sizing: border-box;
 
   page-break-after: always;
@@ -290,22 +289,25 @@ input[type="checkbox"] {
 /* HEADER */
 .card-header {
   text-align: center;
-  font-weight: bold;
-  font-size: 12px;
   border-bottom: 1px solid #000;
+  padding-bottom: 4px;
+  margin-bottom: 6px;      /* 🔥 more spacing */
+
+  line-height: 1.2;        /* tighter but clean */
 }
 
 /* BODY */
 .card-body {
   display: flex;
-  gap: 6px;
-  margin-top: 5px;
+  gap: 10px;               /* 🔥 more space between photo & text */
+  margin-top: 6px;
+  align-items: flex-start;
 }
 
 /* PHOTO */
 .photo-box {
-  width: 30mm;
-  height: 30mm;
+  width: 26mm;            /* 🔥 slightly smaller */
+  height: 26mm;
   border: 1px solid #000;
   background: #eee;
 }
@@ -361,13 +363,13 @@ input[type="checkbox"] {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;               /* 🔥 better readability */
 }
 
 /* NAME */
 .name {
   font-weight: bold;
-  font-size: 12px;
+  font-size: 13px;
   color: #000;
 }
 
@@ -375,7 +377,7 @@ input[type="checkbox"] {
 .line {
   font-size: 10px;
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 
 .line span {
@@ -392,18 +394,17 @@ input[type="checkbox"] {
 
 .school-name {
   font-weight: bold;
-  font-size: 11px;
+  font-size: 12px;         /* 🔥 slightly bigger */
 }
 
 .school-meta {
-  font-size: 8px;
+  font-size: 9px;          /* 🔥 more readable */
 }
-
 /* CARD */
 .id-card {
   border: 1px solid #000;
-  border-radius: 6px;
-  padding: 6px;
+  border-radius: 8px;      /* smoother edges */
+  padding: 5px;            /* slightly reduced */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
