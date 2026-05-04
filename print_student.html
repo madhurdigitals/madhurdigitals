@@ -47,6 +47,9 @@
   <div class="card">
 
     <div class="table-wrapper">
+      <div id="selectionCount" style="margin-bottom:10px; font-weight:600;">
+        Selected: 0 students
+      </div>
       <table>
         <thead></thead>
         <tbody id="studentTable"></tbody>
@@ -57,8 +60,8 @@
     <div id="pagination" style="margin-top:10px;"></div>
 
     <br>
-    <button onclick="generateCards()" class="submit-btn">
-      Generate Cards
+    <button onclick="generateCards()" class="submit-btn" id="generateBtn">
+      Generate Cards (0)
     </button>
 
   </div>

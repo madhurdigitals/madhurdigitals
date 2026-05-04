@@ -35,6 +35,7 @@ async function loadStudents() {
   generateClassSectionOptions();
   generateFieldSelector();
   await loadSchoolInfo();
+  updateSelectionUI();
 }
 
 loadStudents();
@@ -69,6 +70,7 @@ function renderTable(data, headers) {
   `).join("");
 
   attachCheckboxEvents();
+  updateSelectionUI();
 }
 
 function generateFieldSelector() {
@@ -190,8 +192,9 @@ function attachCheckboxEvents() {
         }
 
       });
-
+      updateSelectionUI();
     });
+    
 
   }
 
@@ -211,7 +214,9 @@ function attachCheckboxEvents() {
       }
 
       updateSelectAllState();
+      updateSelectionUI();
     });
+    
 
   });
 }
@@ -277,7 +282,7 @@ document.addEventListener("click", function (e) {
 // GENERATE CARDS
 function generateCards() {
 
-  const selected = students.filter(s =>
+  const selected = filtered.filter(s =>
     selectedStudentIds.has(Number(s.Student_ID))
   );
 
@@ -418,6 +423,18 @@ async function loadSchoolInfo() {
 
 //   `).join("");
 // }
+
+function updateSelectAllState() {
+  const selectAll = document.getElementById("selectAll");
+
+  if (!selectAll) return;
+
+  const all = document.querySelectorAll(".rowCheck");
+  const checked = document.querySelectorAll(".rowCheck:checked");
+
+  selectAll.checked = all.length === checked.length;
+}
+
 
 // ADDRESS LIMIT
 function truncate(text) {
@@ -696,4 +713,19 @@ function printAllCards() {
     }, 500);
 
   }, 200);
+}
+
+function updateSelectionUI() {
+  const count = selectedStudentIds.size;
+
+  const label = document.getElementById("selectionCount");
+  const btn = document.getElementById("generateBtn");
+
+  if (label) {
+    label.innerText = `Selected: ${count} student${count !== 1 ? "s" : ""}`;
+  }
+
+  if (btn) {
+    btn.innerText = `Generate Cards (${count})`;
+  }
 }
