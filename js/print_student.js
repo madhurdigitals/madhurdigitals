@@ -36,6 +36,8 @@ async function loadStudents() {
   generateFieldSelector();
   await loadSchoolInfo();
   updateSelectionUI();
+  attachGlobalSelect();
+  updateGlobalCheckbox();
 }
 
 loadStudents();
@@ -327,102 +329,50 @@ async function loadSchoolInfo() {
 
 }
 
+function attachGlobalSelect() {
 
-// RENDER CARDS
-// function renderCards(data) {
+  const global = document.getElementById("globalSelect");
+  if (!global) return;
 
-//   const container = document.getElementById("cardContainer");
+  global.addEventListener("change", function () {
 
-//   let pages = [];
+    if (this.checked) {
+      students.forEach(s => {
+        selectedStudentIds.add(Number(s.Student_ID));
+      });
+    } else {
+      selectedStudentIds.clear();
+    }
 
-//   for (let i = 0; i < data.length; i += 10) {
-//     pages.push(data.slice(i, i + 10));
-//   }
+    renderSmartTable(); // refresh checkboxes
+    updateSelectionUI();
+    updateGlobalCheckbox();
+  });
 
-//   container.innerHTML = pages.map(page => `
+}
 
-//     <div class="page">
+function updateGlobalCheckbox() {
 
-//       ${page.map(s => `
+  const global = document.getElementById("globalSelect");
+  if (!global) return;
 
-//         <div class="id-card">
+  const total = students.length;
+  const selected = selectedStudentIds.size;
 
-//           <div class="card-header">
+  if (selected === 0) {
+    global.checked = false;
+    global.indeterminate = false;
+  } 
+  else if (selected === total) {
+    global.checked = true;
+    global.indeterminate = false;
+  } 
+  else {
+    global.checked = false;
+    global.indeterminate = true; // 🔥 important
+  }
 
-//             <div class="school-name">
-//               ${schoolInfo.school_name || school}
-//             </div>
-
-//             <div class="school-meta">
-//               ${schoolInfo.address || ""}
-//             </div>
-
-//             <div class="school-meta">
-//               ${schoolInfo.contact || ""}
-//             </div>
-
-//           </div>
-
-//           <div class="card-body">
-
-//             <div class="left">
-//               <div class="photo-box"></div>
-//             </div>
-
-//             <div class="right">
-
-//               ${selectedFields.map((f, i) => {
-
-//                 // 🔥 NAME (first field)
-//                 if (i === 0) {
-//                   return `<div class="name">${s[f] || ""}</div>`;
-//                 }
-
-//                 // 🔥 COMBINE CLASS + SECTION
-//                 if (f === "Class" && selectedFields.includes("Section")) {
-
-//                   const cls = s.Class || "";
-//                   const sec = s.Section || "";
-
-//                   let value = "";
-
-//                   if (cls && sec) value = `${cls} - ${sec}`;
-//                   else if (cls) value = cls;
-//                   else if (sec) value = sec;
-
-//                   return `
-//                     <div class="line">
-//                       <span>Class:</span> ${value}
-//                     </div>
-//                   `;
-//                 }
-
-//                 // ❌ SKIP SECTION (already merged)
-//                 if (f === "Section" && selectedFields.includes("Class")) {
-//                   return "";
-//                 }
-
-//                 // 🔥 DEFAULT FIELD
-//                 return `
-//                   <div class="line">
-//                     <span>${f}:</span> ${s[f] || ""}
-//                   </div>
-//                 `;
-
-//               }).join("")}
-
-//             </div>
-
-//           </div>
-
-//         </div>
-
-//       `).join("")}
-
-//     </div>
-
-//   `).join("");
-// }
+}
 
 function updateSelectAllState() {
   const selectAll = document.getElementById("selectAll");
@@ -728,4 +678,6 @@ function updateSelectionUI() {
   if (btn) {
     btn.innerText = `Generate Cards (${count})`;
   }
+
+  updateGlobalCheckbox(); // 🔥 sync global checkbox
 }
