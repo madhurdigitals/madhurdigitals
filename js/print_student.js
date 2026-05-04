@@ -264,21 +264,11 @@ document.addEventListener("click", function (e) {
 
   dropdowns.forEach(container => {
 
-    document.addEventListener("click", function (e) {
+    const dropdown = container.querySelector(".dropdown-content");
 
-      const dropdowns = document.querySelectorAll(".dropdown");
-
-      dropdowns.forEach(container => {
-
-        const dropdown = container.querySelector(".dropdown-content");
-
-        if (dropdown && !container.contains(e.target)) {
-          dropdown.style.display = "none";
-        }
-
-      });
-
-    });
+    if (dropdown && !container.contains(e.target)) {
+      dropdown.style.display = "none";
+    }
 
   });
 
@@ -504,7 +494,19 @@ function renderCardPage() {
         <div class="id-card">
 
           <div class="card-header">
-            ${schoolInfo.school_name || school}
+
+            <div class="school-name">
+              ${schoolInfo.school_name || school}
+            </div>
+
+            <div class="school-meta">
+              ${schoolInfo.address || ""}
+            </div>
+
+            <div class="school-meta">
+              ${schoolInfo.contact || ""}
+            </div>
+
           </div>
 
           <div class="card-body">
@@ -517,8 +519,33 @@ function renderCardPage() {
 
               ${selectedFields.map((f, i) => {
 
+                // 🔥 NAME
                 if (i === 0) {
                   return `<div class="name">${s[f] || ""}</div>`;
+                }
+
+                // 🔥 CLASS + SECTION MERGE
+                if (f === "Class" && selectedFields.includes("Section")) {
+
+                  const cls = s.Class || "";
+                  const sec = s.Section || "";
+
+                  let value = "";
+
+                  if (cls && sec) value = `${cls} - ${sec}`;
+                  else if (cls) value = cls;
+                  else if (sec) value = sec;
+
+                  return `
+                    <div class="line">
+                      <span>Class:</span> ${value}
+                    </div>
+                  `;
+                }
+
+                // ❌ SKIP SECTION
+                if (f === "Section" && selectedFields.includes("Class")) {
+                  return "";
                 }
 
                 return `

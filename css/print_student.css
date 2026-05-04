@@ -176,7 +176,7 @@ input[type="checkbox"] {
 .page {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+  gap: 8px;
   margin-bottom: 30px;
 }
 
