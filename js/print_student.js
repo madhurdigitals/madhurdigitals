@@ -3,6 +3,7 @@ let filtered = [];
 let headersGlobal = [];
 let currentPage = 1;
 let rowsPerPage = 20;
+let schoolInfo = {};
 
 const school = sessionStorage.getItem("school");
 
@@ -26,6 +27,7 @@ async function loadStudents() {
   renderPagination();
   generateClassSectionOptions();
   generateFieldSelector();
+  await loadSchoolInfo();
 }
 
 loadStudents();
@@ -260,6 +262,26 @@ function generateCards() {
   renderCards(selected);
 }
 
+async function loadSchoolInfo() {
+
+  const raw = await getSchools(true);
+
+  const headers = raw[0];
+
+  const schools = raw.slice(1).map(row => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = row[i]);
+    return obj;
+  });
+
+  schoolInfo = schools.find(
+    s => s.school && school &&
+         s.school.toLowerCase() === school.toLowerCase()
+  ) || {};
+
+}
+
+
 // RENDER CARDS
 function renderCards(data) {
 
@@ -280,7 +302,19 @@ function renderCards(data) {
         <div class="id-card">
 
           <div class="card-header">
-            ${school}
+
+            <div class="school-name">
+              ${schoolInfo.school_name || school}
+            </div>
+
+            <div class="school-meta">
+              ${schoolInfo.address || ""}
+            </div>
+
+            <div class="school-meta">
+              ${schoolInfo.contact || ""}
+            </div>
+
           </div>
 
           <div class="card-body">

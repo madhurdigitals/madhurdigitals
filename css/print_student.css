@@ -355,3 +355,49 @@ input[type="checkbox"] {
 .line span {
   font-weight: 600;
 }
+
+/* HEADER */
+.card-header {
+  text-align: center;
+  border-bottom: 1px solid #000;
+  padding-bottom: 3px;
+  margin-bottom: 5px;
+}
+
+.school-name {
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.school-meta {
+  font-size: 8px;
+}
+
+/* CARD */
+.id-card {
+  border: 1px solid #000;
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: white;
+}
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+@media print {
+
+  body {
+    background: none;
+  }
+
+  .page {
+    margin: 0;
+    page-break-after: always;
+  }
+
+}
