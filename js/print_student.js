@@ -264,13 +264,21 @@ document.addEventListener("click", function (e) {
 
   dropdowns.forEach(container => {
 
-    if (dropdown && !container.contains(e.target)) {
-      dropdown.style.display = "none";
-    }
+    document.addEventListener("click", function (e) {
 
-    if (!container.contains(e.target)) {
-      dropdown.style.display = "none";
-    }
+      const dropdowns = document.querySelectorAll(".dropdown");
+
+      dropdowns.forEach(container => {
+
+        const dropdown = container.querySelector(".dropdown-content");
+
+        if (dropdown && !container.contains(e.target)) {
+          dropdown.style.display = "none";
+        }
+
+      });
+
+    });
 
   });
 
@@ -283,14 +291,10 @@ function generateCards() {
     selectedStudentIds.has(Number(s.Student_ID))
   );
 
-  if (selectedIds.length === 0) {
+  if (selected.length === 0) {
     alert("Select at least one student");
     return;
   }
-
-  const selected = filtered.filter(s =>
-    selectedIds.includes(Number(s.Student_ID))
-  );
 
   document.getElementById("cardSection").style.display = "block";
 
@@ -330,100 +334,100 @@ async function loadSchoolInfo() {
 
 
 // RENDER CARDS
-function renderCards(data) {
+// function renderCards(data) {
 
-  const container = document.getElementById("cardContainer");
+//   const container = document.getElementById("cardContainer");
 
-  let pages = [];
+//   let pages = [];
 
-  for (let i = 0; i < data.length; i += 10) {
-    pages.push(data.slice(i, i + 10));
-  }
+//   for (let i = 0; i < data.length; i += 10) {
+//     pages.push(data.slice(i, i + 10));
+//   }
 
-  container.innerHTML = pages.map(page => `
+//   container.innerHTML = pages.map(page => `
 
-    <div class="page">
+//     <div class="page">
 
-      ${page.map(s => `
+//       ${page.map(s => `
 
-        <div class="id-card">
+//         <div class="id-card">
 
-          <div class="card-header">
+//           <div class="card-header">
 
-            <div class="school-name">
-              ${schoolInfo.school_name || school}
-            </div>
+//             <div class="school-name">
+//               ${schoolInfo.school_name || school}
+//             </div>
 
-            <div class="school-meta">
-              ${schoolInfo.address || ""}
-            </div>
+//             <div class="school-meta">
+//               ${schoolInfo.address || ""}
+//             </div>
 
-            <div class="school-meta">
-              ${schoolInfo.contact || ""}
-            </div>
+//             <div class="school-meta">
+//               ${schoolInfo.contact || ""}
+//             </div>
 
-          </div>
+//           </div>
 
-          <div class="card-body">
+//           <div class="card-body">
 
-            <div class="left">
-              <div class="photo-box"></div>
-            </div>
+//             <div class="left">
+//               <div class="photo-box"></div>
+//             </div>
 
-            <div class="right">
+//             <div class="right">
 
-              ${selectedFields.map((f, i) => {
+//               ${selectedFields.map((f, i) => {
 
-                // 🔥 NAME (first field)
-                if (i === 0) {
-                  return `<div class="name">${s[f] || ""}</div>`;
-                }
+//                 // 🔥 NAME (first field)
+//                 if (i === 0) {
+//                   return `<div class="name">${s[f] || ""}</div>`;
+//                 }
 
-                // 🔥 COMBINE CLASS + SECTION
-                if (f === "Class" && selectedFields.includes("Section")) {
+//                 // 🔥 COMBINE CLASS + SECTION
+//                 if (f === "Class" && selectedFields.includes("Section")) {
 
-                  const cls = s.Class || "";
-                  const sec = s.Section || "";
+//                   const cls = s.Class || "";
+//                   const sec = s.Section || "";
 
-                  let value = "";
+//                   let value = "";
 
-                  if (cls && sec) value = `${cls} - ${sec}`;
-                  else if (cls) value = cls;
-                  else if (sec) value = sec;
+//                   if (cls && sec) value = `${cls} - ${sec}`;
+//                   else if (cls) value = cls;
+//                   else if (sec) value = sec;
 
-                  return `
-                    <div class="line">
-                      <span>Class:</span> ${value}
-                    </div>
-                  `;
-                }
+//                   return `
+//                     <div class="line">
+//                       <span>Class:</span> ${value}
+//                     </div>
+//                   `;
+//                 }
 
-                // ❌ SKIP SECTION (already merged)
-                if (f === "Section" && selectedFields.includes("Class")) {
-                  return "";
-                }
+//                 // ❌ SKIP SECTION (already merged)
+//                 if (f === "Section" && selectedFields.includes("Class")) {
+//                   return "";
+//                 }
 
-                // 🔥 DEFAULT FIELD
-                return `
-                  <div class="line">
-                    <span>${f}:</span> ${s[f] || ""}
-                  </div>
-                `;
+//                 // 🔥 DEFAULT FIELD
+//                 return `
+//                   <div class="line">
+//                     <span>${f}:</span> ${s[f] || ""}
+//                   </div>
+//                 `;
 
-              }).join("")}
+//               }).join("")}
 
-            </div>
+//             </div>
 
-          </div>
+//           </div>
 
-        </div>
+//         </div>
 
-      `).join("")}
+//       `).join("")}
 
-    </div>
+//     </div>
 
-  `).join("");
-}
+//   `).join("");
+// }
 
 // ADDRESS LIMIT
 function truncate(text) {
