@@ -2,17 +2,40 @@
 <html>
 <head>
   <title>Bulk Upload</title>
+
   <script src="js/protect.js"></script>
+  <script src="js/auth.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <script src="js/api.js"></script>
   <script src="js/bulk_upload.js" defer></script>
 
   <link rel="stylesheet" href="css/manage_student.css">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body>
 
-<h2>Bulk Upload Students</h2>
+<nav>
+  <div class="logo" onclick="location.href='dashboard.html'" style="cursor:pointer;">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <div>
+      <div class="title-text">Madhur Digitals</div>
+      <div class="school-name" id="schoolNameTop"></div>
+    </div>
+  </div>
+
+  <div class="nav-actions">
+    <button onclick="location.href='dashboard.html'">Dashboard</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="heading-wrapper">
+  <div class="heading-badge">
+    Bulk Upload: <span id="schoolName"></span>
+  </div>
+</div>
 
 <div class="container">
 
@@ -22,7 +45,6 @@
     <button id="loadBtn" onclick="loadData()" style="display:none;">
       Load Data
     </button>
-
     <button onclick="downloadSample()">Download Sample</button>
   </div>
 
@@ -38,19 +60,22 @@
 
     <br>
     <div style="display:flex; gap:10px;">
-
       <button onclick="submitData()" class="submit-btn">
         Submit Selected
       </button>
-
       <button onclick="downloadExcel()" class="submit-btn">
         Download Excel
       </button>
-
     </div>
   </div>
 
 </div>
+
+<script>
+  const _schoolName = sessionStorage.getItem("school_name") || sessionStorage.getItem("school") || "";
+  document.getElementById("schoolName").innerText = _schoolName;
+  document.getElementById("schoolNameTop").innerText = _schoolName;
+</script>
 
 </body>
 </html>

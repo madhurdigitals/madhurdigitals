@@ -4,6 +4,7 @@
   <title>Print Students</title>
 
   <script src="js/protect.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
   <script src="js/print_student.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -16,27 +17,43 @@
 
 <body>
 
-<h2>Print Students</h2>
+<nav>
+  <div class="logo" onclick="location.href='dashboard.html'" style="cursor:pointer;">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <div>
+      <div class="title-text">Madhur Digitals</div>
+      <div class="school-name" id="schoolNameTop"></div>
+    </div>
+  </div>
+
+  <div class="nav-actions">
+    <button onclick="location.href='dashboard.html'">Dashboard</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="heading-wrapper">
+  <div class="heading-badge">
+    Print Students: <span id="schoolName"></span>
+  </div>
+</div>
 
 <div class="container">
 
   <!-- FILTERS -->
   <div class="card">
 
-    <!-- Search -->
     <input id="searchName" placeholder="Search Name">
     <div style="margin-top:15px;">
       <b>Select Fields for Card:</b>
       <div id="fieldSelector" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:5px;"></div>
     </div>
 
-    <!-- Class Section Dropdown -->
     <div style="margin-top:10px;">
       <div class="dropdown">
         <button onclick="toggleDropdown('classSectionOptions', event)">
           Select Class-Section
         </button>
-
         <div id="classSectionOptions" class="dropdown-content"></div>
       </div>
     </div>
@@ -55,33 +72,29 @@
         position:relative;
         width:100%;
       ">
-
-        <!-- LEFT: Global checkbox -->
         <div style="
           position:absolute;
           left:0;
           display:flex;
           align-items:center;
           gap:6px;
-          white-space: nowrap;
+          white-space:nowrap;
         ">
           <input type="checkbox" id="globalSelect">
           <label for="globalSelect">Select / Deselect All</label>
         </div>
 
-        <!-- CENTER: Count -->
         <div id="selectionCount" style="font-weight:600;">
           Selected: 0 students
         </div>
-
       </div>
+
       <table>
         <thead></thead>
         <tbody id="studentTable"></tbody>
       </table>
     </div>
 
-    <!-- Pagination -->
     <div id="pagination" style="margin-top:10px;"></div>
 
     <br>
@@ -103,6 +116,13 @@
 
   </div>
 </div>
+
+<script>
+  // Set school name in nav
+  const _schoolName = sessionStorage.getItem("school_name") || sessionStorage.getItem("school") || "";
+  document.getElementById("schoolName").innerText = _schoolName;
+  document.getElementById("schoolNameTop").innerText = _schoolName;
+</script>
 
 </body>
 </html>
