@@ -44,6 +44,12 @@
     <p>Generate ID cards</p>
   </div>
 
+  <div class="card" onclick="showSchoolSelector('export')">
+    <h3>📤 Export Students</h3>
+    <p>Export to PDF cards or Excel</p>
+  </div>
+
+
   <!-- Bulk Upload -->
   <div class="card" onclick="showSchoolSelector('bulk')">
   <h3>📤 Bulk Upload Students</h3>
@@ -197,6 +203,9 @@ function continueAction() {
   }
   else if (mode === "form") {
     window.location.href = "school_form.html";
+  }
+  else if (mode === "export") {
+    window.location.href = "export_student.html";
   }
 }
 

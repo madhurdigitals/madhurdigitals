@@ -1,0 +1,273 @@
+/* GLOBAL */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  background: #f5f7fb;
+}
+
+h2 {
+  text-align: center;
+  margin-top: 20px;
+  color: #0d6efd;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 20px auto;
+  padding: 15px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+
+input[type="text"],
+input:not([type="checkbox"]):not([type="radio"]) {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+input:focus {
+  outline: none;
+  border: 2px solid #0d6efd;
+}
+
+/* DROPDOWN */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #0d6efd;
+  background: white;
+  color: #0d6efd;
+  cursor: pointer;
+}
+
+.dropdown button:hover {
+  background: #0d6efd;
+  color: white;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ccc;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 180px;
+  z-index: 1000;
+  border-radius: 6px;
+}
+
+.dropdown-content label {
+  display: block;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.dropdown-content label:hover {
+  background: #f1f5f9;
+}
+
+/* TABLE */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 10px;
+}
+
+th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #374151;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+th, td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+}
+
+td {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+tbody tr:hover {
+  background: #e0f2fe;
+  transform: scale(1.01);
+}
+
+input[type="checkbox"] {
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+/* PAGINATION */
+#pagination {
+  text-align: center;
+  margin-top: 10px;
+}
+
+#pagination button {
+  margin: 3px;
+  padding: 6px 10px;
+  border-radius: 5px;
+  border: 1px solid #0d6efd;
+  background: white;
+  cursor: pointer;
+}
+
+#pagination button:hover {
+  background: #0d6efd;
+  color: white;
+}
+
+/* EXPORT BUTTONS */
+.submit-btn {
+  padding: 12px 20px;
+  background: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  flex: 1;
+}
+
+.submit-btn:hover {
+  background: #0b5ed7;
+}
+
+.submit-btn:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}
+
+/* Excel button - green accent */
+.excel-btn {
+  background: #198754;
+}
+
+.excel-btn:hover {
+  background: #157347;
+}
+
+/* ========================= */
+/* CARD PRINT STYLES (for PDF render) */
+/* ========================= */
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+.page {
+  width: 210mm;
+  height: 297mm;
+  margin: 5mm auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  gap: 6mm;
+  padding: 8mm;
+  box-sizing: border-box;
+  page-break-after: always;
+}
+
+.id-card {
+  border: 1px solid #000;
+  border-radius: 8px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: white;
+  overflow: hidden;
+}
+
+.card-header {
+  text-align: center;
+  border-bottom: 1px solid #000;
+  padding-bottom: 3px;
+  margin-bottom: 5px;
+  line-height: 1.2;
+}
+
+.school-name {
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.school-meta {
+  font-size: 9px;
+}
+
+.card-body {
+  display: flex;
+  gap: 8px;
+  margin-top: 5px;
+  align-items: flex-start;
+}
+
+.left {
+  flex-shrink: 0;
+}
+
+.photo-box {
+  width: 28mm;
+  height: 28mm;
+  border: 1px solid #000;
+  background: #eee;
+}
+
+.right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.name {
+  font-weight: bold;
+  font-size: 13px;
+  color: #000;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.line {
+  font-size: 10px;
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.line span {
+  font-weight: 600;
+}

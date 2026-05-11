@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Export Students</title>
+
+  <script src="js/protect.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/export_student.js" defer></script>
+
+  <!-- PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Excel export (SheetJS) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <link rel="stylesheet" href="css/export_student.css">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+
+<h2>Export Students</h2>
+
+<div class="container">
+
+  <!-- FILTERS -->
+  <div class="card">
+
+    <input id="searchName" placeholder="Search Name">
+
+    <div style="margin-top:15px;">
+      <b>Select Fields for Card / Excel:</b>
+      <div id="fieldSelector" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:5px;"></div>
+    </div>
+
+    <div style="margin-top:10px;">
+      <div class="dropdown">
+        <button onclick="toggleDropdown('classSectionOptions', event)">
+          Select Class-Section
+        </button>
+        <div id="classSectionOptions" class="dropdown-content"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TABLE -->
+  <div class="card">
+
+    <div class="table-wrapper">
+
+      <div style="
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        margin-bottom:10px;
+        position:relative;
+        width:100%;
+      ">
+        <!-- LEFT: Global checkbox -->
+        <div style="
+          position:absolute;
+          left:0;
+          display:flex;
+          align-items:center;
+          gap:6px;
+          white-space:nowrap;
+        ">
+          <input type="checkbox" id="globalSelect">
+          <label for="globalSelect">Select / Deselect All</label>
+        </div>
+
+        <!-- CENTER: Count -->
+        <div id="selectionCount" style="font-weight:600;">
+          Selected: 0 students
+        </div>
+      </div>
+
+      <table>
+        <thead></thead>
+        <tbody id="studentTable"></tbody>
+      </table>
+    </div>
+
+    <div id="pagination" style="margin-top:10px;"></div>
+
+    <br>
+
+    <!-- EXPORT BUTTONS -->
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button onclick="exportCardsPDF()" class="submit-btn export-btn" id="exportCardsBtn">
+        📄 Export Cards PDF (0)
+      </button>
+      <button onclick="exportExcel()" class="submit-btn export-btn excel-btn" id="exportExcelBtn">
+        📊 Export Excel (0)
+      </button>
+    </div>
+
+  </div>
+
+  <!-- HIDDEN CARD RENDER AREA (used for PDF generation) -->
+  <div id="cardSection" style="display:none;">
+    <div id="cardContainer"></div>
+  </div>
+
+</div>
+
+</body>
+</html>
