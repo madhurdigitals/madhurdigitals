@@ -77,10 +77,10 @@ async function restore(id) {
   if (!confirm("Restore this student?")) return;
 
   const filters = {
-    name: searchName.value,
-    class: searchClass.value,
-    section: searchSection.value,
-    school: searchSchool.value
+    name: document.getElementById("searchName").value,
+    class: document.getElementById("searchClass").value,
+    section: document.getElementById("searchSection").value,
+    school: document.getElementById("searchSchool").value
   };
 
   const scrollPos = window.scrollY;
@@ -92,10 +92,10 @@ async function restore(id) {
   await loadDeleted();
 
   // restore filters
-  searchName.value = filters.name;
-  searchClass.value = filters.class;
-  searchSection.value = filters.section;
-  searchSchool.value = filters.school;
+  document.getElementById("searchName").value = filters.name;
+  document.getElementById("searchClass").value = filters.class;
+  document.getElementById("searchSection").value = filters.section;
+  document.getElementById("searchSchool").value = filters.school;
 
   applyFilter();
 
