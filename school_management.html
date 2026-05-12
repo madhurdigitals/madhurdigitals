@@ -335,7 +335,7 @@ async function updateSchoolData() {
     alert(res.error);
   } else {
     closePopup();
-    sessionStorage.removeItem("schools"); // clear cache
+    sessionStorage.removeItem("schoolsCache"); // clear cache
     loadSchools();
   }
 }
@@ -358,7 +358,7 @@ async function deleteSchoolData(id) {
   if (result.error) {
     alert(result.error);
   } else {
-    sessionStorage.removeItem("schools");
+    sessionStorage.removeItem("schoolsCache");
     loadSchools();
   }
 }

@@ -29,7 +29,7 @@ async function addSchool(data) {
     console.log("Add School Result:", result);
 
     // 🔥 Clear schools cache so dashboard reloads fresh
-    sessionStorage.removeItem("schools");
+    sessionStorage.removeItem("schoolsCache");
 
     return result;
 
@@ -76,8 +76,7 @@ async function getStudents(school) {
 function getSchools(forceRefresh = false) {
   return new Promise((resolve, reject) => {
 
-    // ✅ STEP 1: Check sessionStorage
-    const cached = sessionStorage.getItem("schools");
+    const cached = sessionStorage.getItem("schoolsCache"); // 🔥 renamed
 
     if (cached && !forceRefresh) {
       console.log("Using session cached schools");
@@ -85,28 +84,21 @@ function getSchools(forceRefresh = false) {
       return;
     }
 
-    // ✅ STEP 2: JSONP call (same as before)
     const callbackName = "jsonpCallback_" + Date.now();
 
     window[callbackName] = function(data) {
       console.log("Schools (API):", data);
-
-      // ✅ STEP 3: Store in sessionStorage
-      sessionStorage.setItem("schools", JSON.stringify(data));
-
+      sessionStorage.setItem("schoolsCache", JSON.stringify(data)); // 🔥 renamed
       resolve(data);
       delete window[callbackName];
     };
 
     const script = document.createElement("script");
-
     script.src = `${API_URL}?action=getSchools&callback=${callbackName}`;
-
     script.onerror = function() {
       reject("JSONP failed");
       delete window[callbackName];
     };
-
     document.body.appendChild(script);
   });
 }

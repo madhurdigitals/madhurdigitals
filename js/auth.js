@@ -14,7 +14,7 @@ async function login(username, password) {
     sessionStorage.setItem("username",    data.username);
     sessionStorage.setItem("role",        data.role);
     sessionStorage.setItem("schoolRaw",   data.school);
-    sessionStorage.setItem("schools",     JSON.stringify(data.schools));
+    sessionStorage.setItem("userSchools", JSON.stringify(data.schools));
     sessionStorage.setItem("permissions", JSON.stringify(data.permissions));
     sessionStorage.setItem("isLoggedIn",  "true");
 
@@ -55,7 +55,7 @@ function hasPermission(key) { return getPermissions().includes(key); }
 // Returns "*" or array of {name, id}
 function getUserSchools() {
   try {
-    const s = sessionStorage.getItem("schools");
+    const s = sessionStorage.getItem("userSchools");
     if (!s) return "*";
     const p = JSON.parse(s);
     return p === "*" ? "*" : p;
