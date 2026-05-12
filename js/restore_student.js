@@ -6,13 +6,23 @@ async function loadDeleted() {
   const res = await fetch(url);
   const raw = await res.json();
 
-  students = raw.slice(1).map(r => ({
-    id: r[0],
-    name: r[1],
-    class: r[2],
-    section: r[3],
-    school: r[10]
-  }));
+  students = raw.slice(1).map(r => {
+    // 🔥 Parse the full row data from JSON (new format)
+    const headers = JSON.parse(r[4] || "[]");
+    const rowData = JSON.parse(r[5] || "[]");
+
+    // Build object from headers + row
+    const obj = {};
+    headers.forEach((h, i) => obj[h.toLowerCase()] = rowData[i]);
+
+    return {
+      id: r[0],
+      name: obj["name"] || "",
+      class: obj["class"] || "",
+      section: obj["section"] || "",
+      school: r[1]   // School_Name is column 1 in new format
+    };
+  });
 
   populateSchoolFilter();
   renderTable(students);
