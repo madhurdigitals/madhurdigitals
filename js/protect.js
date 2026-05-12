@@ -1,7 +1,3 @@
-/* ========================= */
-/* protect.js — RBAC Guard   */
-/* ========================= */
-
 (function () {
 
   const publicPages = ["index.html", "login.html"];
@@ -24,19 +20,41 @@
   let currentPage = path.substring(path.lastIndexOf("/") + 1);
   if (currentPage === "") currentPage = "index.html";
 
-  const isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
-  const token      = sessionStorage.getItem("token");
+  const isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true"
+                  && sessionStorage.getItem("token");
 
+  // ── PUBLIC PAGES ──
   if (publicPages.includes(currentPage)) {
-    if (isLoggedIn && token) window.location.href = "dashboard.html";
+
+    // 🔥 If already logged in (any tab) → redirect to dashboard
+    const globalLogin = localStorage.getItem("isLoggedIn") === "true";
+    if (globalLogin && sessionStorage.getItem("token")) {
+      window.location.replace("dashboard.html");
+      return;
+    }
+
     return;
   }
 
-  if (!isLoggedIn || !token) {
-    window.location.href = "login.html";
+  // ── PROTECTED PAGES ──
+
+  // 🔥 Fix back button after logout — always revalidate
+  // This runs every time page is shown (including from cache)
+  window.addEventListener("pageshow", function(e) {
+    const stillLoggedIn = sessionStorage.getItem("isLoggedIn") === "true"
+                       && sessionStorage.getItem("token");
+    if (!stillLoggedIn) {
+      window.location.replace("login.html");
+    }
+  });
+
+  // Not logged in → redirect
+  if (!isLoggedIn) {
+    window.location.replace("login.html");
     return;
   }
 
+  // ── PERMISSION CHECK ──
   const requiredPermission = pagePermissions[currentPage];
   if (requiredPermission) {
     let permissions = [];
@@ -44,7 +62,7 @@
 
     if (!permissions.includes(requiredPermission)) {
       sessionStorage.setItem("accessDenied", currentPage);
-      window.location.href = "dashboard.html";
+      window.location.replace("dashboard.html");
       return;
     }
   }
