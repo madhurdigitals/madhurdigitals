@@ -42,7 +42,8 @@
   // This runs every time page is shown (including from cache)
   window.addEventListener("pageshow", function(e) {
     const stillLoggedIn = sessionStorage.getItem("isLoggedIn") === "true"
-                       && sessionStorage.getItem("token");
+                      && sessionStorage.getItem("token")
+                      && localStorage.getItem("isLoggedIn") === "true";
     if (!stillLoggedIn) {
       window.location.replace("login.html");
     }

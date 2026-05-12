@@ -16,6 +16,7 @@ async function login(username, password) {
     sessionStorage.setItem("schoolRaw",   data.school);
     sessionStorage.setItem("userSchools", JSON.stringify(data.schools));
     sessionStorage.setItem("permissions", JSON.stringify(data.permissions));
+    sessionStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("isLoggedIn", "true");
 
     // Backward compat for single school
