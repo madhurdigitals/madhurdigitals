@@ -9,6 +9,89 @@
   <link rel="stylesheet" href="css/add_school.css">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    /* PERMISSIONS DROPDOWN */
+    .perm-dropdown {
+      position: relative;
+      flex: 1;
+    }
+
+    .perm-trigger {
+      width: 100%;
+      padding: 11px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      color: #374151;
+      transition: 0.25s;
+    }
+
+    .perm-trigger:hover { background: #fff; }
+
+    .perm-trigger:focus {
+      outline: none;
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
+    }
+
+    .perm-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      z-index: 100;
+      padding: 10px;
+    }
+
+    .perm-panel.open { display: block; }
+
+    .perm-hint {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .perm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .perm-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #374151;
+      transition: 0.15s;
+    }
+
+    .perm-item:hover { background: #f1f5f9; }
+
+    .perm-item input[type="checkbox"] {
+      transform: scale(1.1);
+      accent-color: #0d6efd;
+      cursor: pointer;
+      width: auto;
+    }
+
+    .perm-item .perm-label { font-weight: 500; }
+    .perm-item .perm-desc  { font-size: 11px; color: #9ca3af; display: block; }
+  </style>
 </head>
 
 <body>
@@ -18,7 +101,6 @@
     <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
     <div class="title-text">Madhur Digitals</div>
   </div>
-
   <div class="nav-actions">
     <button onclick="goBack()">← Back</button>
     <button onclick="logout()">Logout</button>
@@ -28,7 +110,6 @@
 <h2>Add School</h2>
 
 <div class="container">
-
   <div class="card">
 
     <div class="form-row">
@@ -53,9 +134,9 @@
 
     <div class="form-row">
       <label>Fields (comma separated)</label>
-      <input id="fields" 
-            value="Name,Father's Name,Class,Section,DOB,Phone,Address"
-            placeholder="name,class,section,phone">
+      <input id="fields"
+             value="Name,Father's Name,Class,Section,DOB,Phone,Address"
+             placeholder="name,class,section,phone">
     </div>
 
     <div class="form-row">
@@ -73,74 +154,202 @@
       <input type="color" id="card_color" value="#FF5733">
     </div>
 
+    <!-- PERMISSIONS -->
+    <div class="form-row">
+      <label>School User Permissions</label>
+      <div class="perm-dropdown">
+
+        <button type="button" class="perm-trigger" id="permTrigger"
+          onclick="togglePermPanel()">
+          ✅ 4 permissions selected ▾
+        </button>
+
+        <div class="perm-panel" id="permPanel">
+
+          <div class="perm-hint">
+            Select what this school's login can access.
+            Add, Manage, Print, Form are selected by default.
+          </div>
+
+          <div class="perm-grid">
+
+            <label class="perm-item">
+              <input type="checkbox" value="add" checked>
+              <span>
+                <span class="perm-label">➕ Add Students</span>
+                <span class="perm-desc">Add new student records</span>
+              </span>
+            </label>
+
+            <label class="perm-item">
+              <input type="checkbox" value="manage" checked>
+              <span>
+                <span class="perm-label">🧾 Manage Students</span>
+                <span class="perm-desc">View and edit students</span>
+              </span>
+            </label>
+
+            <label class="perm-item">
+              <input type="checkbox" value="print" checked>
+              <span>
+                <span class="perm-label">🖨 Print Students</span>
+                <span class="perm-desc">Generate ID cards</span>
+              </span>
+            </label>
+
+            <label class="perm-item">
+              <input type="checkbox" value="form" checked>
+              <span>
+                <span class="perm-label">📄 School Forms</span>
+                <span class="perm-desc">Generate blank forms</span>
+              </span>
+            </label>
+
+            <label class="perm-item">
+              <input type="checkbox" value="export">
+              <span>
+                <span class="perm-label">💾 Export Students</span>
+                <span class="perm-desc">Export PDF / Excel</span>
+              </span>
+            </label>
+
+            <label class="perm-item">
+              <input type="checkbox" value="bulk">
+              <span>
+                <span class="perm-label">📤 Bulk Upload</span>
+                <span class="perm-desc">Upload via Excel/CSV</span>
+              </span>
+            </label>
+
+            <label class="perm-item">
+              <input type="checkbox" value="schools">
+              <span>
+                <span class="perm-label">🏫 Manage Schools</span>
+                <span class="perm-desc">Add/edit schools</span>
+              </span>
+            </label>
+
+            <label class="perm-item">
+              <input type="checkbox" value="restore">
+              <span>
+                <span class="perm-label">♻️ Restore Students</span>
+                <span class="perm-desc">Restore deleted students</span>
+              </span>
+            </label>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- END PERMISSIONS -->
+
     <div class="btn-group">
       <button class="submit-btn" onclick="submitSchool()">Add School</button>
       <button class="clear-btn" onclick="clearForm()">Clear</button>
     </div>
 
   </div>
-
 </div>
 
 <div id="toast"></div>
 
 <script>
 
-/* TOAST */
+/* ── PERMISSIONS PANEL ── */
+function togglePermPanel() {
+  document.getElementById("permPanel").classList.toggle("open");
+}
+
+// Close panel when clicking outside
+document.addEventListener("click", function(e) {
+  const panel   = document.getElementById("permPanel");
+  const trigger = document.getElementById("permTrigger");
+  if (!panel.contains(e.target) && !trigger.contains(e.target)) {
+    panel.classList.remove("open");
+  }
+});
+
+// Update trigger label when checkboxes change
+document.addEventListener("change", function(e) {
+  if (e.target.closest("#permPanel")) updatePermLabel();
+});
+
+function updatePermLabel() {
+  const checked = document.querySelectorAll("#permPanel input:checked");
+  const trigger = document.getElementById("permTrigger");
+  trigger.innerText = `✅ ${checked.length} permission${checked.length !== 1 ? "s" : ""} selected ▾`;
+}
+
+function getSelectedPermissions() {
+  return [...document.querySelectorAll("#permPanel input:checked")]
+    .map(cb => cb.value)
+    .join(",");
+}
+
+/* ── TOAST ── */
 function showToast(msg) {
   const t = document.getElementById("toast");
   t.innerText = msg;
   t.style.display = "block";
-  setTimeout(() => t.style.display = "none", 2000);
+  setTimeout(() => t.style.display = "none", 2500);
 }
 
-/* CLEAR */
+/* ── CLEAR ── */
 function clearForm() {
-  document.getElementById("school").value = "";
+  document.getElementById("school").value      = "";
   document.getElementById("school_name").value = "";
-  document.getElementById("address").value = "";
-  document.getElementById("contact").value = "";
-  document.getElementById("fields").value = "";
-  document.getElementById("template").value = "template_1";
-  document.getElementById("logo").value = "";
-  document.getElementById("card_color").value = "#FF5733";
+  document.getElementById("address").value     = "";
+  document.getElementById("contact").value     = "";
+  document.getElementById("fields").value      = "";
+  document.getElementById("template").value    = "template_1";
+  document.getElementById("logo").value        = "";
+  document.getElementById("card_color").value  = "#FF5733";
+
+  // Reset permissions to defaults
+  document.querySelectorAll("#permPanel input").forEach(cb => {
+    cb.checked = ["add", "manage", "print", "form"].includes(cb.value);
+  });
+  updatePermLabel();
 }
 
-/* SUBMIT */
+/* ── SUBMIT ── */
 async function submitSchool() {
 
   const school = document.getElementById("school").value.trim();
-
   if (!school) {
     showToast("School code is required");
     return;
   }
 
+  const permissions = getSelectedPermissions();
+  if (!permissions) {
+    showToast("Select at least one permission");
+    return;
+  }
+
   const data = {
-    school: school,
-    school_name: document.getElementById("school_name").value.trim(),
-    address: document.getElementById("address").value.trim(),
-    contact: document.getElementById("contact").value.trim(),
-    fields: document.getElementById("fields").value.trim(),
-    template: document.getElementById("template").value.trim(),
-    logo: document.getElementById("logo").value.trim(),
-    card_color: document.getElementById("card_color").value
+    school:       school,
+    school_name:  document.getElementById("school_name").value.trim(),
+    address:      document.getElementById("address").value.trim(),
+    contact:      document.getElementById("contact").value.trim(),
+    fields:       document.getElementById("fields").value.trim(),
+    template:     document.getElementById("template").value.trim(),
+    logo:         document.getElementById("logo").value.trim(),
+    card_color:   document.getElementById("card_color").value,
+    permissions:  permissions   // 🔥 new field
   };
 
   const res = await addSchool(data);
 
   if (res.error) {
-    showToast(res.error);   // e.g. "School already exists"
+    showToast(res.error);
   } else {
     showToast("School Created Successfully");
-
-    setTimeout(() => {
-      window.location.href = "school_management.html";
-    }, 1000);
+    setTimeout(() => window.location.href = "school_management.html", 1200);
   }
 }
 
-/* NAV */
+/* ── NAV ── */
 function goBack() {
   window.location.href = "school_management.html";
 }

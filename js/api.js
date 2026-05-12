@@ -3,25 +3,39 @@ let schoolsData = [];
 /**
  * ✅ ADD STUDENT (using GET to avoid CORS)
  */
-async function addStudent(data) {
+async function addSchool(data) {
   try {
     const params = new URLSearchParams({
-      action: "addStudent",
-      ...data   // 🔥 THIS IS THE MAGIC LINE
+      action:      "addSchool",
+      school:      data.school,
+      school_name: data.school_name,
+      school_id:   data.school_id || "",
+      address:     data.address,
+      contact:     data.contact,
+      fields:      data.fields,
+      template:    data.template,
+      logo:        data.logo,
+      card_color:  data.card_color,
+      permissions: data.permissions || "add,manage,print,form"  // 🔥 new
     });
 
     const url = `${API_URL}?${params.toString()}`;
 
-    console.log("Add URL:", url);
+    console.log("Add School URL:", url);
 
-    const res = await fetch(url);
+    const res    = await fetch(url);
     const result = await res.json();
+
+    console.log("Add School Result:", result);
+
+    // 🔥 Clear schools cache so dashboard reloads fresh
+    sessionStorage.removeItem("schools");
 
     return result;
 
   } catch (error) {
-    console.error("Add Student Error:", error);
-    alert("Failed to add student");
+    console.error("Add School Error:", error);
+    alert("Failed to add school");
   }
 }
 

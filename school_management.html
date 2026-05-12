@@ -9,130 +9,236 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body {
-      font-family: Arial;
-      padding: 20px;
-    }
+    body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f5f7fb; margin: 0; }
 
     nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px; background: white; padding: 12px 20px;
+      border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
+
+    .nav-left { font-weight: bold; font-size: 18px; color: #0d6efd; }
 
     button {
-      padding: 8px 12px;
-      cursor: pointer;
-      margin: 3px;
+      padding: 8px 12px; cursor: pointer; margin: 3px;
+      border-radius: 6px; border: 1px solid #0d6efd;
+      background: white; color: #0d6efd; transition: 0.2s;
     }
+    button:hover { background: #0d6efd; color: white; }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+    .top-bar { margin-bottom: 15px; }
 
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      font-size: 14px;
-    }
+    .table-wrapper { overflow-x: auto; }
 
-    .top-bar {
-      margin-bottom: 15px;
+    table { width: 100%; border-collapse: collapse; background: white;
+            border-radius: 10px; overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    th, td { border-bottom: 1px solid #f1f5f9; padding: 10px; font-size: 13px; text-align: left; }
+    th { background: #f8fafc; font-weight: 600; color: #374151; }
+    tbody tr:hover { background: #f0f7ff; }
+
+    .overlay {
+      display: none; position: fixed; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.45); top: 0; left: 0; z-index: 999;
+      backdrop-filter: blur(3px);
     }
 
     .popup {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
+      display: none; position: fixed; top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      background: white;
-      padding: 20px;
-      border: 1px solid #ccc;
-      z-index: 1000;
+      background: white; padding: 25px; border-radius: 14px;
+      z-index: 1000; width: 420px; max-width: 95%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      max-height: 90vh; overflow-y: auto;
     }
 
-    .overlay {
-      display: none;
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      top: 0;
-      left: 0;
+    .popup h3 { margin: 0 0 15px; color: #0d6efd; }
+
+    .popup input, .popup select {
+      display: block; margin: 6px 0 12px;
+      padding: 9px 11px; width: 100%; box-sizing: border-box;
+      border-radius: 7px; border: 1px solid #d1d5db;
+      background: #f9fafb; font-size: 14px;
     }
 
-    input {
-      display: block;
-      margin: 5px 0;
-      padding: 6px;
-      width: 100%;
+    .popup input:focus, .popup select:focus {
+      outline: none; border-color: #0d6efd;
+      box-shadow: 0 0 0 3px rgba(13,110,253,0.12);
     }
+
+    .popup label.field-label {
+      font-size: 12px; font-weight: 600; color: #6b7280;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .popup-actions { display: flex; gap: 10px; margin-top: 5px; }
+    .popup-actions button { flex: 1; padding: 10px; }
+    .save-btn  { background: #0d6efd; color: white; border-color: #0d6efd; }
+    .cancel-btn { background: #e5e7eb; color: #333; border-color: #e5e7eb; }
+
+    /* PERMISSIONS GRID IN POPUP */
+    .perm-grid-popup {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 5px; margin: 6px 0 14px;
+    }
+
+    .perm-item-popup {
+      display: flex; align-items: center; gap: 7px;
+      padding: 6px 8px; border-radius: 6px;
+      cursor: pointer; font-size: 13px; color: #374151;
+      border: 1px solid #e5e7eb; transition: 0.15s;
+    }
+
+    .perm-item-popup:hover { background: #f0f7ff; border-color: #0d6efd; }
+
+    .perm-item-popup input[type="checkbox"] {
+      transform: scale(1.1); accent-color: #0d6efd;
+      cursor: pointer; width: auto; margin: 0;
+    }
+
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-admin    { background: #dbeafe; color: #1d4ed8; }
+    .badge-employee { background: #dcfce7; color: #166534; }
+    .badge-school   { background: #fef9c3; color: #854d0e; }
   </style>
 </head>
 
 <body>
 
 <nav>
-  <h2>School Management</h2>
+  <div class="nav-left">🏫 School Management</div>
   <div>
     <button onclick="goAddSchool()">➕ Add School</button>
     <button onclick="loadSchools()">🔄 Refresh</button>
+    <button onclick="location.href='dashboard.html'">Dashboard</button>
     <button onclick="logout()">Logout</button>
   </div>
 </nav>
 
 <div class="top-bar">
-  <h3>Total Schools: <span id="totalSchools">0</span></h3>
+  <b>Total Schools: <span id="totalSchools">0</span></b>
 </div>
 
-<table>
-  <thead>
-    <tr>
-      <th>School ID</th>
-      <th>School</th>
-      <th>School Name</th>
-      <th>Address</th>
-      <th>Contact</th>
-      <th>Fields</th>
-      <th>Template</th>
-      <th>Logo</th>
-      <th>Color</th>
-      <th>Created</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody id="schoolTable"></tbody>
-</table>
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Code</th>
+        <th>School Name</th>
+        <th>Address</th>
+        <th>Contact</th>
+        <th>Fields</th>
+        <th>Color</th>
+        <th>Login</th>
+        <th>Permissions</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="schoolTable"></tbody>
+  </table>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closePopup()"></div>
 
 <!-- EDIT POPUP -->
-<div class="overlay" id="overlay"></div>
-
 <div class="popup" id="editPopup">
   <h3>Edit School</h3>
 
+  <label class="field-label">School ID</label>
   <input id="edit_school_id" disabled>
+
+  <label class="field-label">School Code</label>
   <input id="edit_school" disabled>
+
+  <label class="field-label">School Name</label>
   <input id="edit_school_name" placeholder="School Name">
+
+  <label class="field-label">Address</label>
   <input id="edit_address" placeholder="Address">
+
+  <label class="field-label">Contact</label>
   <input id="edit_contact" placeholder="Contact">
+
+  <label class="field-label">Fields</label>
   <input id="edit_fields" placeholder="Fields">
+
+  <label class="field-label">Template</label>
   <input id="edit_template" placeholder="Template">
+
+  <label class="field-label">Logo URL</label>
   <input id="edit_logo" placeholder="Logo">
+
+  <label class="field-label">Card Color</label>
   <input type="color" id="edit_color">
 
-  <button onclick="updateSchoolData()">Save</button>
-  <button onclick="closePopup()">Cancel</button>
+  <!-- PERMISSIONS -->
+  <label class="field-label">School User Permissions</label>
+  <div class="perm-grid-popup" id="editPermGrid">
+
+    <label class="perm-item-popup">
+      <input type="checkbox" value="add">
+      <span>➕ Add Students</span>
+    </label>
+
+    <label class="perm-item-popup">
+      <input type="checkbox" value="manage">
+      <span>🧾 Manage Students</span>
+    </label>
+
+    <label class="perm-item-popup">
+      <input type="checkbox" value="print">
+      <span>🖨 Print Students</span>
+    </label>
+
+    <label class="perm-item-popup">
+      <input type="checkbox" value="form">
+      <span>📄 School Forms</span>
+    </label>
+
+    <label class="perm-item-popup">
+      <input type="checkbox" value="export">
+      <span>💾 Export</span>
+    </label>
+
+    <label class="perm-item-popup">
+      <input type="checkbox" value="bulk">
+      <span>📤 Bulk Upload</span>
+    </label>
+
+    <label class="perm-item-popup">
+      <input type="checkbox" value="schools">
+      <span>🏫 Manage Schools</span>
+    </label>
+
+    <label class="perm-item-popup">
+      <input type="checkbox" value="restore">
+      <span>♻️ Restore</span>
+    </label>
+
+  </div>
+
+  <div class="popup-actions">
+    <button class="save-btn"   onclick="updateSchoolData()">Save</button>
+    <button class="cancel-btn" onclick="closePopup()">Cancel</button>
+  </div>
 </div>
 
 <script>
+let schoolsData = [];
+
+const ALL_PERMS = ["add","manage","print","form","export","bulk","schools","restore"];
+
 /* LOAD */
 async function loadSchools() {
-  const raw = await getSchools();
-
+  const raw = await getSchools(true);
   const headers = raw[0];
+
   schoolsData = raw.slice(1).map(r => {
     let obj = {};
     headers.forEach((h, i) => obj[h] = r[i]);
@@ -142,100 +248,124 @@ async function loadSchools() {
   document.getElementById("totalSchools").innerText = schoolsData.length;
 
   const table = document.getElementById("schoolTable");
-  table.innerHTML = "";
+  table.innerHTML = schoolsData.map(s => `
+    <tr>
+      <td>${s.school_id}</td>
+      <td><b>${s.school}</b></td>
+      <td>${s.school_name}</td>
+      <td>${s.address || "-"}</td>
+      <td>${s.contact || "-"}</td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.fields || "-"}</td>
+      <td><div style="background:${s.card_color};width:24px;height:24px;border-radius:4px;border:1px solid #ccc;"></div></td>
+      <td style="font-size:12px;">
+        <b>User:</b> ${String(s.school||"").toLowerCase()}<br>
+        <b>Pass:</b> ${s.school_id}
+      </td>
+      <td style="font-size:12px;">${formatPerms(s.permissions)}</td>
+      <td style="font-size:12px;">${s.created_at || "-"}</td>
+      <td>
+        <button onclick="editSchool('${s.school_id}')">✏️ Edit</button>
+        <button onclick="deleteSchoolData('${s.school_id}')"
+          style="border-color:#dc3545;color:#dc3545;">🗑 Delete</button>
+      </td>
+    </tr>
+  `).join("");
+}
 
-  schoolsData.forEach(s => {
-    table.innerHTML += `
-      <tr>
-        <td>${s.school_id}</td>
-        <td>${s.school}</td>
-        <td>${s.school_name}</td>
-        <td>${s.address}</td>
-        <td>${s.contact}</td>
-        <td>${s.fields}</td>
-        <td>${s.template}</td>
-        <td>${s.logo}</td>
-        <td>
-          <div style="background:${s.card_color};width:20px;height:20px;"></div>
-        </td>
-        <td>${s.created_at || ""}</td>
-        <td>
-          <button onclick="editSchool('${s.school_id}')">Edit</button>
-          <button onclick="deleteSchoolData('${s.school_id}')">Delete</button>
-        </td>
-      </tr>
-    `;
-  });
+function formatPerms(perms) {
+  if (!perms) return "-";
+  return perms.split(",").map(p => `<span style="background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:10px;font-size:11px;margin:1px;display:inline-block;">${p.trim()}</span>`).join(" ");
 }
 
 /* EDIT */
 function editSchool(id) {
   const s = schoolsData.find(x => String(x.school_id) === id);
+  if (!s) return;
 
-  document.getElementById("edit_school_id").value = s.school_id;
-  document.getElementById("edit_school").value = s.school;
+  document.getElementById("edit_school_id").value   = s.school_id;
+  document.getElementById("edit_school").value      = s.school;
   document.getElementById("edit_school_name").value = s.school_name;
-  document.getElementById("edit_address").value = s.address;
-  document.getElementById("edit_contact").value = s.contact;
-  document.getElementById("edit_fields").value = s.fields;
-  document.getElementById("edit_template").value = s.template;
-  document.getElementById("edit_logo").value = s.logo;
-  document.getElementById("edit_color").value = s.card_color;
+  document.getElementById("edit_address").value     = s.address;
+  document.getElementById("edit_contact").value     = s.contact;
+  document.getElementById("edit_fields").value      = s.fields;
+  document.getElementById("edit_template").value    = s.template;
+  document.getElementById("edit_logo").value        = s.logo;
+  document.getElementById("edit_color").value       = s.card_color || "#FF5733";
 
-  document.getElementById("overlay").style.display = "block";
+  // 🔥 Set permission checkboxes
+  const currentPerms = (s.permissions || "").split(",").map(p => p.trim());
+  document.querySelectorAll("#editPermGrid input[type='checkbox']").forEach(cb => {
+    cb.checked = currentPerms.includes(cb.value);
+  });
+
+  document.getElementById("overlay").style.display  = "block";
   document.getElementById("editPopup").style.display = "block";
+}
+
+/* GET SELECTED PERMS FROM EDIT POPUP */
+function getEditPermissions() {
+  return [...document.querySelectorAll("#editPermGrid input:checked")]
+    .map(cb => cb.value).join(",");
 }
 
 /* UPDATE */
 async function updateSchoolData() {
+  const permissions = getEditPermissions();
+  if (!permissions) {
+    alert("Select at least one permission");
+    return;
+  }
+
   const data = {
-    school_id: document.getElementById("edit_school_id").value,
-    school: document.getElementById("edit_school").value,
+    school_id:   document.getElementById("edit_school_id").value,
+    school:      document.getElementById("edit_school").value,
     school_name: document.getElementById("edit_school_name").value,
-    address: document.getElementById("edit_address").value,
-    contact: document.getElementById("edit_contact").value,
-    fields: document.getElementById("edit_fields").value,
-    template: document.getElementById("edit_template").value,
-    logo: document.getElementById("edit_logo").value,
-    card_color: document.getElementById("edit_color").value
+    address:     document.getElementById("edit_address").value,
+    contact:     document.getElementById("edit_contact").value,
+    fields:      document.getElementById("edit_fields").value,
+    template:    document.getElementById("edit_template").value,
+    logo:        document.getElementById("edit_logo").value,
+    card_color:  document.getElementById("edit_color").value,
+    permissions: permissions   // 🔥
   };
 
   const res = await updateSchool(data);
 
-  if (res.error) {
+  if (res && res.error) {
     alert(res.error);
   } else {
-    alert("Updated");
     closePopup();
+    sessionStorage.removeItem("schools"); // clear cache
     loadSchools();
   }
 }
 
+/* UPDATE SCHOOL via api */
 async function updateSchool(data) {
-  const url = `${API_URL}?action=updateSchool`;
-
-  const params = new URLSearchParams(data);
-
-  const res = await fetch(url + "&" + params.toString());
+  const params = new URLSearchParams({ action: "updateSchool", ...data });
+  const res = await fetch(`${API_URL}?${params.toString()}`);
   return res.json();
 }
+
 /* DELETE */
 async function deleteSchoolData(id) {
   if (!confirm("⚠️ This will delete all student data of this school. Continue?")) return;
 
-  const res = await deleteSchool(id);
+  const params = new URLSearchParams({ action: "deleteSchool", school_id: id });
+  const res    = await fetch(`${API_URL}?${params.toString()}`);
+  const result = await res.json();
 
-  if (res.error) {
-    alert(res.error);
+  if (result.error) {
+    alert(result.error);
   } else {
-    alert("Deleted");
+    sessionStorage.removeItem("schools");
     loadSchools();
   }
 }
 
 /* POPUP */
 function closePopup() {
-  document.getElementById("overlay").style.display = "none";
+  document.getElementById("overlay").style.display  = "none";
   document.getElementById("editPopup").style.display = "none";
 }
 
