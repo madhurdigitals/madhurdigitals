@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Manage Users</title>
+  <script src="js/protect.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <link rel="stylesheet" href="css/manage_student.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    /* ── PAGE ── */
+    body { background: #f5f7fb; }
+
+    .container { max-width: 1100px; margin: 20px auto; padding: 15px; }
+
+    /* ── ROLE BADGES ── */
+    .badge {
+      display: inline-block; padding: 3px 10px;
+      border-radius: 12px; font-size: 11px; font-weight: 600;
+    }
+    .badge-admin    { background: #dbeafe; color: #1d4ed8; }
+    .badge-employee { background: #dcfce7; color: #166534; }
+    .badge-school   { background: #fef9c3; color: #854d0e; }
+
+    /* ── STATUS ── */
+    .status-yes { color: #16a34a; font-weight: 600; }
+    .status-no  { color: #dc2626; font-weight: 600; }
+
+    /* ── PERM CHIP ── */
+    .perm-chip {
+      display: inline-block; padding: 2px 7px;
+      background: #e0f2fe; color: #0369a1;
+      border-radius: 10px; font-size: 11px; margin: 1px;
+    }
+
+    /* ── OVERLAY + POPUP ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 999;
+      backdrop-filter: blur(3px);
+    }
+
+    .popup {
+      display: none; position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: white; padding: 25px; border-radius: 14px;
+      z-index: 1000; width: 460px; max-width: 95%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      max-height: 92vh; overflow-y: auto;
+    }
+
+    .popup h3 { margin: 0 0 16px; color: #0d6efd; }
+
+    .field-label {
+      display: block; font-size: 11px; font-weight: 700;
+      color: #6b7280; text-transform: uppercase;
+      letter-spacing: 0.5px; margin-bottom: 4px;
+    }
+
+    .popup input, .popup select {
+      width: 100%; padding: 9px 11px; box-sizing: border-box;
+      border-radius: 7px; border: 1px solid #d1d5db;
+      background: #f9fafb; font-size: 14px; margin-bottom: 12px;
+    }
+
+    .popup input:focus, .popup select:focus {
+      outline: none; border-color: #0d6efd;
+      box-shadow: 0 0 0 3px rgba(13,110,253,0.12);
+      background: #fff;
+    }
+
+    /* password wrapper */
+    .pass-wrap {
+      position: relative; margin-bottom: 12px;
+    }
+    .pass-wrap input { margin-bottom: 0; padding-right: 38px; }
+    .pass-eye {
+      position: absolute; right: 10px; top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer; font-size: 15px; color: #6b7280;
+    }
+
+    /* ── PERMISSIONS GRID ── */
+    .perm-section-label {
+      font-size: 11px; font-weight: 700; color: #6b7280;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .perm-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 5px; margin-bottom: 14px;
+    }
+
+    .perm-item {
+      display: flex; align-items: center; gap: 7px;
+      padding: 6px 8px; border-radius: 6px; cursor: pointer;
+      font-size: 13px; color: #374151;
+      border: 1px solid #e5e7eb; transition: 0.15s;
+    }
+    .perm-item:hover { background: #f0f7ff; border-color: #0d6efd; }
+    .perm-item input[type="checkbox"] {
+      transform: scale(1.1); accent-color: #0d6efd;
+      cursor: pointer; width: auto; margin: 0;
+    }
+
+    /* ── SCHOOL CHECKLIST ── */
+    .school-list {
+      max-height: 140px; overflow-y: auto;
+      border: 1px solid #d1d5db; border-radius: 7px;
+      padding: 6px; margin-bottom: 12px; background: #f9fafb;
+    }
+
+    .school-check-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 6px; border-radius: 5px; cursor: pointer;
+      font-size: 13px; transition: 0.15s;
+    }
+    .school-check-item:hover { background: #e0f2fe; }
+    .school-check-item input { width: auto; margin: 0; accent-color: #0d6efd; }
+
+    /* ── POPUP ACTIONS ── */
+    .popup-actions { display: flex; gap: 10px; margin-top: 8px; }
+    .popup-actions button { flex: 1; padding: 10px; border-radius: 7px; border: none; cursor: pointer; font-size: 14px; }
+    .btn-save   { background: #0d6efd; color: white; }
+    .btn-save:hover { background: #0b5ed7; }
+    .btn-cancel { background: #e5e7eb; color: #333; }
+
+    /* ── TABLE ACTION BUTTONS ── */
+    .btn-edit     { background: #fef9c3; color: #854d0e; border: 1px solid #fbbf24; }
+    .btn-toggle   { border: 1px solid #6b7280; }
+    .btn-active   { background: #dcfce7; color: #166534; border-color: #16a34a; }
+    .btn-inactive { background: #fee2e2; color: #991b1b; border-color: #dc2626; }
+    .btn-delete   { background: #fee2e2; color: #991b1b; border: 1px solid #dc2626; }
+
+    table { font-size: 13px; }
+    td, th { padding: 10px 8px; }
+
+    .heading-wrapper { text-align: center; margin: 15px 0 5px; }
+    .heading-badge {
+      display: inline-block; padding: 8px 18px;
+      background: rgba(13,110,253,0.1); color: #0d6efd;
+      border-radius: 20px; font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <div class="logo" onclick="location.href='dashboard.html'" style="cursor:pointer;">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <div>
+      <div class="title-text">Madhur Digitals</div>
+    </div>
+  </div>
+  <div class="nav-actions">
+    <button onclick="location.href='dashboard.html'">Dashboard</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="heading-wrapper">
+  <div class="heading-badge">👥 Manage Users</div>
+</div>
+
+<div class="container">
+
+  <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+    <div>
+      <b>Total Users: <span id="totalUsers">0</span></b>
+    </div>
+    <button class="submit-btn" onclick="openAddPopup()"
+      style="width:auto;padding:10px 20px;">
+      ➕ Add User
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Schools</th>
+            <th>Permissions</th>
+            <th>Status</th>
+            <th>Last Login</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="usersTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closePopup()"></div>
+
+<!-- ADD / EDIT POPUP -->
+<div class="popup" id="userPopup">
+
+  <h3 id="popupTitle">Add User</h3>
+
+  <label class="field-label">Username</label>
+  <input id="pu_username" placeholder="e.g. ravi">
+
+  <label class="field-label">Password</label>
+  <div class="pass-wrap">
+    <input id="pu_password" type="password" placeholder="Enter password">
+    <span class="pass-eye" onclick="togglePassVis('pu_password', this)">👁️</span>
+  </div>
+
+  <label class="field-label">Role</label>
+  <select id="pu_role" onchange="handleRoleChange()">
+    <option value="employee">Employee</option>
+    <option value="school">School</option>
+    <option value="admin">Admin</option>
+  </select>
+
+  <!-- SCHOOL ACCESS -->
+  <div id="schoolAccessSection">
+    <label class="field-label">School Access</label>
+
+    <label class="perm-item" style="margin-bottom:8px;">
+      <input type="checkbox" id="allSchoolsCheck" onchange="toggleAllSchools(this)">
+      <span>⭐ All Schools (*)</span>
+    </label>
+
+    <div class="school-list" id="schoolChecklist">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- PERMISSIONS -->
+  <div class="perm-section-label">Permissions</div>
+  <div class="perm-grid" id="permGrid">
+
+    <label class="perm-item">
+      <input type="checkbox" value="add">
+      <span>➕ Add Students</span>
+    </label>
+    <label class="perm-item">
+      <input type="checkbox" value="manage">
+      <span>🧾 Manage Students</span>
+    </label>
+    <label class="perm-item">
+      <input type="checkbox" value="print">
+      <span>🖨 Print Students</span>
+    </label>
+    <label class="perm-item">
+      <input type="checkbox" value="export">
+      <span>💾 Export Students</span>
+    </label>
+    <label class="perm-item">
+      <input type="checkbox" value="bulk">
+      <span>📤 Bulk Upload</span>
+    </label>
+    <label class="perm-item">
+      <input type="checkbox" value="form">
+      <span>📄 School Forms</span>
+    </label>
+    <label class="perm-item">
+      <input type="checkbox" value="schools">
+      <span>🏫 Manage Schools</span>
+    </label>
+    <label class="perm-item">
+      <input type="checkbox" value="restore">
+      <span>♻️ Restore Students</span>
+    </label>
+    <label class="perm-item">
+      <input type="checkbox" value="users">
+      <span>👥 Manage Users</span>
+    </label>
+
+  </div>
+
+  <div class="popup-actions">
+    <button class="btn-save"   onclick="saveUser()">Save</button>
+    <button class="btn-cancel" onclick="closePopup()">Cancel</button>
+  </div>
+
+</div>
+
+<script>
+/* ── STATE ── */
+let allUsers   = [];
+let allSchools = [];
+let editingUsername = null; // null = add mode
+
+const PERM_LABELS = {
+  add:"➕ Add", manage:"🧾 Manage", print:"🖨 Print",
+  export:"💾 Export", bulk:"📤 Bulk", form:"📄 Forms",
+  schools:"🏫 Schools", restore:"♻️ Restore", users:"👥 Users"
+};
+
+/* ── INIT ── */
+async function init() {
+  await loadSchoolList();
+  await loadUsers();
+}
+
+init();
+
+/* ── LOAD SCHOOLS ── */
+async function loadSchoolList() {
+  const raw = await getSchools(true);
+  const headers = raw[0];
+  allSchools = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+}
+
+/* ── LOAD USERS ── */
+async function loadUsers() {
+  const res = await getUsers();
+  if (res.error) { alert(res.error); return; }
+
+  allUsers = res.users || [];
+  document.getElementById("totalUsers").innerText = allUsers.length;
+
+  const tbody = document.getElementById("usersTable");
+
+  tbody.innerHTML = allUsers.map((u, idx) => {
+
+    const role      = u.role || "employee";
+    const active    = String(u.active || "yes").toLowerCase();
+    const perms     = (u.permissions || "").split(",").map(p => p.trim()).filter(Boolean);
+    const schoolStr = u.school || "*";
+    const lastLogin = u.last_login ? new Date(u.last_login).toLocaleString() : "Never";
+
+    const badgeClass = role === "admin" ? "badge-admin"
+                     : role === "school" ? "badge-school"
+                     : "badge-employee";
+
+    const permChips = perms.map(p =>
+      `<span class="perm-chip">${PERM_LABELS[p] || p}</span>`
+    ).join("");
+
+    const schoolDisplay = schoolStr === "*"
+      ? '<span class="perm-chip" style="background:#f3e8ff;color:#7c3aed;">⭐ All</span>'
+      : schoolStr.split(",").map(s =>
+          `<span class="perm-chip" style="background:#fef9c3;color:#854d0e;">${s.trim()}</span>`
+        ).join("");
+
+    const toggleClass = active === "yes" ? "btn-active" : "btn-inactive";
+    const toggleLabel = active === "yes" ? "✅ Active" : "❌ Inactive";
+
+    return `
+      <tr>
+        <td>${idx + 1}</td>
+        <td><b>${u.username}</b></td>
+        <td><span class="badge ${badgeClass}">${role}</span></td>
+        <td style="max-width:160px;">${schoolDisplay}</td>
+        <td style="max-width:200px;">${permChips || "-"}</td>
+        <td>
+          <button class="btn-toggle ${toggleClass}"
+            onclick="handleToggle('${u.username}')">
+            ${toggleLabel}
+          </button>
+        </td>
+        <td style="font-size:12px;color:#6b7280;">${lastLogin}</td>
+        <td>
+          <button class="btn-edit" onclick="openEditPopup('${u.username}')">✏️ Edit</button>
+          <button class="btn-delete" onclick="handleDelete('${u.username}')">🗑</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+/* ── SCHOOL CHECKLIST ── */
+function buildSchoolChecklist(selectedSchools) {
+  // selectedSchools: "*" or array of "SchoolName(id)" strings
+  const container = document.getElementById("schoolChecklist");
+  container.innerHTML = allSchools.map(s => {
+    const entry   = `${s.school}(${s.school_id})`;
+    const checked = selectedSchools !== "*" &&
+                    selectedSchools.some(sel => sel.includes(`${s.school}(`));
+    return `
+      <label class="school-check-item">
+        <input type="checkbox" value="${entry}" ${checked ? "checked" : ""}>
+        ${s.school_name} <span style="color:#9ca3af;font-size:11px;">(${s.school})</span>
+      </label>
+    `;
+  }).join("");
+}
+
+function getSelectedSchools() {
+  const allCheck = document.getElementById("allSchoolsCheck");
+  if (allCheck.checked) return "*";
+
+  const checked = [...document.querySelectorAll("#schoolChecklist input:checked")];
+  return checked.map(cb => cb.value).join(",");
+}
+
+function toggleAllSchools(cb) {
+  const list = document.getElementById("schoolChecklist");
+  list.style.opacity = cb.checked ? "0.4" : "1";
+  list.querySelectorAll("input").forEach(i => i.disabled = cb.checked);
+}
+
+/* ── ROLE CHANGE ── */
+function handleRoleChange() {
+  const role    = document.getElementById("pu_role").value;
+  const section = document.getElementById("schoolAccessSection");
+  // Admin always gets * — hide school selector
+  if (role === "admin") {
+    section.style.display = "none";
+  } else {
+    section.style.display = "block";
+  }
+}
+
+/* ── OPEN ADD POPUP ── */
+function openAddPopup() {
+  editingUsername = null;
+  document.getElementById("popupTitle").innerText = "Add User";
+  document.getElementById("pu_username").value    = "";
+  document.getElementById("pu_username").disabled = false;
+  document.getElementById("pu_password").value    = "";
+  document.getElementById("pu_role").value        = "employee";
+
+  // Default perms: none
+  document.querySelectorAll("#permGrid input").forEach(cb => cb.checked = false);
+
+  // School: all by default for employee
+  document.getElementById("allSchoolsCheck").checked = true;
+  buildSchoolChecklist("*");
+  toggleAllSchools(document.getElementById("allSchoolsCheck"));
+
+  handleRoleChange();
+  openPopup();
+}
+
+/* ── OPEN EDIT POPUP ── */
+function openEditPopup(username) {
+  const user = allUsers.find(u => u.username === username);
+  if (!user) return;
+
+  editingUsername = username;
+  document.getElementById("popupTitle").innerText = `Edit User: ${username}`;
+  document.getElementById("pu_username").value    = username;
+  document.getElementById("pu_username").disabled = true;
+  document.getElementById("pu_password").value    = ""; // blank = no change
+  document.getElementById("pu_role").value        = user.role || "employee";
+
+  // Permissions
+  const perms = (user.permissions || "").split(",").map(p => p.trim());
+  document.querySelectorAll("#permGrid input").forEach(cb => {
+    cb.checked = perms.includes(cb.value);
+  });
+
+  // Schools
+  const schoolRaw = String(user.school || "*");
+  const isAll     = schoolRaw === "*";
+
+  document.getElementById("allSchoolsCheck").checked = isAll;
+  const selectedList = isAll ? "*" : schoolRaw.split(",");
+  buildSchoolChecklist(selectedList);
+  toggleAllSchools(document.getElementById("allSchoolsCheck"));
+
+  handleRoleChange();
+  openPopup();
+}
+
+/* ── SAVE USER ── */
+async function saveUser() {
+  const username = document.getElementById("pu_username").value.trim().toLowerCase();
+  const password = document.getElementById("pu_password").value.trim();
+  const role     = document.getElementById("pu_role").value;
+
+  if (!username) { alert("Username is required"); return; }
+
+  const perms  = [...document.querySelectorAll("#permGrid input:checked")]
+                   .map(cb => cb.value).join(",");
+
+  const school = role === "admin" ? "*" : getSelectedSchools();
+
+  if (!school) { alert("Select at least one school or All Schools"); return; }
+
+  let res;
+
+  if (editingUsername) {
+    // Edit mode — password blank means no change
+    res = await updateUser({
+      target_username: editingUsername,
+      password:        password,
+      role:            role,
+      school:          school,
+      permissions:     perms
+    });
+  } else {
+    if (!password) { alert("Password is required"); return; }
+    res = await addUser({ username, password, role, school, permissions: perms });
+  }
+
+  if (res && res.error) {
+    alert(res.error);
+  } else {
+    closePopup();
+    await loadUsers();
+  }
+}
+
+/* ── TOGGLE ── */
+async function handleToggle(username) {
+  const res = await toggleUser(username);
+  if (res && res.error) { alert(res.error); return; }
+  await loadUsers();
+}
+
+/* ── DELETE ── */
+async function handleDelete(username) {
+  if (!confirm(`Delete user "${username}"? This cannot be undone.`)) return;
+  const res = await deleteUser(username);
+  if (res && res.error) { alert(res.error); return; }
+  await loadUsers();
+}
+
+/* ── PASSWORD TOGGLE ── */
+function togglePassVis(inputId, icon) {
+  const input = document.getElementById(inputId);
+  input.type  = input.type === "password" ? "text" : "password";
+  icon.innerText = input.type === "password" ? "👁️" : "🙈";
+}
+
+/* ── POPUP HELPERS ── */
+function openPopup() {
+  document.getElementById("overlay").style.display   = "block";
+  document.getElementById("userPopup").style.display = "block";
+}
+
+function closePopup() {
+  document.getElementById("overlay").style.display   = "none";
+  document.getElementById("userPopup").style.display = "none";
+}
+</script>
+
+</body>
+</html>

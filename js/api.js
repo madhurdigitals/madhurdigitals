@@ -248,4 +248,85 @@ function attachEnterNavigation() {
   });
 }
 
+/* ========================= */
+/* USER MANAGEMENT APIs      */
+/* Append these to api.js    */
+/* ========================= */
+
+async function getUsers() {
+  try {
+    const url = `${API_URL}?action=getUsers`;
+    const res = await fetch(url);
+    return await res.json();
+  } catch (err) {
+    console.error("getUsers error:", err);
+    return { error: "Failed to fetch users" };
+  }
+}
+
+async function addUser(data) {
+  try {
+    const params = new URLSearchParams({
+      action:      "addUser",
+      username:    data.username,
+      password:    data.password,
+      role:        data.role,
+      school:      data.school,
+      permissions: data.permissions
+    });
+    const res = await fetch(`${API_URL}?${params.toString()}`);
+    return await res.json();
+  } catch (err) {
+    console.error("addUser error:", err);
+    return { error: "Failed to add user" };
+  }
+}
+
+async function updateUser(data) {
+  try {
+    const params = new URLSearchParams({
+      action:          "updateUser",
+      target_username: data.target_username,
+      password:        data.password    || "",
+      role:            data.role        || "",
+      school:          data.school      || "",
+      permissions:     data.permissions || ""
+    });
+    const res = await fetch(`${API_URL}?${params.toString()}`);
+    return await res.json();
+  } catch (err) {
+    console.error("updateUser error:", err);
+    return { error: "Failed to update user" };
+  }
+}
+
+async function toggleUser(username) {
+  try {
+    const params = new URLSearchParams({
+      action:          "toggleUser",
+      target_username: username
+    });
+    const res = await fetch(`${API_URL}?${params.toString()}`);
+    return await res.json();
+  } catch (err) {
+    console.error("toggleUser error:", err);
+    return { error: "Failed to toggle user" };
+  }
+}
+
+async function deleteUser(username) {
+  try {
+    const params = new URLSearchParams({
+      action:          "deleteUser",
+      target_username: username
+    });
+    const res = await fetch(`${API_URL}?${params.toString()}`);
+    return await res.json();
+  } catch (err) {
+    console.error("deleteUser error:", err);
+    return { error: "Failed to delete user" };
+  }
+}
+
+
 
