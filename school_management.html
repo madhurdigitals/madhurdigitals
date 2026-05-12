@@ -111,7 +111,7 @@
 <nav>
   <div class="nav-left">🏫 School Management</div>
   <div>
-    <button onclick="goAddSchool()">➕ Add School</button>
+    <button onclick="location.href='add_school.html'">➕ Add School</button>
     <button onclick="loadSchools()">🔄 Refresh</button>
     <button onclick="location.href='dashboard.html'">Dashboard</button>
     <button onclick="logout()">Logout</button>
@@ -230,7 +230,7 @@
 </div>
 
 <script>
-let schoolsData = [];
+schoolsData = [];
 
 const ALL_PERMS = ["add","manage","print","form","export","bulk","schools","restore"];
 
