@@ -5,7 +5,7 @@
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
-  <link rel="stylesheet" href="css/dashboard.css"> 
+  <link rel="stylesheet" href="css/dashboard.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
@@ -18,157 +18,188 @@
   </div>
 
   <div class="nav-actions">
+    <span id="welcomeUser" style="font-size:13px; color:#6b7280; margin-right:10px;"></span>
     <button onclick="logout()">Logout</button>
   </div>
 </nav>
 
 <h2 class="heading">Dashboard</h2>
 
-<div class="container">
+<!-- ACCESS DENIED NOTICE -->
+<div id="accessNotice" style="
+  display:none;
+  text-align:center;
+  margin: 10px auto;
+  max-width:400px;
+  background:#fff3cd;
+  border:1px solid #ffc107;
+  color:#856404;
+  padding:10px 16px;
+  border-radius:8px;
+  font-size:14px;
+"></div>
+
+<div class="container" id="cardContainer">
 
   <!-- Add Students -->
-  <div class="card" onclick="showSchoolSelector('add')">
+  <div class="card" data-permission="add" onclick="showSchoolSelector('add')">
     <h3>➕ Add Students</h3>
     <p>Add new student records</p>
   </div>
 
   <!-- Manage Students -->
-  <div class="card" onclick="goManage('manage')">
+  <div class="card" data-permission="manage" onclick="showSchoolSelector('manage')">
     <h3>🧾 Manage Students</h3>
     <p>View and edit students</p>
   </div>
 
   <!-- Print Students -->
-  <div class="card" onclick="goPrint('print')">
+  <div class="card" data-permission="print" onclick="showSchoolSelector('print')">
     <h3>🖨 Print Students</h3>
     <p>Generate ID cards</p>
   </div>
 
-  <div class="card" onclick="showSchoolSelector('export')">
+  <!-- Export Students -->
+  <div class="card" data-permission="export" onclick="showSchoolSelector('export')">
     <h3>💾 Export Students</h3>
     <p>Export to PDF cards or Excel</p>
   </div>
 
-
   <!-- Bulk Upload -->
-  <div class="card" onclick="showSchoolSelector('bulk')">
-  <h3>📤 Bulk Upload Students</h3>
-  <p>Upload students using Excel or CSV</p>
+  <div class="card" data-permission="bulk" onclick="showSchoolSelector('bulk')">
+    <h3>📤 Bulk Upload Students</h3>
+    <p>Upload students using Excel or CSV</p>
   </div>
 
-    <!-- Manage Schools -->
-  <div class="card" onclick="goToSchoolManagement()">
+  <!-- Manage Schools -->
+  <div class="card" data-permission="schools" onclick="goToSchoolManagement()">
     <h3>🏫 Manage Schools</h3>
     <p>Add and configure schools</p>
   </div>
 
-  <div class="card" onclick="showSchoolSelector('form')">
-  <h3>📄 School Forms</h3>
-  <p>Generate blank ID card forms</p>
-</div>
+  <!-- School Forms -->
+  <div class="card" data-permission="form" onclick="showSchoolSelector('form')">
+    <h3>📄 School Forms</h3>
+    <p>Generate blank ID card forms</p>
+  </div>
+
+  <!-- Restore Students -->
+  <div class="card" data-permission="restore" onclick="location.href='restore_students.html'">
+    <h3>♻️ Restore Students</h3>
+    <p>Restore deleted students</p>
+  </div>
 
 </div>
 
 <!-- School Selector -->
 <div id="schoolBox" class="school-box">
   <h3>Select School</h3>
-
   <select id="schoolSelect">
     <option value="">Loading...</option>
   </select>
-
   <br><br>
-  <!-- <button onclick="continueToAdd()">Continue</button> -->
-   <button onclick="continueAction()">Continue</button>
+  <button onclick="continueAction()">Continue</button>
 </div>
 
 <div id="customSchoolPopup" class="school-box" style="display:none;">
   <h3>New School Form</h3>
-
   <input id="cs_name" placeholder="School Name *"><br><br>
   <input id="cs_address" placeholder="Address"><br><br>
   <input id="cs_contact" placeholder="Contact"><br><br>
   <input id="cs_session" placeholder="Session"><br><br>
-
   <select id="cs_type" onchange="handleTypeChange()">
     <option value="student">Student ID Card Form</option>
     <option value="teacher">Teacher ID Card Form</option>
     <option value="other">Other</option>
   </select>
-
   <br><br>
-
   <input id="cs_custom_title" placeholder="Enter custom title" style="display:none;">
-
   <br><br>
-
   <button onclick="submitCustomSchool()">Continue</button>
 </div>
 
 <div id="overlay" class="overlay" style="display:none;"></div>
+
 <script>
-let school = sessionStorage.getItem("school");
-let school_name = sessionStorage.getItem("school_name");
 let mode = "";
-// Load schools
+const userRole       = getRole();
+const userPermissions = getPermissions();
+const userSchool     = getUserSchool();
+const username       = sessionStorage.getItem("username") || "";
+
+// ── Welcome message ──
+document.getElementById("welcomeUser").innerText =
+  `👤 ${username} (${userRole})`;
+
+// ── Hide cards user doesn't have permission for ──
+document.querySelectorAll(".card[data-permission]").forEach(card => {
+  const perm = card.getAttribute("data-permission");
+  if (!userPermissions.includes(perm)) {
+    card.style.display = "none";
+  }
+});
+
+// ── Show access denied notice if redirected ──
+const denied = sessionStorage.getItem("accessDenied");
+if (denied) {
+  const notice = document.getElementById("accessNotice");
+  notice.innerText = `⚠️ You don't have permission to access: ${denied}`;
+  notice.style.display = "block";
+  sessionStorage.removeItem("accessDenied");
+}
+
+// ── Load schools ──
 async function loadSchools(mode) {
-
   const raw = await getSchools();
-
   const headers = raw[0];
-
-  const schools = raw.slice(1).map(r => {
+  let schools = raw.slice(1).map(r => {
     let obj = {};
     headers.forEach((h, i) => obj[h] = r[i]);
     return obj;
   });
 
+  // 🔥 School user: only show their school
+  if (userRole === "school" && userSchool !== "*") {
+    schools = schools.filter(s =>
+      s.school && s.school.toLowerCase() === userSchool.toLowerCase()
+    );
+  }
+
   const dropdown = document.getElementById("schoolSelect");
+  dropdown.innerHTML = `<option value="">Select School</option>`;
 
-  // 🔥 Reset dropdown
-  dropdown.innerHTML = "";
-
-  // Default option
-  dropdown.innerHTML += `<option value="">Select School</option>`;
-  // 🔥 Only for School Forms
   if (mode === "form") {
     dropdown.innerHTML += `
       <option value="__other__">Other School (Generate form for new school)</option>
     `;
   }
-  
-  // Add real schools
+
   dropdown.innerHTML += schools.map(s => `
     <option value="${s.school}" data-id="${s.school_id}">
       ${s.school_name}
     </option>
   `).join("");
+
+  // 🔥 Auto-select if school user has only one school
+  if (userRole === "school" && schools.length === 1) {
+    dropdown.value = schools[0].school;
+  }
 }
 
-// Show selector
 function showSchoolSelector(selectedMode) {
   mode = selectedMode;
-
   const dropdown = document.getElementById("schoolSelect");
-
-  // 🔥 CLEAR IMMEDIATELY (prevents flicker)
   dropdown.innerHTML = `<option value="">Loading schools...</option>`;
-
   document.getElementById("schoolBox").style.display = "block";
   document.getElementById("overlay").style.display = "block";
-
   loadSchools(mode);
 }
 
-// Continue
 function continueAction() {
-
   const dropdown = document.getElementById("schoolSelect");
   const selectedOption = dropdown.options[dropdown.selectedIndex];
-
   const selectedValue = selectedOption.value;
 
-  // 🔥 FIX: check selected value, not sessionStorage
   if (selectedValue === "__other__") {
     showCustomSchoolPopup();
     return;
@@ -188,72 +219,17 @@ function continueAction() {
   sessionStorage.setItem("school_id", school_id);
   sessionStorage.setItem("school_name", school_name);
 
-  // Redirect
-  if (mode === "add") {
-    window.location.href = "add_student.html";
-  } 
-  else if (mode === "manage") {
-    window.location.href = "manage_student.html";
-  } 
-  else if (mode === "print") {
-    window.location.href = "print_student.html";
-  }
-  else if (mode === "bulk") {
-    window.location.href = "bulk_upload.html";
-  }
-  else if (mode === "form") {
-    window.location.href = "school_form.html";
-  }
-  else if (mode === "export") {
-    window.location.href = "export_student.html";
-  }
-}
-
-// Other buttons
-function goManage() {
-  showSchoolSelector("manage");
-}
-
-function goPrint() {
-  showSchoolSelector("print");
-}
-
-// Hide popup
-function hideSchoolSelector() {
-  hideAllPopups();
+  if (mode === "add")    window.location.href = "add_student.html";
+  else if (mode === "manage") window.location.href = "manage_student.html";
+  else if (mode === "print")  window.location.href = "print_student.html";
+  else if (mode === "bulk")   window.location.href = "bulk_upload.html";
+  else if (mode === "form")   window.location.href = "school_form.html";
+  else if (mode === "export") window.location.href = "export_student.html";
 }
 
 function goToSchoolManagement() {
   window.location.href = "school_management.html";
 }
-
-// ESC key close
-document.addEventListener("keydown", function(e) {
-  if (e.key === "Escape") {
-    hideAllPopups();
-  }
-});
-
-// Click outside close
-document.addEventListener("click", function(e) {
-
-  const schoolBox = document.getElementById("schoolBox");
-  const customBox = document.getElementById("customSchoolPopup");
-
-  const isInsideSchoolBox = schoolBox.contains(e.target);
-  const isInsideCustomBox = customBox.contains(e.target);
-  const isCardClick = e.target.closest(".card");
-
-  // 🔥 Ignore clicks inside popups or on cards
-  if (isInsideSchoolBox || isInsideCustomBox || isCardClick) {
-    return;
-  }
-
-  if (schoolBox.style.display === "block" || customBox.style.display === "block") {
-    hideAllPopups();
-  }
-
-});
 
 function hideAllPopups() {
   document.getElementById("schoolBox").style.display = "none";
@@ -262,20 +238,23 @@ function hideAllPopups() {
   mode = "";
 }
 
-// Always reset popup when page loads (important fix)
-window.addEventListener("pageshow", function () {
-  hideSchoolSelector();
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") hideAllPopups();
 });
 
-window.onload = function () {
-  hideSchoolSelector();
-};
+document.addEventListener("click", function(e) {
+  const schoolBox  = document.getElementById("schoolBox");
+  const customBox  = document.getElementById("customSchoolPopup");
+  if (schoolBox.contains(e.target) || customBox.contains(e.target) || e.target.closest(".card")) return;
+  if (schoolBox.style.display === "block" || customBox.style.display === "block") hideAllPopups();
+});
 
-window.addEventListener("DOMContentLoaded", function () {
+window.addEventListener("pageshow", hideAllPopups);
+window.onload = hideAllPopups;
+
+window.addEventListener("DOMContentLoaded", function() {
   const overlay = document.getElementById("overlay");
-  if (overlay) {
-    overlay.addEventListener("click", hideAllPopups);
-  }
+  if (overlay) overlay.addEventListener("click", hideAllPopups);
 });
 
 function showCustomSchoolPopup() {
@@ -286,28 +265,17 @@ function showCustomSchoolPopup() {
 
 function handleTypeChange() {
   const type = document.getElementById("cs_type").value;
-  const input = document.getElementById("cs_custom_title");
-
-  input.style.display = (type === "other") ? "block" : "none";
+  document.getElementById("cs_custom_title").style.display = type === "other" ? "block" : "none";
 }
 
 function submitCustomSchool() {
-
   const name = document.getElementById("cs_name").value.trim();
-  if (!name) {
-    alert("School name is required");
-    return;
-  }
+  if (!name) { alert("School name is required"); return; }
 
   const type = document.getElementById("cs_type").value;
-
   let title = "STUDENT ID CARD FORM";
-
-  if (type === "teacher") {
-    title = "TEACHER ID CARD FORM";
-  } else if (type === "other") {
-    title = document.getElementById("cs_custom_title").value.trim() || "CUSTOM FORM";
-  }
+  if (type === "teacher") title = "TEACHER ID CARD FORM";
+  else if (type === "other") title = document.getElementById("cs_custom_title").value.trim() || "CUSTOM FORM";
 
   const data = {
     school_name: name,
@@ -319,10 +287,8 @@ function submitCustomSchool() {
   };
 
   sessionStorage.setItem("custom_school", JSON.stringify(data));
-
   window.location.href = "school_form.html";
 }
-
 </script>
 
 </body>
