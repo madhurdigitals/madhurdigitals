@@ -357,7 +357,8 @@ async function submitData() {
       body: JSON.stringify({
         action: "bulkUploadStudents",
         school: school,
-        data: payload
+        data: payload,
+        added_by: sessionStorage.getItem("username") || "unknown" 
       })
     });
 

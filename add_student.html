@@ -180,7 +180,9 @@ async function submitStudent() {
 
   let data = {
     school: school,
-    school_id: sessionStorage.getItem("school_id")  
+    school_id: sessionStorage.getItem("school_id"),
+    added_by:   sessionStorage.getItem("username") || "unknown", 
+    added_via:  "manual"  
   };
 
   let valid = true;

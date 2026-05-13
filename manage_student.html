@@ -48,6 +48,20 @@
 
     <!-- Name -->
     <input id="searchName" placeholder="Search Name">
+    <input id="searchStudentId"
+          placeholder="Search by Student ID"
+          type="number"
+          oninput="applyFilter()"
+          style="margin-top:10px;">
+
+    <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <label style="font-weight:600; font-size:13px;">Added By:</label>
+      <select id="filterAddedBy" onchange="applyFilter()"
+        style="padding:8px 12px; border-radius:6px; border:1px solid #d1d5db;
+              background:#f9fafb; font-size:13px; cursor:pointer;">
+        <option value="">All</option>
+      </select>
+    </div>
 
     <!-- Class-Section Filter -->
     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;">

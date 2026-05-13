@@ -29,7 +29,12 @@ async function loadStudents() {
   const headers = raw[0];
 
   // ✅ Remove Timestamp from UI
-  headersGlobal = headers.filter(h => h !== "Timestamp");
+  headersGlobal = headers.filter(h => {
+    const key = h.toLowerCase();
+    return key !== "timestamp" &&
+           key !== "added_via" &&
+           key !== "updated_by";   // 🔥 keep Added_By, hide others
+  });
 
   // ✅ Convert rows to objects (keep full data internally)
   students = raw.slice(1).map(row => {
@@ -47,6 +52,7 @@ async function loadStudents() {
   renderSmartTable();
   renderPagination();
   populateClassSectionDropdown();
+  populateAddedByDropdown();
 }
 
 loadStudents();
@@ -167,7 +173,11 @@ function renderTable(data, headers) {
 
   const visibleHeaders = headers.filter(h => {
     const key = h.toLowerCase();
-    return !key.includes("address") && !key.includes("photo");
+    return !key.includes("address") &&
+           !key.includes("photo")   &&
+           key !== "updated_by"     &&
+           key !== "added_via"      &&
+           key !== "timestamp";
   });
 
   const table = document.getElementById("studentTable");
@@ -194,23 +204,25 @@ function renderTable(data, headers) {
 
 
 function applyFilter() {
-  const name = document.getElementById("searchName").value.toLowerCase();
+    const name      = document.getElementById("searchName").value.toLowerCase();
+    const studentId = document.getElementById("searchStudentId").value.trim();
+    const addedBy   = document.getElementById("filterAddedBy").value.trim().toLowerCase();
 
-  filteredData = students.filter(s => {
+    filteredData = students.filter(s => {
+      const key = s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`;
 
-    const key = s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`;
+      const matchName      = (s.Name || "").toLowerCase().includes(name);
+      const matchId        = !studentId || String(s.Student_ID || "").includes(studentId);
+      const matchAddedBy   = !addedBy   || (s.Added_By || "").toLowerCase().includes(addedBy);
+      const matchClassSec  = selectedFilters.length === 0 || selectedFilters.includes(key);
 
-    return (
-      (s.Name || "").toLowerCase().includes(name) &&
-      (selectedFilters.length === 0 || selectedFilters.includes(key))
-    );
-  });
+      return matchName && matchId && matchAddedBy && matchClassSec;
+    });
 
-  currentPage = 1;
-
-  renderSmartTable();
-  renderPagination();
-}
+    currentPage = 1;
+    renderSmartTable();
+    renderPagination();
+  }
 
 // DELETE
 async function deleteStudent(id) {
@@ -371,7 +383,8 @@ async function saveEditDynamic(id) {
   let params = new URLSearchParams({
     action: "updateStudent",
     school: school,
-    student_id: id
+    student_id: id,
+    updated_by:  sessionStorage.getItem("username") || "unknown" 
   });
 
   // ✅ ensure schools loaded
@@ -752,3 +765,17 @@ async function initSchools() {
 }
 
 initSchools();
+
+function populateAddedByDropdown() {
+  const unique = [...new Set(
+    students
+      .map(s => (s.Added_By || "").trim())
+      .filter(Boolean)
+  )].sort();
+
+  const dropdown = document.getElementById("filterAddedBy");
+  if (!dropdown) return;
+
+  dropdown.innerHTML = `<option value="">All</option>` +
+    unique.map(u => `<option value="${u}">${u}</option>`).join("");
+}
