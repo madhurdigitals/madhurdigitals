@@ -39,6 +39,28 @@ async function addSchool(data) {
   }
 }
 
+/* ADD STUDENT */
+async function addStudent(data) {
+  try {
+    const params = new URLSearchParams({
+      action: "addStudent",
+      ...data
+    });
+
+    const url = `${API_URL}?${params.toString()}`;
+    console.log("Add URL:", url);
+
+    const res    = await fetch(url);
+    const result = await res.json();
+
+    return result;
+
+  } catch (error) {
+    console.error("Add Student Error:", error);
+    alert("Failed to add student");
+  }
+}
+
 /**
  * ✅ GET STUDENTS (CORS SAFE)
  */
