@@ -1,92 +1,1809 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Madhur Digitals</title>
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/index.css">
-</head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Madhur Digitals — Professional School ID Card Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+  <style>
+    /* ══════════════════════════════════════
+       TOKENS
+    ══════════════════════════════════════ */
+    :root {
+      /* Light */
+      --bg:          #f8f7f4;
+      --bg2:         #ffffff;
+      --bg3:         #f0ede8;
+      --surface:     #ffffff;
+      --border:      #e5e1d8;
+      --border2:     #d4cfc6;
+      --text:        #0f1923;
+      --text2:       #4a5568;
+      --text3:       #8a94a6;
+      --navy:        #0f2147;
+      --navy2:       #1a3a7a;
+      --gold:        #b8924a;
+      --gold-lt:     #f9f3e8;
+      --gold-border: #e8d5a3;
+      --blue:        #1a4fd6;
+      --blue-lt:     #eff4ff;
+      --shadow-sm:   0 1px 4px rgba(15,33,71,0.06);
+      --shadow:      0 4px 20px rgba(15,33,71,0.09);
+      --shadow-lg:   0 12px 40px rgba(15,33,71,0.13);
+      --radius:      14px;
+    }
+
+    [data-theme="dark"] {
+      --bg:          #080d1a;
+      --bg2:         #0d1529;
+      --bg3:         #111e38;
+      --surface:     #0d1529;
+      --border:      rgba(255,255,255,0.08);
+      --border2:     rgba(255,255,255,0.12);
+      --text:        #f0f4ff;
+      --text2:       #8a9bcc;
+      --text3:       #4a5a8a;
+      --navy:        #c8d8ff;
+      --navy2:       #a0b8f0;
+      --gold:        #c9a84c;
+      --gold-lt:     rgba(201,168,76,0.1);
+      --gold-border: rgba(201,168,76,0.25);
+      --blue:        #4a7fff;
+      --blue-lt:     rgba(74,127,255,0.1);
+      --shadow-sm:   0 1px 4px rgba(0,0,0,0.3);
+      --shadow:      0 4px 20px rgba(0,0,0,0.4);
+      --shadow-lg:   0 12px 40px rgba(0,0,0,0.5);
+    }
+
+    /* ══════════════════════════════════════
+       BASE
+    ══════════════════════════════════════ */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.6;
+      transition: background 0.3s ease, color 0.3s ease;
+      overflow-x: hidden;
+    }
+
+    /* Subtle texture */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.015'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 1;
+    }
+
+    [data-theme="dark"] body::before { filter: invert(1); opacity: 0.3; }
+
+    /* ══════════════════════════════════════
+       NAV
+    ══════════════════════════════════════ */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 64px;
+      height: 70px;
+      background: rgba(248,247,244,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    [data-theme="dark"] nav {
+      background: rgba(8,13,26,0.88);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .nav-logo-wrap {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #0f2147, #1a4fd6);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(15,33,71,0.35);
+    }
+
+    .nav-logo-wrap img {
+      width: 22px;
+      height: 22px;
+      filter: brightness(10);
+    }
+
+    .nav-brand-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text2);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      width: 44px;
+      height: 24px;
+      background: var(--border2);
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+
+    [data-theme="dark"] .theme-toggle { background: var(--blue); }
+
+    .theme-toggle::after {
+      content: "";
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 18px; height: 18px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+
+    [data-theme="dark"] .theme-toggle::after { transform: translateX(20px); }
+
+    .theme-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text3);
+      letter-spacing: 0.3px;
+    }
+
+    .btn-nav {
+      padding: 9px 22px;
+      background: var(--navy);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s;
+      box-shadow: 0 4px 14px rgba(15,33,71,0.25);
+    }
+
+    [data-theme="dark"] .btn-nav {
+      background: var(--blue);
+      box-shadow: 0 4px 14px rgba(74,127,255,0.3);
+    }
+
+    .btn-nav:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(15,33,71,0.35);
+    }
+
+    /* ══════════════════════════════════════
+       HERO
+    ══════════════════════════════════════ */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 110px 64px 80px;
+      overflow: hidden;
+    }
+
+    /* Decorative shapes */
+    .hero-shape-1 {
+      position: absolute;
+      top: -100px; right: -100px;
+      width: 700px; height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(26,79,214,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-shape-2 {
+      position: absolute;
+      bottom: -150px; left: -150px;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(184,146,74,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    [data-theme="dark"] .hero-shape-1 {
+      background: radial-gradient(circle, rgba(74,127,255,0.12) 0%, transparent 70%);
+    }
+
+    [data-theme="dark"] .hero-shape-2 {
+      background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .hero-left { }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--gold-lt);
+      border: 1px solid var(--gold-border);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      animation: fadeUp 0.7s ease both;
+    }
+
+    .hero-tag-dot {
+      width: 6px; height: 6px;
+      background: var(--gold);
+      border-radius: 50%;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(40px, 5vw, 64px);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -1.5px;
+      color: var(--text);
+      margin-bottom: 24px;
+      animation: fadeUp 0.7s ease 0.1s both;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--blue);
+    }
+
+    [data-theme="dark"] .hero h1 em { color: #6a9fff; }
+
+    .hero-sub {
+      font-size: 17px;
+      font-weight: 400;
+      color: var(--text2);
+      line-height: 1.75;
+      max-width: 480px;
+      margin-bottom: 40px;
+      animation: fadeUp 0.7s ease 0.2s both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      animation: fadeUp 0.7s ease 0.3s both;
+    }
+
+    .btn-primary {
+      padding: 14px 32px;
+      background: linear-gradient(135deg, #0f2147, #1a4fd6);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s;
+      box-shadow: 0 6px 20px rgba(15,33,71,0.25);
+    }
+
+    [data-theme="dark"] .btn-primary {
+      background: linear-gradient(135deg, #1a4fd6, #4a7fff);
+      box-shadow: 0 6px 20px rgba(74,127,255,0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(15,33,71,0.35);
+    }
+
+    .btn-outline {
+      padding: 14px 32px;
+      background: transparent;
+      color: var(--text);
+      border: 1.5px solid var(--border2);
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .btn-outline:hover {
+      background: var(--bg3);
+      border-color: var(--border2);
+    }
+
+    /* ── HERO RIGHT — ID CARD VISUAL ── */
+    .hero-right {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeUp 0.9s ease 0.3s both;
+    }
+
+    .id-card-demo {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow-lg);
+      transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .id-card-header {
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+    }
+
+    .id-card-school {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.3px;
+    }
+
+    .id-card-subtitle {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 3px;
+    }
+
+    .id-card-badge {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 3px 10px;
+      background: var(--navy);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border-radius: 4px;
+    }
+
+    [data-theme="dark"] .id-card-badge { background: var(--blue); }
+
+    .id-card-body {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .id-card-photo {
+      width: 72px;
+      height: 88px;
+      background: linear-gradient(135deg, var(--bg3), var(--bg));
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      flex-shrink: 0;
+    }
+
+    .id-card-info { flex: 1; }
+
+    .id-card-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+
+    .id-card-field {
+      display: flex;
+      gap: 8px;
+      font-size: 12px;
+      margin-bottom: 6px;
+      color: var(--text2);
+    }
+
+    .id-card-field strong {
+      color: var(--text3);
+      font-weight: 600;
+      min-width: 70px;
+    }
+
+    .id-card-footer {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .id-card-id {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text3);
+      letter-spacing: 1px;
+      font-family: monospace;
+    }
+
+    .id-card-status {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #16a34a;
+    }
+
+    .id-card-status-dot {
+      width: 6px; height: 6px;
+      background: #16a34a;
+      border-radius: 50%;
+    }
+
+    /* Mini stats below card */
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .hero-stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .hero-stat:hover {
+      border-color: var(--border2);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-stat-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .hero-stat-label {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 3px;
+      font-weight: 500;
+    }
+
+    /* ══════════════════════════════════════
+       TRUST BAR
+    ══════════════════════════════════════ */
+    .trust-bar {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 64px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      flex-wrap: wrap;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .trust-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text3);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .trust-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+    }
+
+    .trust-schools {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .trust-chip {
+      padding: 5px 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      transition: all 0.2s;
+    }
+
+    .trust-chip:hover {
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    /* ══════════════════════════════════════
+       SECTION SHARED
+    ══════════════════════════════════════ */
+    section {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 100px 64px;
+    }
+
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .section-label::before {
+      content: "";
+      width: 28px; height: 2px;
+      background: var(--gold);
+      border-radius: 2px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(30px, 3.5vw, 46px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+
+    .section-sub {
+      font-size: 16px;
+      color: var(--text2);
+      line-height: 1.75;
+      max-width: 520px;
+    }
+
+    /* ══════════════════════════════════════
+       FEATURES
+    ══════════════════════════════════════ */
+    .features-bg {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .features-header {
+      margin-bottom: 56px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .feature-item {
+      background: var(--surface);
+      padding: 36px 30px;
+      transition: background 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-item:hover { background: var(--bg3); }
+
+    .feature-item::after {
+      content: "";
+      position: absolute;
+      bottom: 0; left: 30px; right: 30px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--blue), var(--gold));
+      transform: scaleX(0);
+      transition: transform 0.3s;
+      border-radius: 2px;
+    }
+
+    .feature-item:hover::after { transform: scaleX(1); }
+
+    .feature-icon-wrap {
+      width: 48px; height: 48px;
+      background: var(--blue-lt);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 18px;
+      border: 1px solid var(--border);
+      transition: all 0.25s;
+    }
+
+    .feature-item:hover .feature-icon-wrap {
+      background: var(--gold-lt);
+      border-color: var(--gold-border);
+    }
+
+    .feature-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    .feature-desc {
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.7;
+    }
+
+    /* ══════════════════════════════════════
+       HOW IT WORKS
+    ══════════════════════════════════════ */
+    .how-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+      margin-top: 60px;
+      position: relative;
+    }
+
+    .how-grid::before {
+      content: "";
+      position: absolute;
+      top: 32px; left: 15%; right: 15%;
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent,
+        var(--border2) 20%,
+        var(--border2) 80%,
+        transparent
+      );
+    }
+
+    .how-step { text-align: center; padding: 0 12px; }
+
+    .how-num {
+      width: 64px; height: 64px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 2px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--navy);
+      position: relative;
+      z-index: 1;
+      box-shadow: var(--shadow);
+      transition: all 0.3s;
+    }
+
+    [data-theme="dark"] .how-num { color: var(--blue); }
+
+    .how-step:hover .how-num {
+      background: var(--navy);
+      color: white;
+      border-color: var(--navy);
+      box-shadow: var(--shadow-lg);
+    }
+
+    [data-theme="dark"] .how-step:hover .how-num {
+      background: var(--blue);
+      border-color: var(--blue);
+    }
+
+    .how-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .how-desc {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.65;
+    }
+
+    /* ══════════════════════════════════════
+       WHY US
+    ══════════════════════════════════════ */
+    .why-bg {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .why-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .why-list { display: flex; flex-direction: column; gap: 4px; }
+
+    .why-item {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      cursor: default;
+      transition: all 0.25s;
+    }
+
+    .why-item:hover {
+      background: var(--bg3);
+      border-color: var(--border);
+    }
+
+    .why-icon {
+      width: 44px; height: 44px;
+      border-radius: 11px;
+      background: var(--blue-lt);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      flex-shrink: 0;
+      transition: all 0.25s;
+    }
+
+    .why-item:hover .why-icon {
+      background: var(--gold-lt);
+      border-color: var(--gold-border);
+    }
+
+    .why-item-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .why-item-desc {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.65;
+    }
+
+    /* Right panel */
+    .why-panel {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .why-panel-header {
+      background: linear-gradient(135deg, #0f2147, #1a4fd6);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    [data-theme="dark"] .why-panel-header {
+      background: linear-gradient(135deg, #0d1529, #1a3a7a);
+    }
+
+    .why-panel-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .why-panel-dot {
+      width: 8px; height: 8px;
+      background: #00e5b4;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #00e5b4;
+    }
+
+    .why-panel-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; }
+
+    .why-panel-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: all 0.25s;
+    }
+
+    .why-panel-row:hover {
+      border-color: var(--border2);
+      transform: translateX(4px);
+    }
+
+    .why-panel-row-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text2);
+    }
+
+    .panel-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .pd-blue   { background: #1a4fd6; }
+    .pd-green  { background: #16a34a; }
+    .pd-gold   { background: #c9a84c; }
+    .pd-purple { background: #7c3aed; }
+    .pd-teal   { background: #0891b2; }
+
+    .why-panel-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* ══════════════════════════════════════
+       TESTIMONIALS
+    ══════════════════════════════════════ */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 56px;
+    }
+
+    .testimonial-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .testimonial-card::before {
+      content: "\201C";
+      position: absolute;
+      top: -10px; right: 20px;
+      font-family: 'Playfair Display', serif;
+      font-size: 100px;
+      color: var(--border);
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .testimonial-card:hover {
+      box-shadow: var(--shadow);
+      border-color: var(--border2);
+      transform: translateY(-3px);
+    }
+
+    .testimonial-stars {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 14px;
+    }
+
+    .star { color: var(--gold); font-size: 14px; }
+
+    .testimonial-text {
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.75;
+      margin-bottom: 20px;
+      font-style: italic;
+      position: relative;
+      z-index: 1;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .testimonial-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0f2147, #1a4fd6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .testimonial-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .testimonial-role {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 2px;
+    }
+
+    /* ══════════════════════════════════════
+       CTA SECTION
+    ══════════════════════════════════════ */
+    .cta-bg {
+      background: linear-gradient(135deg, #0f2147 0%, #1a4fd6 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    [data-theme="dark"] .cta-bg {
+      background: linear-gradient(135deg, #080d1a 0%, #0d1e4a 100%);
+    }
+
+    .cta-bg::before {
+      content: "";
+      position: absolute;
+      top: -200px; right: -200px;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+      pointer-events: none;
+    }
+
+    .cta-bg::after {
+      content: "";
+      position: absolute;
+      bottom: -150px; left: -150px;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      background: rgba(201,168,76,0.08);
+      pointer-events: none;
+    }
+
+    .cta-inner {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 100px 40px;
+    }
+
+    .cta-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.8);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .cta-inner h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(32px, 4.5vw, 52px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: white;
+      margin-bottom: 16px;
+    }
+
+    .cta-inner p {
+      font-size: 17px;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 36px;
+      line-height: 1.7;
+    }
+
+    .cta-actions {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-cta-primary {
+      padding: 15px 36px;
+      background: white;
+      color: #0f2147;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+    }
+
+    .btn-cta-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 32px rgba(0,0,0,0.3);
+    }
+
+    .btn-cta-outline {
+      padding: 15px 36px;
+      background: transparent;
+      color: white;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .btn-cta-outline:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.5);
+    }
+
+    /* ══════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════ */
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .footer-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 60px 64px 36px;
+    }
+
+    .footer-top {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1.5fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+
+    .footer-brand-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+
+    .footer-brand-desc {
+      font-size: 13px;
+      color: var(--text3);
+      line-height: 1.7;
+      max-width: 260px;
+    }
+
+    .footer-col-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 18px;
+    }
+
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 11px; }
+
+    .footer-links a {
+      font-size: 14px;
+      color: var(--text2);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--text); }
+
+    .footer-contact-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--text2);
+    }
+
+    .footer-contact-icon {
+      width: 34px; height: 34px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .footer-contact-row a {
+      color: var(--text2);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-contact-row a:hover { color: var(--text); }
+
+    .footer-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer-copy { font-size: 12px; color: var(--text3); }
+
+    .footer-made {
+      font-size: 12px;
+      color: var(--text3);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .footer-made span { color: var(--gold); }
+
+    /* ══════════════════════════════════════
+       SCROLL REVEAL
+    ══════════════════════════════════════ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ══════════════════════════════════════
+       ANIMATIONS
+    ══════════════════════════════════════ */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ══════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════ */
+    @media (max-width: 1024px) {
+      nav { padding: 0 30px; }
+      .hero { padding: 100px 30px 70px; }
+      .hero-inner { grid-template-columns: 1fr; gap: 50px; }
+      .hero-right { max-width: 520px; margin: 0 auto; width: 100%; }
+      .section-wrap { padding: 80px 30px; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .how-grid { grid-template-columns: repeat(2, 1fr); }
+      .how-grid::before { display: none; }
+      .why-grid { grid-template-columns: 1fr; }
+      .testimonials-grid { grid-template-columns: 1fr 1fr; }
+      .footer-top { grid-template-columns: 1fr 1fr; gap: 32px; }
+      .trust-bar { padding: 20px 30px; }
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; height: 60px; }
+      .nav-links { display: none; }
+      .hero { padding: 90px 20px 60px; }
+      .hero h1 { font-size: 36px; }
+      .section-wrap { padding: 60px 20px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .testimonials-grid { grid-template-columns: 1fr; }
+      .footer-inner { padding: 40px 20px 28px; }
+      .footer-top { grid-template-columns: 1fr; gap: 28px; }
+      .trust-bar { padding: 16px 20px; gap: 16px; }
+      .cta-inner { padding: 70px 20px; }
+      .theme-label { display: none; }
+    }
+  </style>
+</head>
 <body>
 
-<!-- NAVBAR -->
+<!-- ── NAV ── -->
 <nav>
-    <h1 onclick="location.href='index.html'" style="cursor:pointer;">
-        Madhur Digitals
-    </h1>
+  <div class="nav-brand" onclick="location.href='index.html'">
+    <div class="nav-logo-wrap">
+      <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="logo">
+    </div>
+    <span class="nav-brand-name">Madhur Digitals</span>
+  </div>
 
-    <button class="nav-btn login-btn" onclick="location.href='login.html'">
-        Login
-    </button>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#why">Why Us</a></li>
+    <li><a href="#testimonials">Reviews</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+
+  <div class="nav-right">
+    <span class="theme-label" id="themeLabel">Light</span>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode"></button>
+    <button class="btn-nav" onclick="location.href='login.html'">Login →</button>
+  </div>
 </nav>
 
-<!-- HERO -->
-<section class="hero">
-    <h2>Smart ID Card Solutions for Schools & Businesses</h2>
-    <p>
-        Simplify ID card creation with our digital system. Manage student data,
-        generate cards instantly, and print with ease.
-    </p>
-    <button class="btn" onclick="location.href='login.html'">
-        Get Started
-    </button>
-</section>
+<!-- ── HERO ── -->
+<section>
+  <div class="hero">
+    <div class="hero-shape-1"></div>
+    <div class="hero-shape-2"></div>
 
-<!-- SERVICES -->
-<section class="section">
-    <h2>Our Services</h2>
-
-    <div class="cards">
-        <div class="card">
-            <h3>ID Card Printing</h3>
-            <p>High-quality and durable ID cards for schools and organizations.</p>
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="hero-tag">
+          <span class="hero-tag-dot"></span>
+          Trusted by Schools Across U.P.
         </div>
 
-        <div class="card">
-            <h3>Data Management</h3>
-            <p>Manage student records easily with our digital dashboard system.</p>
+        <h1>
+          Professional ID Cards<br>for <em>Every School.</em>
+        </h1>
+
+        <p class="hero-sub">
+          Madhur Digitals is a complete school ID card management system —
+          student records, bulk uploads, card generation, and multi-school
+          administration, all in one secure platform.
+        </p>
+
+        <div class="hero-actions">
+          <button class="btn-primary" onclick="location.href='login.html'">
+            Get Started →
+          </button>
+          <button class="btn-outline" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">
+            See Features
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <!-- ID Card Demo -->
+        <div class="id-card-demo">
+          <div class="id-card-header">
+            <div class="id-card-school">K.B.C. Public School</div>
+            <div class="id-card-subtitle">Aliganj, Tanda, Ambedkar Nagar</div>
+            <div class="id-card-badge">STUDENT ID CARD</div>
+          </div>
+          <div class="id-card-body">
+            <div class="id-card-photo">🎓</div>
+            <div class="id-card-info">
+              <div class="id-card-name">Aarav Sharma</div>
+              <div class="id-card-field"><strong>Father</strong> Mr. Rajesh Sharma</div>
+              <div class="id-card-field"><strong>Class</strong> 5 — Section A</div>
+              <div class="id-card-field"><strong>Phone</strong> 98XXXXXXXX</div>
+              <div class="id-card-field"><strong>DOB</strong> 12/08/2015</div>
+            </div>
+          </div>
+          <div class="id-card-footer">
+            <span class="id-card-id">ID: 30042</span>
+            <span class="id-card-status">
+              <span class="id-card-status-dot"></span> Active
+            </span>
+          </div>
         </div>
 
-        <div class="card">
-            <h3>Bulk Generation</h3>
-            <p>Generate hundreds of ID cards in minutes with automation.</p>
+        <!-- Mini stats -->
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-val">7+</div>
+            <div class="hero-stat-label">Schools</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">500+</div>
+            <div class="hero-stat-label">Cards Generated</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">3</div>
+            <div class="hero-stat-label">Access Roles</div>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 </section>
 
-<!-- WHY US -->
-<section class="section" style="background:#fff;">
-    <h2>Why Choose Madhur Digitals</h2>
+<!-- ── TRUST BAR ── -->
+<div class="trust-bar">
+  <span class="trust-label">Trusted by</span>
+  <div class="trust-divider"></div>
+  <div class="trust-schools">
+    <span class="trust-chip">K.B.C. Public School</span>
+    <span class="trust-chip">Chaudhary Ram Ganesh School</span>
+    <span class="trust-chip">Cosmopolitan School</span>
+    <span class="trust-chip">Fatma Children Academy</span>
+    <span class="trust-chip">APS Army Public School</span>
+    <span class="trust-chip">Sun Flower Public School</span>
+  </div>
+</div>
 
-    <div class="cards">
-        <div class="card">
-            <h3>Fast & Reliable</h3>
-            <p>Quick processing and smooth workflow.</p>
-        </div>
-
-        <div class="card">
-            <h3>Simple Interface</h3>
-            <p>User-friendly dashboard for easy usage.</p>
-        </div>
-
-        <div class="card">
-            <h3>Trusted by Schools</h3>
-            <p>Used by multiple schools like RAV & DAV.</p>
-        </div>
+<!-- ── FEATURES ── -->
+<section id="features" class="features-bg">
+  <div class="section-wrap">
+    <div class="features-header reveal">
+      <div class="section-label">What We Offer</div>
+      <h2 class="section-title">Everything a school needs.<br>Nothing it doesn't.</h2>
+      <p class="section-sub" style="margin-top:12px;">Purpose-built for school administrators — fast, reliable, and designed for real operational use.</p>
     </div>
+
+    <div class="features-grid reveal">
+
+      <div class="feature-item">
+        <div class="feature-icon-wrap">🪪</div>
+        <div class="feature-title">ID Card Generation</div>
+        <p class="feature-desc">Generate professional, print-ready ID cards instantly. A4 layout with school branding, student details, and photo placeholder.</p>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon-wrap">👥</div>
+        <div class="feature-title">Student Management</div>
+        <p class="feature-desc">Add, edit, search, and manage complete student records. Dynamic fields customized per school — fully flexible.</p>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon-wrap">📤</div>
+        <div class="feature-title">Bulk Upload</div>
+        <p class="feature-desc">Upload hundreds of student records at once via Excel or CSV. Smart column mapping handles any file format automatically.</p>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon-wrap">🔐</div>
+        <div class="feature-title">Role-Based Access</div>
+        <p class="feature-desc">Admin, Employee, and School-level logins with configurable permissions. Each user sees only what they need.</p>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon-wrap">💾</div>
+        <div class="feature-title">Export & Reports</div>
+        <p class="feature-desc">Export student data to Excel or download ID card PDFs. Choose exactly which students and fields to include.</p>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon-wrap">📊</div>
+        <div class="feature-title">Analytics Dashboard</div>
+        <p class="feature-desc">Live dashboard with student counts, class distribution, monthly growth, and data entry tracking — all in real time.</p>
+      </div>
+
+    </div>
+  </div>
 </section>
 
-<!-- CTA -->
-<section class="cta">
-    <h2>Start Creating ID Cards Today</h2>
-    <p>Login to your dashboard and begin instantly.</p>
+<!-- ── HOW IT WORKS ── -->
+<section id="how">
+  <div class="section-wrap">
+    <div class="reveal" style="text-align:center;">
+      <div class="section-label" style="justify-content:center;">How It Works</div>
+      <h2 class="section-title">Up and running in minutes.</h2>
+      <p class="section-sub" style="margin:12px auto 0; text-align:center;">No complex setup. No technical training required.</p>
+    </div>
+
+    <div class="how-grid">
+
+      <div class="how-step reveal">
+        <div class="how-num">01</div>
+        <div class="how-title">Create Your School</div>
+        <p class="how-desc">Set up a school profile with custom fields, card color, and branding in under 2 minutes.</p>
+      </div>
+
+      <div class="how-step reveal reveal-delay-1">
+        <div class="how-num">02</div>
+        <div class="how-title">Add Students</div>
+        <p class="how-desc">Enter students individually or bulk upload hundreds at once via Excel. Data saves instantly.</p>
+      </div>
+
+      <div class="how-step reveal reveal-delay-2">
+        <div class="how-num">03</div>
+        <div class="how-title">Generate ID Cards</div>
+        <p class="how-desc">Select students, choose fields, and generate print-ready ID cards in seconds.</p>
+      </div>
+
+      <div class="how-step reveal reveal-delay-3">
+        <div class="how-num">04</div>
+        <div class="how-title">Print & Export</div>
+        <p class="how-desc">Print directly from browser or download as PDF. Export student data to Excel for records.</p>
+      </div>
+
+    </div>
+  </div>
 </section>
 
-<!-- FOOTER -->
-<footer>
-    <p>© 2026 Madhur Digitals | All Rights Reserved</p>
+<!-- ── WHY US ── -->
+<section id="why" class="why-bg">
+  <div class="section-wrap">
+    <div class="why-grid">
+
+      <div class="reveal">
+        <div class="section-label">Why Madhur Digitals</div>
+        <h2 class="section-title">Built for schools.<br>Trusted by schools.</h2>
+        <p class="section-sub" style="margin-top:12px; margin-bottom:36px;">We understand the real challenges school administrators face — and built a system that solves them.</p>
+
+        <div class="why-list">
+
+          <div class="why-item">
+            <div class="why-icon">⚡</div>
+            <div>
+              <div class="why-item-title">Fast & Reliable</div>
+              <p class="why-item-desc">Smart caching and parallel data loading keeps the system instant. No waiting, no lag, no downtime.</p>
+            </div>
+          </div>
+
+          <div class="why-item">
+            <div class="why-icon">🏫</div>
+            <div>
+              <div class="why-item-title">Multi-School Support</div>
+              <p class="why-item-desc">Manage multiple schools from one admin account. Each school has its own data, users, and configuration.</p>
+            </div>
+          </div>
+
+          <div class="why-item">
+            <div class="why-icon">🔒</div>
+            <div>
+              <div class="why-item-title">Secure by Design</div>
+              <p class="why-item-desc">Token-based authentication, role-based access, and full audit trails on every data entry action.</p>
+            </div>
+          </div>
+
+          <div class="why-item">
+            <div class="why-icon">📱</div>
+            <div>
+              <div class="why-item-title">Works Everywhere</div>
+              <p class="why-item-desc">Fully responsive — works on desktop, tablet, and mobile. No app download required.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="reveal reveal-delay-1">
+        <div class="why-panel">
+          <div class="why-panel-header">
+            <div class="why-panel-title">System Overview</div>
+            <div class="why-panel-dot"></div>
+          </div>
+          <div class="why-panel-body">
+
+            <div class="why-panel-row">
+              <div class="why-panel-row-left">
+                <div class="panel-dot pd-blue"></div>
+                Schools Managed
+              </div>
+              <div class="why-panel-val">7+</div>
+            </div>
+
+            <div class="why-panel-row">
+              <div class="why-panel-row-left">
+                <div class="panel-dot pd-green"></div>
+                ID Cards Generated
+              </div>
+              <div class="why-panel-val">500+</div>
+            </div>
+
+            <div class="why-panel-row">
+              <div class="why-panel-row-left">
+                <div class="panel-dot pd-gold"></div>
+                Student Records
+              </div>
+              <div class="why-panel-val">1,000+</div>
+            </div>
+
+            <div class="why-panel-row">
+              <div class="why-panel-row-left">
+                <div class="panel-dot pd-purple"></div>
+                User Roles
+              </div>
+              <div class="why-panel-val">3 Levels</div>
+            </div>
+
+            <div class="why-panel-row">
+              <div class="why-panel-row-left">
+                <div class="panel-dot pd-teal"></div>
+                System Uptime
+              </div>
+              <div class="why-panel-val">99.9%</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── TESTIMONIALS ── -->
+<section id="testimonials">
+  <div class="section-wrap">
+    <div class="reveal" style="text-align:center;">
+      <div class="section-label" style="justify-content:center;">Testimonials</div>
+      <h2 class="section-title">What schools say about us.</h2>
+    </div>
+
+    <div class="testimonials-grid">
+
+      <div class="testimonial-card reveal">
+        <div class="testimonial-stars">
+          <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+        </div>
+        <p class="testimonial-text">"Madhur Digitals transformed how we manage student records. What used to take days now takes hours. The bulk upload feature is exceptional."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">R</div>
+          <div>
+            <div class="testimonial-name">Ram Ganesh School</div>
+            <div class="testimonial-role">Principal, Katariya, Tanda</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card reveal reveal-delay-1">
+        <div class="testimonial-stars">
+          <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+        </div>
+        <p class="testimonial-text">"The ID card generation is professional and fast. Our parents are impressed with the quality. The system is simple enough for our staff to use without training."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">K</div>
+          <div>
+            <div class="testimonial-name">K.B.C. Public School</div>
+            <div class="testimonial-role">Administrator, Asopur, Tanda</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card reveal reveal-delay-2">
+        <div class="testimonial-stars">
+          <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+        </div>
+        <p class="testimonial-text">"Managing two school branches from one dashboard is a game changer. The role-based access ensures each school only sees their own data. Highly recommended."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">F</div>
+          <div>
+            <div class="testimonial-name">Fatma Children Academy</div>
+            <div class="testimonial-role">Director, Tanda, Ambedkar Nagar</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-bg">
+  <div class="cta-inner">
+    <div class="cta-tag reveal">
+      ✦ Ready to get started
+    </div>
+    <h2 class="reveal">Take your school<br>management digital.</h2>
+    <p class="reveal">Join schools across Ambedkar Nagar already using Madhur Digitals to manage student ID cards professionally and efficiently.</p>
+    <div class="cta-actions reveal">
+      <button class="btn-cta-primary" onclick="location.href='login.html'">
+        Get Started →
+      </button>
+      <button class="btn-cta-outline" onclick="location.href='mailto:madhurdigitals01@gmail.com'">
+        Contact Us
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer id="contact">
+  <div class="footer-inner">
+    <div class="footer-top">
+
+      <div>
+        <div class="footer-brand-name">Madhur Digitals</div>
+        <p class="footer-brand-desc">Professional ID card management for schools. Fast, secure, and built for real-world school operations in India.</p>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Platform</div>
+        <ul class="footer-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how">How It Works</a></li>
+          <li><a href="#why">Why Us</a></li>
+          <li><a href="#testimonials">Reviews</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Account</div>
+        <ul class="footer-links">
+          <li><a href="login.html">Login</a></li>
+          <li><a href="login.html">Admin Portal</a></li>
+          <li><a href="login.html">School Login</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Contact</div>
+        <div class="footer-contact-row">
+          <div class="footer-contact-icon">✉️</div>
+          <a href="mailto:madhurdigitals01@gmail.com">madhurdigitals01@gmail.com</a>
+        </div>
+        <div class="footer-contact-row">
+          <div class="footer-contact-icon">🌐</div>
+          <span>madhurdigitals.in</span>
+        </div>
+        <div class="footer-contact-row">
+          <div class="footer-contact-icon">📍</div>
+          <span>Tanda, Ambedkar Nagar, U.P.</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 Madhur Digitals. All Rights Reserved.</div>
+      <div class="footer-made">Built with <span>♥</span> for Indian Schools</div>
+    </div>
+  </div>
 </footer>
+
+<script>
+  /* ── THEME TOGGLE ── */
+  const html        = document.documentElement;
+  const toggleBtn   = document.getElementById("themeToggle");
+  const themeLabel  = document.getElementById("themeLabel");
+
+  // Load saved preference
+  const saved = localStorage.getItem("theme") || "light";
+  html.setAttribute("data-theme", saved);
+  themeLabel.innerText = saved === "dark" ? "Dark" : "Light";
+
+  toggleBtn.addEventListener("click", () => {
+    const current = html.getAttribute("data-theme");
+    const next    = current === "dark" ? "light" : "dark";
+    html.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+    themeLabel.innerText = next === "dark" ? "Dark" : "Light";
+  });
+
+  /* ── SCROLL REVEAL ── */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(el => {
+      if (el.isIntersecting) {
+        el.target.classList.add("visible");
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+
+  /* ── SMOOTH SCROLL ── */
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener("click", e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute("href"));
+      if (target) target.scrollIntoView({ behavior: "smooth" });
+    });
+  });
+
+  /* ── NAV SCROLL SHADOW ── */
+  window.addEventListener("scroll", () => {
+    const nav = document.querySelector("nav");
+    if (window.scrollY > 10) {
+      nav.style.boxShadow = "0 4px 24px rgba(0,0,0,0.1)";
+    } else {
+      nav.style.boxShadow = "none";
+    }
+  });
+</script>
 
 </body>
 </html>

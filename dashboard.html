@@ -1,90 +1,197 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Dashboard</title>
+  <title>Dashboard — Madhur Digitals</title>
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="js/dashboard.js" defer></script>
   <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
-  <div class="logo" onclick="location.href='index.html'" style="cursor:pointer;">
-    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
-    <div class="title-text">Madhur Digitals</div>
+  <div class="nav-brand" onclick="location.href='index.html'">
+    <div class="nav-logo">
+      <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="logo">
+    </div>
+    <div class="nav-title">
+      <span class="nav-title-main">Madhur Digitals</span>
+      <span class="nav-title-sub">School Management</span>
+    </div>
   </div>
-  <div class="nav-actions">
-    <span id="welcomeUser" style="font-size:13px;color:#6b7280;margin-right:10px;"></span>
-    <button onclick="logout()">Logout</button>
+
+  <div class="nav-center" id="schoolFilterWrap">
+    <select id="schoolFilterSelect" class="school-filter-select">
+      <option value="all">🏫 All Schools</option>
+    </select>
+  </div>
+
+  <div class="nav-right">
+    <div id="welcomeUser" class="welcome-pill"></div>
+    <div id="lastUpdated" class="last-updated"></div>
+    <button class="nav-btn refresh-btn" onclick="location.reload()" title="Refresh">↺</button>
+    <button class="nav-btn logout-btn" onclick="logout()">Logout</button>
   </div>
 </nav>
 
-<h2 class="heading">Dashboard</h2>
+<!-- ACCESS DENIED -->
+<div id="accessNotice" class="access-notice" style="display:none;"></div>
 
-<!-- ACCESS DENIED NOTICE -->
-<div id="accessNotice" style="
-  display:none; text-align:center; margin:10px auto;
-  max-width:420px; background:#fff3cd; border:1px solid #ffc107;
-  color:#856404; padding:10px 16px; border-radius:8px; font-size:14px;
-"></div>
+<main class="dashboard-main">
 
-<div class="container" id="cardContainer">
+  <!-- KPI ROW -->
+  <section class="kpi-section">
 
-  <div class="card" data-permission="add" onclick="showSchoolSelector('add')">
-    <h3>➕ Add Students</h3>
-    <p>Add new student records</p>
-  </div>
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-icon">👥</div>
+      <div class="kpi-body">
+        <div class="kpi-label">Total Students</div>
+        <div class="kpi-value" id="kpiStudents">—</div>
+      </div>
+      <div class="kpi-bg-icon">👥</div>
+    </div>
 
-  <div class="card" data-permission="manage" onclick="showSchoolSelector('manage')">
-    <h3>🧾 Manage Students</h3>
-    <p>View and edit students</p>
-  </div>
+    <div class="kpi-card kpi-green" id="kpiSchoolCard">
+      <div class="kpi-icon">🏫</div>
+      <div class="kpi-body">
+        <div class="kpi-label">Schools</div>
+        <div class="kpi-value" id="kpiSchools">—</div>
+      </div>
+      <div class="kpi-bg-icon">🏫</div>
+    </div>
 
-  <div class="card" data-permission="print" onclick="showSchoolSelector('print')">
-    <h3>🖨 Print Students</h3>
-    <p>Generate ID cards</p>
-  </div>
+    <div class="kpi-card kpi-amber">
+      <div class="kpi-icon">📅</div>
+      <div class="kpi-body">
+        <div class="kpi-label">Added This Month</div>
+        <div class="kpi-value" id="kpiThisMonth">—</div>
+      </div>
+      <div class="kpi-bg-icon">📅</div>
+    </div>
 
-  <div class="card" data-permission="export" onclick="showSchoolSelector('export')">
-    <h3>💾 Export Students</h3>
-    <p>Export to PDF cards or Excel</p>
-  </div>
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-icon">📚</div>
+      <div class="kpi-body">
+        <div class="kpi-label">Classes</div>
+        <div class="kpi-value" id="kpiClasses">—</div>
+      </div>
+      <div class="kpi-bg-icon">📚</div>
+    </div>
 
-  <div class="card" data-permission="bulk" onclick="showSchoolSelector('bulk')">
-    <h3>📤 Bulk Upload Students</h3>
-    <p>Upload students using Excel or CSV</p>
-  </div>
+  </section>
 
-  <div class="card" data-permission="schools" onclick="location.href='school_management.html'">
-    <h3>🏫 Manage Schools</h3>
-    <p>Add and configure schools</p>
-  </div>
+  <!-- CHARTS ROW -->
+  <section class="charts-row">
 
-  <div class="card" data-permission="form" onclick="showSchoolSelector('form')">
-    <h3>📄 School Forms</h3>
-    <p>Generate blank ID card forms</p>
-  </div>
+    <!-- Chart 1: Students per School / Class -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title" id="chartSchoolBarTitle">Students per School</div>
+          <div class="chart-subtitle">Distribution overview</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chartSchoolBar"></canvas>
+      </div>
+    </div>
 
-  <div class="card" data-permission="restore" onclick="location.href='restore_students.html'">
-    <h3>♻️ Restore Students</h3>
-    <p>Restore deleted students</p>
-  </div>
+    <!-- Chart 2: Monthly Growth -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Monthly Growth</div>
+          <div class="chart-subtitle">Students added — last 6 months</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chartMonthly"></canvas>
+      </div>
+    </div>
 
-  <div class="card" data-permission="users" onclick="location.href='manage_users.html'">
-    <h3>👥 Manage Users</h3>
-    <p>Add, edit and manage user access</p>
-  </div>
+    <!-- Chart 3: Top Data Operators (admin only) -->
+    <div class="chart-card" id="chartAddedByCard">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Top Data Operators</div>
+          <div class="chart-subtitle">Students entered per user</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chartAddedBy"></canvas>
+      </div>
+    </div>
 
-</div>
+  </section>
 
-<!-- School Selector -->
+  <!-- QUICK ACTIONS -->
+  <section class="actions-section">
+    <div class="section-header">
+      <h2 class="section-title">Quick Actions</h2>
+    </div>
+
+    <div class="actions-grid">
+
+      <div class="action-card ac-blue" data-permission="add" onclick="showSchoolSelector('add')">
+        <div class="ac-icon">➕</div>
+        <div class="ac-label">Add Students</div>
+      </div>
+
+      <div class="action-card ac-indigo" data-permission="manage" onclick="showSchoolSelector('manage')">
+        <div class="ac-icon">🧾</div>
+        <div class="ac-label">Manage Students</div>
+      </div>
+
+      <div class="action-card ac-cyan" data-permission="print" onclick="showSchoolSelector('print')">
+        <div class="ac-icon">🖨</div>
+        <div class="ac-label">Print ID Cards</div>
+      </div>
+
+      <div class="action-card ac-green" data-permission="export" onclick="showSchoolSelector('export')">
+        <div class="ac-icon">💾</div>
+        <div class="ac-label">Export Data</div>
+      </div>
+
+      <div class="action-card ac-orange" data-permission="bulk" onclick="showSchoolSelector('bulk')">
+        <div class="ac-icon">📤</div>
+        <div class="ac-label">Bulk Upload</div>
+      </div>
+
+      <div class="action-card ac-slate" data-permission="schools" onclick="location.href='school_management.html'">
+        <div class="ac-icon">🏫</div>
+        <div class="ac-label">Manage Schools</div>
+      </div>
+
+      <div class="action-card ac-rose" data-permission="form" onclick="showSchoolSelector('form')">
+        <div class="ac-icon">📄</div>
+        <div class="ac-label">School Forms</div>
+      </div>
+
+      <div class="action-card ac-teal" data-permission="restore" onclick="location.href='restore_students.html'">
+        <div class="ac-icon">♻️</div>
+        <div class="ac-label">Restore Students</div>
+      </div>
+
+      <div class="action-card ac-violet" data-permission="users" onclick="location.href='manage_users.html'">
+        <div class="ac-icon">👥</div>
+        <div class="ac-label">Manage Users</div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- SCHOOL SELECTOR POPUP -->
 <div id="schoolBox" class="school-box">
   <h3>Select School</h3>
-  <select id="schoolSelect">
-    <option value="">Loading...</option>
-  </select>
+  <select id="schoolSelect"><option value="">Loading...</option></select>
   <br><br>
   <button onclick="continueAction()">Continue</button>
 </div>
@@ -107,161 +214,6 @@
 </div>
 
 <div id="overlay" class="overlay" style="display:none;"></div>
-
-<script>
-let mode = "";
-
-const userRole        = getRole();
-const userPermissions = getPermissions();
-const accessibleNames = getAccessibleSchoolNames(); // "*" or ["APS","Ram_Ganesh"]
-const username        = sessionStorage.getItem("username") || "";
-
-// Welcome
-document.getElementById("welcomeUser").innerText = `👤 ${username} (${userRole})`;
-
-// Hide cards without permission
-document.querySelectorAll(".card[data-permission]").forEach(card => {
-  const perm = card.getAttribute("data-permission");
-  if (!userPermissions.includes(perm)) card.style.display = "none";
-});
-
-// Access denied notice
-const denied = sessionStorage.getItem("accessDenied");
-if (denied) {
-  const notice = document.getElementById("accessNotice");
-  notice.innerText = `⚠️ You don't have permission to access: ${denied}`;
-  notice.style.display = "block";
-  sessionStorage.removeItem("accessDenied");
-}
-
-// Load schools filtered by user access
-async function loadSchools(mode) {
-  const raw     = await getSchools();
-  const headers = raw[0];
-
-  let schools = raw.slice(1).map(r => {
-    let obj = {};
-    headers.forEach((h, i) => obj[h] = r[i]);
-    return obj;
-  });
-
-  // Filter by accessible schools
-  if (accessibleNames !== "*") {
-    schools = schools.filter(s =>
-      accessibleNames.includes(s.school)
-    );
-  }
-
-  const dropdown = document.getElementById("schoolSelect");
-  dropdown.innerHTML = `<option value="">Select School</option>`;
-
-  if (mode === "form") {
-    dropdown.innerHTML += `
-      <option value="__other__">Other School (Generate form for new school)</option>
-    `;
-  }
-
-  dropdown.innerHTML += schools.map(s => `
-    <option value="${s.school}" data-id="${s.school_id}">
-      ${s.school_name}
-    </option>
-  `).join("");
-
-  // Auto-select if only one school
-  if (schools.length === 1) {
-    dropdown.value = schools[0].school;
-  }
-}
-
-function showSchoolSelector(selectedMode) {
-  mode = selectedMode;
-  const dropdown = document.getElementById("schoolSelect");
-  dropdown.innerHTML = `<option value="">Loading schools...</option>`;
-  document.getElementById("schoolBox").style.display  = "block";
-  document.getElementById("overlay").style.display    = "block";
-  loadSchools(mode);
-}
-
-function continueAction() {
-  const dropdown      = document.getElementById("schoolSelect");
-  const selectedOption = dropdown.options[dropdown.selectedIndex];
-  const selectedValue  = selectedOption.value;
-
-  if (selectedValue === "__other__") { showCustomSchoolPopup(); return; }
-  if (!selectedValue) { alert("Please select a school"); return; }
-
-  const school_name = selectedOption.textContent.trim();
-  const school_id   = selectedOption.getAttribute("data-id");
-
-  sessionStorage.setItem("school",      selectedValue);
-  sessionStorage.setItem("school_id",   school_id);
-  sessionStorage.setItem("school_name", school_name);
-
-  const routes = {
-    add:    "add_student.html",
-    manage: "manage_student.html",
-    print:  "print_student.html",
-    bulk:   "bulk_upload.html",
-    form:   "school_form.html",
-    export: "export_student.html"
-  };
-
-  if (routes[mode]) window.location.href = routes[mode];
-}
-
-function hideAllPopups() {
-  document.getElementById("schoolBox").style.display         = "none";
-  document.getElementById("customSchoolPopup").style.display = "none";
-  document.getElementById("overlay").style.display           = "none";
-  mode = "";
-}
-
-document.addEventListener("keydown", e => { if (e.key === "Escape") hideAllPopups(); });
-
-document.addEventListener("click", function(e) {
-  const schoolBox = document.getElementById("schoolBox");
-  const customBox = document.getElementById("customSchoolPopup");
-  if (schoolBox.contains(e.target) || customBox.contains(e.target) || e.target.closest(".card")) return;
-  if (schoolBox.style.display === "block" || customBox.style.display === "block") hideAllPopups();
-});
-
-window.addEventListener("pageshow", hideAllPopups);
-window.onload = hideAllPopups;
-window.addEventListener("DOMContentLoaded", () => {
-  const overlay = document.getElementById("overlay");
-  if (overlay) overlay.addEventListener("click", hideAllPopups);
-});
-
-function showCustomSchoolPopup() {
-  document.getElementById("schoolBox").style.display         = "none";
-  document.getElementById("customSchoolPopup").style.display = "block";
-  document.getElementById("overlay").style.display           = "block";
-}
-
-function handleTypeChange() {
-  const type = document.getElementById("cs_type").value;
-  document.getElementById("cs_custom_title").style.display = type === "other" ? "block" : "none";
-}
-
-function submitCustomSchool() {
-  const name = document.getElementById("cs_name").value.trim();
-  if (!name) { alert("School name is required"); return; }
-  const type  = document.getElementById("cs_type").value;
-  let title   = "STUDENT ID CARD FORM";
-  if (type === "teacher") title = "TEACHER ID CARD FORM";
-  else if (type === "other") title = document.getElementById("cs_custom_title").value.trim() || "CUSTOM FORM";
-
-  sessionStorage.setItem("custom_school", JSON.stringify({
-    school_name: name,
-    address:     document.getElementById("cs_address").value.trim(),
-    contact:     document.getElementById("cs_contact").value.trim(),
-    session:     document.getElementById("cs_session").value.trim(),
-    form_title:  title,
-    isCustom:    true
-  }));
-  window.location.href = "school_form.html";
-}
-</script>
 
 </body>
 </html>
