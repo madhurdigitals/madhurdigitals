@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Manage Students</title>
+  <title>Manage Students — Madhur Digitals</title>
 
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
@@ -10,12 +10,14 @@
   <script src="js/manage_student.js" defer></script>
 
   <link rel="stylesheet" href="css/manage_student.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-
 <body>
 
+<!-- NAV -->
 <nav>
   <div class="logo" onclick="goHome()" style="cursor:pointer;">
     <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
@@ -24,7 +26,6 @@
       <div class="school-name" id="schoolNameTop"></div>
     </div>
   </div>
-
   <div class="nav-actions">
     <button onclick="changeSchool()">Change School</button>
     <button onclick="location.href='dashboard.html'">Dashboard</button>
@@ -32,73 +33,130 @@
   </div>
 </nav>
 
-<!-- ✅ Heading Badge -->
+<!-- HEADING + STATS -->
 <div class="heading-wrapper">
   <div class="heading-badge">
     Manage Students: <span id="schoolName"></span>
   </div>
+  <div class="stats-row">
+    <div class="stat-pill">
+      <span class="stat-num" id="statTotal">—</span>
+      <span class="stat-lbl">Total</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-num" id="statFiltered">—</span>
+      <span class="stat-lbl">Filtered</span>
+    </div>
+    <div class="stat-pill stat-pill-blue" id="statActiveWrap" style="display:none;">
+      <span class="stat-num" id="statActive">0</span>
+      <span class="stat-lbl">Active Filters</span>
+    </div>
+  </div>
 </div>
 
 <div class="container">
-  
 
-  <!-- Filters -->
-  <div class="card">
-    <h3>Filters</h3>
+  <!-- FILTER CARD -->
+  <div class="card filter-card">
 
-    <!-- Name -->
-    <input id="searchName" placeholder="Search Name">
-    <input id="searchStudentId"
-          placeholder="Search by Student ID"
-          type="number"
-          oninput="applyFilter()"
-          style="margin-top:10px;">
-
-    <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-      <label style="font-weight:600; font-size:13px;">Added By:</label>
-      <select id="filterAddedBy" onchange="applyFilter()"
-        style="padding:8px 12px; border-radius:6px; border:1px solid #d1d5db;
-              background:#f9fafb; font-size:13px; cursor:pointer;">
-        <option value="">All</option>
-      </select>
+    <div class="filter-top">
+      <span class="filter-title">🔍 Filters</span>
+      <button class="btn-clear" onclick="clearAllFilters()">Clear All</button>
     </div>
 
-    <!-- Class-Section Filter -->
-    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;">
+    <div class="filter-grid">
 
-      <!-- Button -->
-      <div class="dropdown">
-        <button onclick="toggleDropdown('classSectionDropdown')">
-          Select Class-Section
-        </button>
-        <div id="classSectionDropdown" class="dropdown-content"></div>
+      <!-- Name -->
+      <div class="filter-col">
+        <label class="filter-label">Student Name</label>
+        <input id="searchName" class="filter-input" placeholder="Search name...">
       </div>
 
-      <!-- 🔥 Selected Chips -->
-      <div id="selectedChips" style="display:flex; gap:5px; flex-wrap:wrap;"></div>
+      <!-- Student ID -->
+      <div class="filter-col">
+        <label class="filter-label">Student ID</label>
+        <input id="searchStudentId" type="number" class="filter-input"
+               placeholder="Enter ID..." oninput="applyFilter()">
+      </div>
+
+      <!-- Date From -->
+      <div class="filter-col">
+        <label class="filter-label">Date Added From</label>
+        <input id="dateFrom" type="date" class="filter-input" onchange="applyFilter()">
+      </div>
+
+      <!-- Date To -->
+      <div class="filter-col">
+        <label class="filter-label">Date Added To</label>
+        <input id="dateTo" type="date" class="filter-input" onchange="applyFilter()">
+      </div>
+
+      <!-- Added By -->
+      <div class="filter-col">
+        <label class="filter-label">Added By</label>
+        <select id="filterAddedBy" class="filter-input" onchange="applyFilter()">
+          <option value="">All Users</option>
+        </select>
+      </div>
+
+      <!-- Class Section -->
+      <div class="filter-col">
+        <label class="filter-label">Class — Section</label>
+        <div class="dropdown">
+          <button onclick="toggleDropdown('classSectionDropdown')" class="dropdown-btn">
+            Select Class-Section ▾
+          </button>
+          <div id="classSectionDropdown" class="dropdown-content"></div>
+        </div>
+      </div>
+
+      <!-- Rows Per Page -->
+      <div class="filter-col">
+        <label class="filter-label">Rows Per Page</label>
+        <select id="rowsPerPageSelect" class="filter-input" onchange="changeRowsPerPage(this.value)">
+          <option value="20">20</option>
+          <option value="50" selected>50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
 
     </div>
-  </div>
+
+    <!-- Chips -->
+    <div id="selectedChips" class="chips-row"></div>
 
   </div>
 
-  <!-- Table -->
-  <div class="card">
+  <!-- TABLE CARD -->
+  <div class="card table-card">
 
-    <div class="table-wrapper">
-      <table>
-        <thead id="tableHead"></thead>
-        <tbody id="studentTable"></tbody>
-      </table>
+    <!-- Skeleton -->
+    <div id="skeletonRows" class="skeleton-wrap" style="display:none;">
+      <div class="sk-row"></div>
+      <div class="sk-row" style="width:94%"></div>
+      <div class="sk-row" style="width:97%"></div>
+      <div class="sk-row" style="width:92%"></div>
+      <div class="sk-row" style="width:98%"></div>
+      <div class="sk-row" style="width:95%"></div>
     </div>
 
-    <!-- ✅ SINGLE pagination -->
-    <div id="pagination" style="margin-top:10px;"></div>
+    <!-- Table -->
+    <div id="tableWrapper">
+      <div class="table-wrapper">
+        <table>
+          <thead id="tableHead"></thead>
+          <tbody id="studentTable"></tbody>
+        </table>
+      </div>
+    </div>
 
-    <!-- ✅ Jump to page -->
-    <div style="margin-top:10px;">
-      <input type="number" id="pageInput" placeholder="Go to page" min="1">
-      <button onclick="jumpToPage()">Go</button>
+    <!-- Pagination -->
+    <div class="pagination-row">
+      <div id="pagination"></div>
+      <div class="page-jump">
+        <input type="number" id="pageInput" placeholder="Go to page" min="1">
+        <button onclick="jumpToPage()">Go</button>
+      </div>
     </div>
 
   </div>
@@ -112,17 +170,19 @@
       <h3>Select School</h3>
       <span class="close-btn" onclick="hideSchoolSelector()">✖</span>
     </div>
-
     <select id="schoolSelect">
       <option>Loading...</option>
     </select>
-
     <br><br>
     <button onclick="applySchoolChange()">Apply</button>
   </div>
 </div>
 
 <!-- EDIT POPUP -->
- <div id="editPopup" class="school-box"></div>
+<div id="editPopup" class="school-box" style="display:none;"></div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
 </body>
 </html>
