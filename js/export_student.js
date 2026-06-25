@@ -17,7 +17,13 @@ async function loadStudents() {
   const raw = await getStudents(school);
 
   const headers = raw[0];
-  headersGlobal = headers.filter(h => h !== "Timestamp");
+  headersGlobal = headers.filter(h => {
+    const key = h.toLowerCase();
+    return key !== "timestamp" &&
+          key !== "added_via" &&
+          key !== "updated_by" &&
+          key !== "photo_link";  // exclude photo_link but keep photo_id
+  });
 
   students = raw.slice(1).map(r => {
     let obj = {};
