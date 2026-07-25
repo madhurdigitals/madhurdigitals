@@ -210,23 +210,24 @@ async function submitStudent() {
     }
 
     if (key === "dob") {
+      if (value) {
+        const digits = value.replace(/\D/g, "");
 
-      const digits = value.replace(/\D/g, "");
+        if (digits.length !== 8) {
+          valid = false;
 
-      if (digits.length !== 8) {
-        valid = false;
+          const el = document.getElementById(key);
+          if (el) {
+            el.style.border = "2px solid red";
+            setTimeout(() => { el.style.border = ""; }, 2000);
+          }
 
-        const el = document.getElementById(key);
-        if (el) {
-          el.style.border = "2px solid red";
+          showToast("Enter valid DOB (DDMMYYYY)");
         }
-
-        showToast("Enter valid DOB (DDMMYYYY)");
-        // return;
       }
 
       data[key] = formatDOB(value);
-    } 
+    }
     else {
       data[key] = value || "";
     }
