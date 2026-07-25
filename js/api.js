@@ -130,6 +130,10 @@ function attachDOBFormatterAll() {
 
   inputs.forEach(input => {
 
+    // ✅ Skip if already wired up (prevents duplicate listeners)
+    if (input.dataset.dobBound === "1") return;
+    input.dataset.dobBound = "1";
+
     // ✅ Allow only numbers (max 8)
     input.addEventListener("input", function () {
       this.value = this.value.replace(/\D/g, "").slice(0, 8);
@@ -169,6 +173,10 @@ function attachPhoneValidation() {
   const inputs = document.querySelectorAll('input[id*="phone"], input[id*="contact"]');
 
   inputs.forEach(input => {
+
+    // ✅ Skip if already wired up (prevents duplicate listeners)
+    if (input.dataset.phoneBound === "1") return;
+    input.dataset.phoneBound = "1";
 
     // ✅ Only digits, max 10
     input.addEventListener("input", function () {
