@@ -327,10 +327,12 @@ async function openEdit(id) {
 
     if (key === "class") {
       html += `<select id="edit_${key}">
+        <option value="" ${value === "" ? "selected" : ""}>— Select —</option>
         ${CONFIG.classes.map(c => `<option value="${c}" ${c == value ? "selected" : ""}>${c}</option>`).join("")}
       </select>`;
     } else if (key === "section") {
       html += `<select id="edit_${key}">
+        <option value="" ${value === "" ? "selected" : ""}>— Select —</option>
         ${CONFIG.sections.map(s => `<option value="${s}" ${s == value ? "selected" : ""}>${s}</option>`).join("")}
       </select>`;
     } else if (key === "dob") {
