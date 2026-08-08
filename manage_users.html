@@ -332,8 +332,8 @@ async function loadUsers() {
 
     const role      = u.role || "employee";
     const active    = String(u.active || "yes").toLowerCase();
-    const perms     = (u.permissions || "").split(",").map(p => p.trim()).filter(Boolean);
-    const schoolStr = u.school || "*";
+    const perms = String(u.permissions || "").split(",").map(p => p.trim()).filter(Boolean);
+    const schoolStr = String(u.school || "*");
     const lastLogin = u.last_login ? new Date(u.last_login).toLocaleString() : "Never";
 
     const badgeClass = role === "admin" ? "badge-admin"
