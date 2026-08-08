@@ -15,6 +15,28 @@
   <link rel="stylesheet" href="css/export_student.css">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    .field-selector-grid {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;
+    }
+    .field-chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 20px;
+      background: #f9fafb; cursor: pointer; font-size: 13px; color: #374151;
+      transition: 0.15s;
+    }
+    .field-chip:hover { border-color: #0d6efd; }
+    .field-chip.active {
+      background: #e0f2fe; border-color: #0d6efd; color: #0369a1; font-weight: 600;
+    }
+    .field-chip input { accent-color: #0d6efd; cursor: pointer; }
+    .field-quick-btn {
+      padding: 5px 12px; border-radius: 6px; border: 1px solid #d1d5db;
+      background: #fff; font-size: 12px; cursor: pointer; color: #374151;
+    }
+    .field-quick-btn:hover { background: #f0f7ff; border-color: #0d6efd; }
+  </style>
 </head>
 
 <body>
@@ -48,8 +70,14 @@
     <input id="searchName" placeholder="Search Name">
 
     <div style="margin-top:15px;">
-      <b>Select Fields for Card / Excel:</b>
-      <div id="fieldSelector" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:5px;"></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <b>Select Fields for Card / Excel:</b>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="field-quick-btn" onclick="selectAllFields()">Select All</button>
+          <button type="button" class="field-quick-btn" onclick="clearAllFields()">Clear All</button>
+        </div>
+      </div>
+      <div id="fieldSelector" class="field-selector-grid"></div>
     </div>
 
     <div style="margin-top:10px;">

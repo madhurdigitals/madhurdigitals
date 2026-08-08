@@ -1,6 +1,7 @@
 let students = [];
 let filtered = [];
 let headersGlobal = [];
+let allHeaders = [];          // NEW: full column list from the sheet — nothing excluded
 let selectedFields = [];
 let currentPage = 1;
 let rowsPerPage = 20;
@@ -17,6 +18,10 @@ async function loadStudents() {
   const raw = await getStudents(school);
 
   const headers = raw[0];
+
+  // NEW: keep full column list for the field selector
+  allHeaders = [...headers];
+
   headersGlobal = headers.filter(h => {
     const key = h.toLowerCase();
     return key !== "timestamp" &&
@@ -158,20 +163,45 @@ function prevPage() {
 function generateFieldSelector() {
   const container = document.getElementById("fieldSelector");
 
-  const fields = headersGlobal.filter(h => !h.toLowerCase().includes("photo"));
-  selectedFields = [...fields];
+  // Only these are unticked by default — everything else (including custom fields) is checked
+  const defaultUnchecked = ["timestamp", "added_via", "updated_by", "photo_link"];
 
-  container.innerHTML = fields.map(f => `
-    <label>
-      <input type="checkbox" value="${f}" checked> ${f}
-    </label>
-  `).join("");
+  const fields = allHeaders;   // every column from the sheet, nothing hardcoded out
+
+  selectedFields = fields.filter(f => !defaultUnchecked.includes(f.toLowerCase()));
+
+  container.innerHTML = fields.map(f => {
+    const checked = !defaultUnchecked.includes(f.toLowerCase());
+    return `
+      <label class="field-chip ${checked ? "active" : ""}">
+        <input type="checkbox" value="${f}" ${checked ? "checked" : ""}>
+        <span>${f}</span>
+      </label>
+    `;
+  }).join("");
 
   container.querySelectorAll("input").forEach(cb => {
     cb.addEventListener("change", () => {
+      cb.closest(".field-chip").classList.toggle("active", cb.checked);
       selectedFields = [...container.querySelectorAll("input:checked")].map(i => i.value);
     });
   });
+}
+
+function selectAllFields() {
+  document.querySelectorAll("#fieldSelector input").forEach(cb => {
+    cb.checked = true;
+    cb.closest(".field-chip").classList.add("active");
+  });
+  selectedFields = [...document.querySelectorAll("#fieldSelector input:checked")].map(i => i.value);
+}
+
+function clearAllFields() {
+  document.querySelectorAll("#fieldSelector input").forEach(cb => {
+    cb.checked = false;
+    cb.closest(".field-chip").classList.remove("active");
+  });
+  selectedFields = [];
 }
 
 // ========================
