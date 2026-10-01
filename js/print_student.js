@@ -7,8 +7,13 @@ let schoolInfo = {};
 let selectedStudentIds = new Set();
 let cardPages = [];
 let currentCardPage = 1;
+let currentTemplateId = null;   // 🔥 UPDATED — no hardcoded default anymore
+let currentOrientation = "landscape";   // 🔥 NEW — resolved per school's template
+const templateOrientationCache = {};    // 🔥 NEW — avoids re-detecting every render
 
-
+function isTemplateReady() {
+  return !!(currentTemplateId && window.CARD_TEMPLATES && window.CARD_TEMPLATES[currentTemplateId]);
+}
 
 const school = sessionStorage.getItem("school");
 
@@ -41,6 +46,77 @@ async function loadStudents() {
 }
 
 loadStudents();
+
+// 🔥 UPDATED — loads both JS and CSS for a template, using registry-derived folder paths
+async function loadTemplateAssets(templateId) {
+  if (window.CARD_TEMPLATES && window.CARD_TEMPLATES[templateId]) return;
+
+  const paths = getTemplatePaths(templateId);
+
+  // Load CSS (fire and forget — doesn't block rendering, but should be quick)
+  const cssId = `template-css-${templateId}`;
+  if (!document.getElementById(cssId)) {
+    const link = document.createElement("link");
+    link.id = cssId;
+    link.rel = "stylesheet";
+    link.href = `${paths.css}?v=${Date.now()}`;
+    document.head.appendChild(link);
+  }
+
+  // Load JS — must complete before we can render
+  await new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = `${paths.js}?v=${Date.now()}`;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`Failed to load template: ${templateId}`));
+    document.head.appendChild(script);
+  });
+}
+
+
+// 🔥 NEW — loads a custom (drag-and-drop) template's data and builds its CARD_TEMPLATES entry on the fly
+async function loadCustomTemplateAssets(templateId) {
+  if (window.CARD_TEMPLATES && window.CARD_TEMPLATES[templateId] && window.CARD_TEMPLATES[templateId].__isCustom) return;
+
+  const params = new URLSearchParams({ action: "getCustomTemplates" });
+  const res = await fetch(`${API_URL}?${params.toString()}`);
+  const raw = await res.json();
+
+  if (!raw || raw.length < 2) throw new Error("No custom templates found");
+
+  const headers = raw[0];
+  const rows = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+
+  const row = rows.find(r => r.template_id === templateId);
+  if (!row) throw new Error(`Custom template "${templateId}" not found`);
+
+  let layout;
+  try {
+    layout = JSON.parse(row.layout_json || "{}");
+  } catch (e) {
+    throw new Error(`Invalid layout JSON for "${templateId}"`);
+  }
+
+  const frontBgUrl = row.front_bg_link ? getPhotoUrl(row.front_bg_link, "w_1000") : "";
+  const backBgUrl  = row.back_bg_link  ? getPhotoUrl(row.back_bg_link, "w_1000")  : "";
+
+  window.CARD_TEMPLATES = window.CARD_TEMPLATES || {};
+  window.CARD_TEMPLATES[templateId] = {
+    __isCustom: true,
+    orientation: row.orientation || "landscape",
+    renderFront: function(student, schoolInfo, options) {
+      return renderCustomTemplateSide(layout.front, student, schoolInfo, frontBgUrl);
+    },
+    renderBack: layout.back ? function(schoolInfo) {
+      return renderCustomTemplateSide(layout.back, {}, schoolInfo, backBgUrl);
+    } : null
+  };
+}
+
 
 // RENDER TABLE
 function renderTable(data, headers) {
@@ -79,12 +155,14 @@ function generateFieldSelector() {
 
   const container = document.getElementById("fieldSelector");
 
+  const excludeAlways = ["added_by", "added_via", "updated_by"];
+
   const fields = headersGlobal.filter(h => {
-    const key = h.toLowerCase();
-    return !key.includes("photo");
+    const key = h.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    return !key.includes("photo") && !excludeAlways.includes(key);
   });
 
-  // default = all selected
+  // default = all remaining selected
   selectedFields = [...fields];
 
   container.innerHTML = fields.map(f => `
@@ -310,6 +388,7 @@ function generateCards() {
   renderCardPagination();
 }
 
+// 🔥 UPDATED — uses resolveTemplateId() from the registry, no hardcoded fallback
 async function loadSchoolInfo() {
 
   const raw = await getSchools(true);
@@ -324,8 +403,41 @@ async function loadSchoolInfo() {
 
   schoolInfo = schools.find(
     s => s.school && school &&
-         s.school.toLowerCase() === school.toLowerCase()
+         String(s.school).toLowerCase() === school.toLowerCase()
   ) || {};
+
+    // 🔥 UPDATED — branch: custom (drag-and-drop) templates vs. built-in coded templates
+  const rawTemplateValue = schoolInfo.template || "";
+
+  if (rawTemplateValue.indexOf("custom_") === 0) {
+    currentTemplateId = rawTemplateValue;
+    try {
+      await loadCustomTemplateAssets(currentTemplateId);
+    } catch (err) {
+      console.warn(`Custom template "${currentTemplateId}" failed to load, falling back:`, err);
+      currentTemplateId = getFallbackTemplateId();
+      await loadTemplateAssets(currentTemplateId);
+    }
+  } else {
+    currentTemplateId = resolveTemplateId(rawTemplateValue);
+    try {
+      await loadTemplateAssets(currentTemplateId);
+    } catch (err) {
+      console.warn(`Template "${currentTemplateId}" failed to load, falling back:`, err);
+      currentTemplateId = getFallbackTemplateId();
+      await loadTemplateAssets(currentTemplateId);
+    }
+  }
+
+  currentOrientation = await getTemplateOrientation(currentTemplateId);
+
+  // Show/hide back-sheet buttons based on whether this template has a back design
+  const template = window.CARD_TEMPLATES[currentTemplateId];
+  const printBackBtn = document.getElementById("printBackBtn");
+  const downloadBackBtn = document.getElementById("downloadBackBtn");
+  const hasBack = !!(template && template.renderBack);
+  if (printBackBtn) printBackBtn.style.display = hasBack ? "inline-block" : "none";
+  if (downloadBackBtn) downloadBackBtn.style.display = hasBack ? "inline-block" : "none";
 
 }
 
@@ -430,113 +542,75 @@ async function downloadCardsPDF() {
     return;
   }
 
+  const overlay = document.getElementById("pdfLoadingOverlay");
+  const loadingText = document.getElementById("pdfLoadingText");
+  overlay.style.display = "flex";
+  loadingText.innerText = "Rendering cards...";
+
   // render ALL pages first
   renderAllCardPages();
 
+  // wait for every image in the rendered cards to finish loading
+  loadingText.innerText = "Loading photos...";
+  const allImages = document.querySelectorAll("#cardContainer img");
+  await Promise.all([...allImages].map(img => {
+    if (img.complete) return Promise.resolve();
+    return new Promise(resolve => {
+      img.onload = resolve;
+      img.onerror = resolve;
+    });
+  }));
+
   const pages = document.querySelectorAll(".page");
 
-  const pdf = new jsPDF("p", "mm", "a4");
+  const dims = getPdfPageDims(currentOrientation);
+  const pdf = new jsPDF(dims.pdfOrientation, "mm", "a4");
 
   for (let i = 0; i < pages.length; i++) {
 
-    const canvas = await html2canvas(pages[i], { scale: 2 });
+    loadingText.innerText = `Generating page ${i + 1} of ${pages.length}...`;
+
+    const canvas = await html2canvas(pages[i], {
+      scale: 2,
+      useCORS: true
+    });
     const img = canvas.toDataURL("image/png");
 
     if (i !== 0) pdf.addPage();
 
-    pdf.addImage(img, "PNG", 0, 0, 210, 297);
+    pdf.addImage(img, "PNG", 0, 0, dims.width, dims.height);
   }
 
+  loadingText.innerText = "Saving PDF...";
   pdf.save(`${school}_students.pdf`);
+
+  overlay.style.display = "none";
 
   // restore UI view
   renderCardPage();
 }
 
 function renderCardPage() {
+  if (!isTemplateReady()) {
+    alert("Template is still loading, please try again in a moment.");
+    return;
+  }
 
   const container = document.getElementById("cardContainer");
 
   const pageData = cardPages[currentCardPage - 1] || [];
 
+  const template = window.CARD_TEMPLATES[currentTemplateId];
+
+  const cardClass = currentTemplateId.indexOf("custom_") === 0 ? "custom-card" : `t2-card-${currentTemplateId}`;
+
   container.innerHTML = `
-    <div class="page">
-
+    <div class="page ${currentOrientation === 'portrait' ? 'page-portrait' : ''}">
       ${pageData.map(s => `
-
-        <div class="id-card">
-
-          <div class="card-header">
-
-            <div class="school-name">
-              ${schoolInfo.school_name || school}
-            </div>
-
-            <div class="school-meta">
-              ${schoolInfo.address || ""}
-            </div>
-
-            <div class="school-meta">
-              ${schoolInfo.contact || ""}
-            </div>
-
-          </div>
-
-          <div class="card-body">
-
-            <div class="left">
-              <div class="photo-box"></div>
-            </div>
-
-            <div class="right">
-
-              ${selectedFields.map((f, i) => {
-
-                // 🔥 NAME
-                if (i === 0) {
-                  return `<div class="name">${s[f] || ""}</div>`;
-                }
-
-                // 🔥 CLASS + SECTION MERGE
-                if (f === "Class" && selectedFields.includes("Section")) {
-
-                  const cls = s.Class || "";
-                  const sec = s.Section || "";
-
-                  let value = "";
-
-                  if (cls && sec) value = `${cls} - ${sec}`;
-                  else if (cls) value = cls;
-                  else if (sec) value = sec;
-
-                  return `
-                    <div class="line">
-                      <span>Class:</span> ${value}
-                    </div>
-                  `;
-                }
-
-                // ❌ SKIP SECTION
-                if (f === "Section" && selectedFields.includes("Class")) {
-                  return "";
-                }
-
-                return `
-                  <div class="line">
-                    <span>${f}:</span> ${s[f] || ""}
-                  </div>
-                `;
-
-              }).join("")}
-
-            </div>
-
-          </div>
-
+        <div class="id-card ${cardClass}">
+          ${template.renderFront(s, schoolInfo, { selectedFields, schoolCode: school })}
         </div>
-
       `).join("")}
-
     </div>
   `;
 }
@@ -565,87 +639,24 @@ function goToCardPage(page) {
 }
 
 function renderAllCardPages() {
+  if (!isTemplateReady()) {
+    alert("Template is still loading, please try again in a moment.");
+    return;
+  }
 
   const container = document.getElementById("cardContainer");
+  const template = window.CARD_TEMPLATES[currentTemplateId];
+
+  const cardClass = currentTemplateId.indexOf("custom_") === 0 ? "custom-card" : `t2-card-${currentTemplateId}`;
 
   container.innerHTML = cardPages.map(page => `
-
-    <div class="page">
-
+    <div class="page ${currentOrientation === 'portrait' ? 'page-portrait' : ''}">
       ${page.map(s => `
-
-        <div class="id-card">
-
-          <div class="card-header">
-
-            <div class="school-name">
-              ${schoolInfo.school_name || school}
-            </div>
-
-            <div class="school-meta">
-              ${schoolInfo.address || ""}
-            </div>
-
-            <div class="school-meta">
-              ${schoolInfo.contact || ""}
-            </div>
-
-          </div>
-
-          <div class="card-body">
-
-            <div class="left">
-              <div class="photo-box"></div>
-            </div>
-
-            <div class="right">
-
-              ${selectedFields.map((f, i) => {
-
-                if (i === 0) {
-                  return `<div class="name">${s[f] || ""}</div>`;
-                }
-
-                if (f === "Class" && selectedFields.includes("Section")) {
-
-                  const cls = s.Class || "";
-                  const sec = s.Section || "";
-
-                  let value = "";
-
-                  if (cls && sec) value = `${cls} - ${sec}`;
-                  else if (cls) value = cls;
-                  else if (sec) value = sec;
-
-                  return `
-                    <div class="line">
-                      <span>Class:</span> ${value}
-                    </div>
-                  `;
-                }
-
-                if (f === "Section" && selectedFields.includes("Class")) {
-                  return "";
-                }
-
-                return `
-                  <div class="line">
-                    <span>${f}:</span> ${s[f] || ""}
-                  </div>
-                `;
-
-              }).join("")}
-
-            </div>
-
-          </div>
-
+        <div class="id-card ${cardClass}">
+          ${template.renderFront(s, schoolInfo, { selectedFields, schoolCode: school })}
         </div>
-
       `).join("")}
-
     </div>
-
   `).join("");
 }
 
@@ -653,6 +664,7 @@ function printAllCards() {
 
   // render ALL pages
   renderAllCardPages();
+  setPrintPageOrientation(currentOrientation);
 
   setTimeout(() => {
     window.print();
@@ -663,6 +675,64 @@ function printAllCards() {
     }, 500);
 
   }, 200);
+}
+
+async function printBackSheet() {
+  if (!isTemplateReady()) {
+    alert("Template is still loading, please try again in a moment.");
+    return;
+  }
+  const template = window.CARD_TEMPLATES[currentTemplateId];
+  if (!template || !template.renderBack) {
+    alert("This template does not have a back design.");
+    return;
+  }
+
+  const cardClass = currentTemplateId.indexOf("custom_") === 0 ? "custom-card" : `t2-card-${currentTemplateId}`;
+  const backCardHtml = `<div class="id-card ${cardClass}">${template.renderBack(schoolInfo)}</div>`;
+  const container = document.getElementById("cardContainer");
+
+  container.innerHTML = `<div class="page ${currentOrientation === 'portrait' ? 'page-portrait' : ''}">${Array(10).fill(backCardHtml).join("")}</div>`;
+  setPrintPageOrientation(currentOrientation);
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { renderCardPage(); }, 500);
+  }, 200);
+}
+
+async function downloadBackSheetPDF() {
+  if (!isTemplateReady()) {
+    alert("Template is still loading, please try again in a moment.");
+    return;
+  }
+  const template = window.CARD_TEMPLATES[currentTemplateId];
+  if (!template || !template.renderBack) {
+    alert("This template does not have a back design.");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const overlay = document.getElementById("pdfLoadingOverlay");
+  const loadingText = document.getElementById("pdfLoadingText");
+  overlay.style.display = "flex";
+  loadingText.innerText = "Rendering back sheet...";
+
+  const cardClass = currentTemplateId.indexOf("custom_") === 0 ? "custom-card" : `t2-card-${currentTemplateId}`;
+  const backCardHtml = `<div class="id-card ${cardClass}">${template.renderBack(schoolInfo)}</div>`;
+  const container = document.getElementById("cardContainer");
+  container.innerHTML = `<div class="page ${currentOrientation === 'portrait' ? 'page-portrait' : ''}">${Array(10).fill(backCardHtml).join("")}</div>`;
+
+  const page = document.querySelector("#cardContainer .page");
+  const canvas = await html2canvas(page, { scale: 2, useCORS: true });
+  const img = canvas.toDataURL("image/png");
+
+  const dims = getPdfPageDims(currentOrientation);
+  const pdf = new jsPDF(dims.pdfOrientation, "mm", "a4");
+  pdf.addImage(img, "PNG", 0, 0, dims.width, dims.height);
+  pdf.save(`${school}_back_sheet.pdf`);
+
+  overlay.style.display = "none";
+  renderCardPage();
 }
 
 function updateSelectionUI() {
@@ -680,4 +750,57 @@ function updateSelectionUI() {
   }
 
   updateGlobalCheckbox(); // 🔥 sync global checkbox
+}
+
+// 🔥 NEW — measures a template's own intrinsic card size to determine orientation
+async function detectTemplateOrientation(templateId) {
+  const probe = document.createElement("div");
+  probe.className = `card-size-template_${templateId}`;
+  probe.style.cssText = "position:absolute; visibility:hidden; left:-9999px; top:-9999px;";
+  document.body.appendChild(probe);
+
+  const rect = probe.getBoundingClientRect();
+  document.body.removeChild(probe);
+
+  if (rect.width === 0 && rect.height === 0) {
+    console.warn(`No card-size-template_${templateId} CSS found — defaulting to landscape.`);
+    return "landscape";
+  }
+
+  return rect.width >= rect.height ? "landscape" : "portrait";
+}
+
+// 🔥 NEW — explicit metadata first, auto-detection as fallback, cached either way
+async function getTemplateOrientation(templateId) {
+  if (templateOrientationCache[templateId]) return templateOrientationCache[templateId];
+
+  const template = window.CARD_TEMPLATES[templateId];
+  if (template && (template.orientation === "landscape" || template.orientation === "portrait")) {
+    templateOrientationCache[templateId] = template.orientation;
+    return template.orientation;
+  }
+
+  const detected = await detectTemplateOrientation(templateId);
+  templateOrientationCache[templateId] = detected;
+  return detected;
+}
+
+// 🔥 NEW — returns correct jsPDF orientation + page dimensions for a card orientation
+function getPdfPageDims(orientation) {
+  return orientation === "portrait"
+    ? { pdfOrientation: "l", width: 297, height: 210 }
+    : { pdfOrientation: "p", width: 210, height: 297 };
+}
+
+// 🔥 NEW — injects/updates a dynamic @page rule right before printing
+function setPrintPageOrientation(orientation) {
+  let styleEl = document.getElementById("dynamicPageOrientation");
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = "dynamicPageOrientation";
+    document.head.appendChild(styleEl);
+  }
+  styleEl.innerHTML = orientation === "portrait"
+    ? "@page { size: A4 landscape; margin: 0; }"
+    : "@page { size: A4; margin: 0; }";
 }

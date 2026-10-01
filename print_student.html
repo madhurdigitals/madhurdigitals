@@ -6,6 +6,8 @@
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
+  <script src="card_templates/template_registry.js"></script>
+  <script src="js/custom_template_renderer.js"></script>
   <script src="js/print_student.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -106,14 +108,23 @@
 
   <div id="cardSection" class="card" style="display:none; text-align:center;">
 
-    <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px;">
+    <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px; flex-wrap:wrap;">
       <button onclick="printAllCards()" class="submit-btn">Print</button>
       <button onclick="downloadCardsPDF()" class="submit-btn">Download PDF</button>
+      <button onclick="printBackSheet()" class="submit-btn" id="printBackBtn" style="display:none;">Print Back Sheet</button>
+      <button onclick="downloadBackSheetPDF()" class="submit-btn" id="downloadBackBtn" style="display:none;">Download Back PDF</button>
     </div>
 
     <div id="cardPagination" style="margin-bottom:10px;"></div>
     <div id="cardContainer"></div>
 
+  </div>
+</div>
+
+<div id="pdfLoadingOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:99999; align-items:center; justify-content:center; flex-direction:column;">
+  <div style="background:#fff; padding:30px 40px; border-radius:14px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+    <div class="pdf-spinner"></div>
+    <p id="pdfLoadingText" style="margin-top:15px; font-weight:600; color:#374151;">Preparing PDF...</p>
   </div>
 </div>
 

@@ -5,93 +5,11 @@
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
+  <script src="card_templates/template_registry.js"></script>
 
   <link rel="stylesheet" href="css/add_school.css">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <style>
-    /* PERMISSIONS DROPDOWN */
-    .perm-dropdown {
-      position: relative;
-      flex: 1;
-    }
-
-    .perm-trigger {
-      width: 100%;
-      padding: 11px;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      background: #f9fafb;
-      text-align: left;
-      cursor: pointer;
-      font-size: 14px;
-      color: #374151;
-      transition: 0.25s;
-    }
-
-    .perm-trigger:hover { background: #fff; }
-
-    .perm-trigger:focus {
-      outline: none;
-      border-color: #0d6efd;
-      box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
-    }
-
-    .perm-panel {
-      display: none;
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
-      right: 0;
-      background: white;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-      z-index: 100;
-      padding: 10px;
-    }
-
-    .perm-panel.open { display: block; }
-
-    .perm-hint {
-      font-size: 11px;
-      color: #6b7280;
-      margin-bottom: 8px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    .perm-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-    }
-
-    .perm-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      color: #374151;
-      transition: 0.15s;
-    }
-
-    .perm-item:hover { background: #f1f5f9; }
-
-    .perm-item input[type="checkbox"] {
-      transform: scale(1.1);
-      accent-color: #0d6efd;
-      cursor: pointer;
-      width: auto;
-    }
-
-    .perm-item .perm-label { font-weight: 500; }
-    .perm-item .perm-desc  { font-size: 11px; color: #9ca3af; display: block; }
-  </style>
 </head>
 
 <body>
@@ -107,10 +25,14 @@
   </div>
 </nav>
 
-<h2>Add School</h2>
+<div class="heading-wrapper">
+  <div class="heading-badge">🏫 Add School</div>
+</div>
 
 <div class="container">
   <div class="card">
+
+    <div class="section-title"><span class="icon">📋</span> Basic Details</div>
 
     <div class="form-row">
       <label>School Code (Unique)</label>
@@ -124,35 +46,64 @@
 
     <div class="form-row">
       <label>Address</label>
-      <input id="address">
+      <input id="address" placeholder="Full address">
     </div>
 
     <div class="form-row">
       <label>Contact</label>
-      <input id="contact">
+      <input id="contact" placeholder="Phone number">
     </div>
 
-    <div class="form-row">
-      <label>Fields (comma separated)</label>
-      <input id="fields"
-             value="Name,Father's Name,Class,Section,DOB,Phone,Address"
-             placeholder="name,class,section,phone">
+    <!-- Only shown to an admin with Manage Vendors. Everyone else: the school goes to Madhur Digitals. -->
+    <div class="form-row" id="vendorRow" style="display:none;">
+      <label>Vendor (owner)
+        <span class="hint">Who this school belongs to</span>
+      </label>
+      <select id="vendor_id"></select>
     </div>
 
+    <div class="section-title"><span class="icon">🧾</span> Student Record Fields</div>
+
+    <div class="form-row" style="align-items:flex-start;">
+      <label>Fields
+        <span class="hint">Tap to include/exclude</span>
+      </label>
+      <div class="field-chip-wrap" id="fieldChipWrap"></div>
+    </div>
+    <div class="form-row" style="margin-top:-6px;">
+      <label></label>
+      <div class="field-add-row">
+        <input id="customFieldInput" placeholder="Custom field name (e.g. Blood Group)" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomFieldChip();}">
+        <button type="button" class="field-add-btn" onclick="addCustomFieldChip()">+ Add Field</button>
+      </div>
+      <div class="fields-hint">These become the columns collected for every student at this school.</div>
+    </div>
+    <input type="hidden" id="fields">
+
+    <div class="section-title"><span class="icon">🎨</span> Card & Branding</div>
+
     <div class="form-row">
-      <label>Template</label>
-      <input id="template" value="template_1">
+      <label>ID Card Template</label>
+      <select id="template" required></select>
     </div>
 
     <div class="form-row">
       <label>Logo URL</label>
-      <input id="logo">
+      <input id="logo" placeholder="https://...">
     </div>
 
-    <div class="form-row">
+    <div class="form-row split">
       <label>Card Color</label>
-      <input type="color" id="card_color" value="#FF5733">
+      <div class="field-inline">
+        <input type="color" id="card_color" value="#FF5733" oninput="updateColorPreview()">
+        <div class="color-preview-chip">
+          <span class="swatch-dot" id="colorSwatchDot" style="background:#FF5733;"></span>
+          <span id="colorHexLabel">#FF5733</span>
+        </div>
+      </div>
     </div>
+
+    <div class="section-title"><span class="icon">🔐</span> Access</div>
 
     <!-- PERMISSIONS -->
     <div class="form-row">
@@ -174,7 +125,7 @@
           <div class="perm-grid">
 
             <label class="perm-item">
-              <input type="checkbox" value="add" checked>
+              <input type="checkbox" value="add" checked><span class="perm-check"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               <span>
                 <span class="perm-label">➕ Add Students</span>
                 <span class="perm-desc">Add new student records</span>
@@ -182,7 +133,7 @@
             </label>
 
             <label class="perm-item">
-              <input type="checkbox" value="manage" checked>
+              <input type="checkbox" value="manage" checked><span class="perm-check"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               <span>
                 <span class="perm-label">🧾 Manage Students</span>
                 <span class="perm-desc">View and edit students</span>
@@ -190,7 +141,7 @@
             </label>
 
             <label class="perm-item">
-              <input type="checkbox" value="print" checked>
+              <input type="checkbox" value="print" checked><span class="perm-check"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               <span>
                 <span class="perm-label">🖨 Print Students</span>
                 <span class="perm-desc">Generate ID cards</span>
@@ -198,7 +149,7 @@
             </label>
 
             <label class="perm-item">
-              <input type="checkbox" value="form" checked>
+              <input type="checkbox" value="form" checked><span class="perm-check"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               <span>
                 <span class="perm-label">📄 School Forms</span>
                 <span class="perm-desc">Generate blank forms</span>
@@ -206,7 +157,7 @@
             </label>
 
             <label class="perm-item">
-              <input type="checkbox" value="export">
+              <input type="checkbox" value="export"><span class="perm-check"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               <span>
                 <span class="perm-label">💾 Export Students</span>
                 <span class="perm-desc">Export PDF / Excel</span>
@@ -214,7 +165,7 @@
             </label>
 
             <label class="perm-item">
-              <input type="checkbox" value="bulk">
+              <input type="checkbox" value="bulk"><span class="perm-check"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               <span>
                 <span class="perm-label">📤 Bulk Upload</span>
                 <span class="perm-desc">Upload via Excel/CSV</span>
@@ -222,7 +173,7 @@
             </label>
 
             <label class="perm-item">
-              <input type="checkbox" value="schools">
+              <input type="checkbox" value="schools"><span class="perm-check"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               <span>
                 <span class="perm-label">🏫 Manage Schools</span>
                 <span class="perm-desc">Add/edit schools</span>
@@ -230,7 +181,7 @@
             </label>
 
             <label class="perm-item">
-              <input type="checkbox" value="restore">
+              <input type="checkbox" value="restore"><span class="perm-check"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               <span>
                 <span class="perm-label">♻️ Restore Students</span>
                 <span class="perm-desc">Restore deleted students</span>
@@ -244,7 +195,7 @@
     <!-- END PERMISSIONS -->
 
     <div class="btn-group">
-      <button class="submit-btn" onclick="submitSchool()">Add School</button>
+      <button class="submit-btn" onclick="submitSchool()">➕ Add School</button>
       <button class="clear-btn" onclick="clearForm()">Clear</button>
     </div>
 
@@ -254,6 +205,102 @@
 <div id="toast"></div>
 
 <script>
+
+/* ── FIELD CHIPS ── */
+const DEFAULT_FIELD_CHIPS = ["Name", "Father's Name", "Class", "Section", "DOB", "Phone", "Address"];
+let fieldChips = [];   // [{ label, active, custom }]
+
+function resetFieldChips() {
+  fieldChips = DEFAULT_FIELD_CHIPS.map(label => ({ label, active: true, custom: false }));
+  renderFieldChips();
+}
+
+function renderFieldChips() {
+  const wrap = document.getElementById("fieldChipWrap");
+  wrap.innerHTML = fieldChips.map((chip, i) => `
+    <span class="field-chip ${chip.active ? "active" : ""}" onclick="toggleFieldChip(${i})">
+      ${chip.label}
+      ${chip.custom ? `<span class="remove-x" onclick="event.stopPropagation(); removeFieldChip(${i})">✕</span>` : ""}
+    </span>
+  `).join("");
+  syncFieldsInput();
+}
+
+function toggleFieldChip(i) {
+  fieldChips[i].active = !fieldChips[i].active;
+  renderFieldChips();
+}
+
+function removeFieldChip(i) {
+  fieldChips.splice(i, 1);
+  renderFieldChips();
+}
+
+function addCustomFieldChip() {
+  const input = document.getElementById("customFieldInput");
+  const raw = input.value.trim();
+  if (!raw) return;
+
+  const exists = fieldChips.some(c => c.label.toLowerCase() === raw.toLowerCase());
+  if (exists) {
+    showToast("That field already exists");
+    return;
+  }
+
+  fieldChips.push({ label: raw, active: true, custom: true });
+  input.value = "";
+  renderFieldChips();
+}
+
+function syncFieldsInput() {
+  document.getElementById("fields").value =
+    fieldChips.filter(c => c.active).map(c => c.label).join(",");
+}
+
+/* ── VENDOR (owner) ── */
+function iCanManageVendors() {
+  return getRole() === "admin" && getPermissions().includes("vendors");
+}
+
+// New schools can go to any active or suspended vendor - never an archived one, and never
+// "Unassigned Schools" (a new school always needs a real owner).
+async function loadVendorOptions() {
+  if (!iCanManageVendors()) return;             // row stays hidden, server uses Madhur Digitals
+  const res = await getVendors();
+  if (!res || res.error || !Array.isArray(res.vendors)) return;
+  const esc = v => String(v === undefined || v === null ? "" : v)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const list = res.vendors.filter(v =>
+      String(v.status || "").toLowerCase() !== "archived" &&
+      String(v.kind || "").toLowerCase() !== "holding")
+    .sort((a, b) => Number(a.vendor_id) - Number(b.vendor_id));
+  if (!list.length) return;
+  const sel = document.getElementById("vendor_id");
+  sel.innerHTML = list.map(v => {
+    const tag = String(v.vendor_id) === "1" ? " (your own schools)"
+              : String(v.status).toLowerCase() === "suspended" ? " (suspended)" : "";
+    return `<option value="${esc(v.vendor_id)}">${esc(v.name)}${tag}</option>`;
+  }).join("");
+  sel.value = "1";
+  document.getElementById("vendorRow").style.display = "";
+}
+
+/* ── TEMPLATE DROPDOWN ── */
+populateTemplateDropdownWithCustom(document.getElementById("template"), "", true);
+
+document.getElementById("template").addEventListener("change", function() {
+  if (this.value === "__build_new__") {
+    window.open("template_builder.html", "_blank");
+    this.value = "";   // reset so "Build New Template" is never saved as the actual value
+  }
+});
+
+/* ── COLOR SWATCH PREVIEW (visual only — does not change submitted data) ── */
+function updateColorPreview() {
+  const val = document.getElementById("card_color").value;
+  document.getElementById("colorSwatchDot").style.background = val;
+  document.getElementById("colorHexLabel").innerText = val.toUpperCase();
+}
 
 /* ── PERMISSIONS PANEL ── */
 function togglePermPanel() {
@@ -300,10 +347,12 @@ function clearForm() {
   document.getElementById("school_name").value = "";
   document.getElementById("address").value     = "";
   document.getElementById("contact").value     = "";
-  document.getElementById("fields").value      = "";
-  document.getElementById("template").value    = "template_1";
+  resetFieldChips();
+  populateTemplateDropdownWithCustom(document.getElementById("template"), "", true);
   document.getElementById("logo").value        = "";
   document.getElementById("card_color").value  = "#FF5733";
+  updateColorPreview();
+  if (document.getElementById("vendor_id").options.length) document.getElementById("vendor_id").value = "1";
 
   // Reset permissions to defaults
   document.querySelectorAll("#permPanel input").forEach(cb => {
@@ -313,7 +362,10 @@ function clearForm() {
 }
 
 /* ── SUBMIT ── */
+let savingSchool = false;   // blocks a second click while the first one is still saving
+
 async function submitSchool() {
+  if (savingSchool) return;
 
   const school = document.getElementById("school").value.trim();
   if (!school) {
@@ -327,32 +379,104 @@ async function submitSchool() {
     return;
   }
 
+  const templateValue = document.getElementById("template").value;
+  if (!templateValue) {
+    showToast("Please select a template");
+    return;
+  }
+
   const data = {
     school:       school,
     school_name:  document.getElementById("school_name").value.trim(),
     address:      document.getElementById("address").value.trim(),
     contact:      document.getElementById("contact").value.trim(),
     fields:       document.getElementById("fields").value.trim(),
-    template:     document.getElementById("template").value.trim(),
+    template:     templateValue,
     logo:         document.getElementById("logo").value.trim(),
     card_color:   document.getElementById("card_color").value,
-    permissions:  permissions   // 🔥 new field
+    permissions:  permissions,
+    // blank = Madhur Digitals (vendor 1). Only sent when the vendor row is shown.
+    vendor_id:    document.getElementById("vendorRow").style.display === "none" ? "" : document.getElementById("vendor_id").value,
+    // the school login gets a strong generated password (shown once below), not the school ID
+    new_login_password: "generate"
   };
+
+  savingSchool = true;
+  const btn = document.querySelector(".submit-btn");
+  btn.disabled = true;
+  btn.innerText = "Creating…";
 
   const res = await addSchool(data);
 
-  if (res.error) {
-    showToast(res.error);
+  if (!res || res.error) {
+    showToast((res && res.error) || "School NOT created - no answer from the server");
+    savingSchool = false;
+    btn.disabled = false;
+    btn.innerText = "➕ Add School";
   } else {
+    showLoginCard(res);
+  }
+}
+
+/* ── NEW SCHOOL LOGIN (shown once) ── */
+function showLoginCard(res) {
+  const login = (res && res.login) || {};
+  if (!login.password) {           // older server: nothing to show
     showToast("School Created Successfully");
     setTimeout(() => window.location.href = "school_management.html", 1200);
+    return;
   }
+  const wrap = document.createElement("div");
+  wrap.id = "loginCard";
+  wrap.innerHTML = `
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:flex;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:14px;padding:24px;width:390px;max-width:92%;box-shadow:0 10px 40px rgba(0,0,0,.2);">
+        <h3 style="margin:0 0 6px;color:#16a34a;">✅ School created</h3>
+        <p style="font-size:13px;color:#374151;margin:0 0 12px;">Login for this school:</p>
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;font-size:14px;">
+          <div>Username: <b id="lcUser"></b></div>
+          <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span>Password: <b id="lcPass" style="font-size:18px;letter-spacing:1px;color:#166534;user-select:all;"></b></span>
+            <button type="button" id="lcCopy" style="padding:6px 12px;border-radius:6px;border:1px solid #16a34a;background:#fff;color:#166534;cursor:pointer;">📋 Copy</button>
+          </div>
+        </div>
+        <p style="font-size:12px;color:#92400e;background:#fffbeb;padding:8px 10px;border-radius:6px;margin:12px 0;">
+          ⚠ Copy it now — it will not be shown again. If it is lost, use Reset password on Manage Users.
+        </p>
+        <button type="button" id="lcDone" style="width:100%;padding:11px;border:none;border-radius:8px;background:#0d6efd;color:#fff;font-size:14px;cursor:pointer;">Done</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  document.getElementById("lcUser").textContent = login.username || "";
+  document.getElementById("lcPass").textContent = login.password;
+
+  document.getElementById("lcCopy").onclick = async function () {
+    const text = login.username + " / " + login.password;
+    let copied = false;
+    try { await navigator.clipboard.writeText(text); copied = true; } catch (err) { copied = false; }
+    if (!copied) {
+      const tmp = document.createElement("textarea");
+      tmp.value = text; document.body.appendChild(tmp); tmp.select();
+      try { copied = document.execCommand("copy"); } catch (err) { copied = false; }
+      tmp.remove();
+    }
+    this.textContent = copied ? "✅ Copied" : "Select + Ctrl+C";
+  };
+  document.getElementById("lcDone").onclick = function () {
+    document.getElementById("lcPass").textContent = "";
+    window.location.href = "school_management.html";
+  };
 }
 
 /* ── NAV ── */
 function goBack() {
   window.location.href = "school_management.html";
 }
+
+/* ── INIT ── */
+updateColorPreview();
+resetFieldChips();
+loadVendorOptions();
 
 </script>
 

@@ -1,0 +1,797 @@
+/* =========================================================
+   TEMPLATE 5 — J.R.V.P.V. STUDENT ID CARD
+   Original Green, Yellow, Red and White Design
+   Landscape: 94mm x 58.5mm
+   ========================================================= */
+
+/* ================= CARD WRAPPER ================= */
+
+.t5-card-template_5 {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+/* ================= FRONT CARD ================= */
+
+.t5-front {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+  box-sizing: border-box;
+
+  background: #ffffff;
+  color: #111111;
+
+  font-family: Arial, Helvetica, sans-serif;
+  isolation: isolate;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.t5-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 24%;
+
+  background: #006b13;
+
+  display: flex;
+  align-items: center;
+
+  padding: 1mm 2mm;
+  box-sizing: border-box;
+
+  z-index: 5;
+}
+
+/* SCHOOL LOGO */
+
+.t5-logo-wrap {
+  position: relative;
+
+  width: 19mm;
+  height: 19mm;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+  border: 1.2mm solid #00b9e8;
+
+  background: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.t5-logo {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+/* SCHOOL NAME AND ADDRESS */
+
+.t5-school-info {
+  flex: 1;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding-left: 2mm;
+
+  text-align: center;
+  color: #ffffff;
+}
+
+.t5-school-name {
+  width: 100%;
+
+  font-size: clamp(12px, 5.8mm, 24px);
+  font-weight: 900;
+
+  line-height: 1;
+  letter-spacing: 0.5px;
+
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  text-shadow: 1px 2px 2px #333333;
+}
+
+.t5-school-address {
+  width: 100%;
+
+  margin-top: 1mm;
+
+  font-size: clamp(6px, 2.4mm, 10px);
+  font-weight: 800;
+
+  line-height: 1.2;
+  letter-spacing: 0.2px;
+
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================================================
+   YELLOW HEADER DIVIDER
+   ========================================================= */
+
+.t5-yellow-line {
+  position: absolute;
+
+  top: 24%;
+  left: 0;
+
+  width: 100%;
+  height: 2mm;
+
+  background: #fff000;
+
+  z-index: 6;
+}
+
+/* =========================================================
+   MOBILE NUMBER
+   ========================================================= */
+
+.t5-mobile {
+  position: absolute;
+
+  top: 26.2%;
+  left: 3.2%;
+
+  max-width: 48%;
+
+  color: #d8202f;
+
+  font-size: clamp(9px, 3.5mm, 15px);
+  font-weight: 900;
+
+  line-height: 1.2;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  z-index: 5;
+}
+
+.t5-mobile span {
+  font-weight: 800;
+}
+
+/* =========================================================
+   IDENTITY CARD SESSION
+   ========================================================= */
+
+.t5-session {
+  position: absolute;
+
+  top: 28%;
+  right: 2.5%;
+
+  max-width: 43%;
+
+  padding: 1.2mm 2.5mm;
+
+  background: #bd1e2d;
+  color: #ffffff;
+
+  font-size: clamp(7px, 2.6mm, 11px);
+  font-weight: 900;
+
+  line-height: 1.2;
+  text-align: center;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  box-sizing: border-box;
+
+  z-index: 5;
+}
+
+/* =========================================================
+   WATERMARK
+   ========================================================= */
+
+.t5-watermark {
+  position: absolute;
+
+  width: 64%;
+  height: 70%;
+
+  left: 35%;
+  top: 28%;
+
+  object-fit: contain;
+
+  opacity: 0.055;
+
+  pointer-events: none;
+
+  z-index: 0;
+}
+
+/* =========================================================
+   STUDENT PHOTO
+   ========================================================= */
+
+.t5-photo-area {
+  position: absolute;
+
+  left: 3.5%;
+  top: 33.5%;
+
+  width: 23%;
+  height: 36%;
+
+  padding: 1.5mm;
+
+  box-sizing: border-box;
+
+  background: #fff000;
+
+  z-index: 3;
+}
+
+/* PHOTO FRAME */
+
+.t5-photo-wrap {
+  width: 100%;
+  height: 100%;
+
+  background: #e5e7eb;
+
+  border: 1px solid #dddddd;
+
+  overflow: hidden;
+
+  box-sizing: border-box;
+}
+
+/* STUDENT PHOTO */
+
+.t5-photo-img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center center;
+}
+
+/* PHOTO PLACEHOLDER */
+
+.t5-photo-placeholder {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #e5e7eb;
+  color: #999999;
+
+  font-size: 8px;
+  text-align: center;
+}
+
+/* =========================================================
+   PHOTO LABEL
+   ========================================================= */
+
+.t5-photo-label {
+  position: absolute;
+
+  left: 3.5%;
+  top: 70.5%;
+
+  width: 23%;
+
+  color: #aaaaaa;
+
+  font-size: 9px;
+  line-height: 1.2;
+
+  text-align: center;
+
+  z-index: 3;
+}
+
+/* =========================================================
+   STUDENT DETAILS
+   ========================================================= */
+
+.t5-details {
+  position: absolute;
+
+  left: 29%;
+  right: 15%;
+
+  top: 40%;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 1.5mm;
+
+  min-width: 0;
+
+  box-sizing: border-box;
+
+  z-index: 2;
+}
+
+/* STUDENT NAME */
+
+.t5-student-name {
+  width: 100%;
+
+  font-size: clamp(9px, 3.8mm, 16px);
+  font-weight: 900;
+
+  line-height: 1.25;
+
+  color: #d8202f;
+
+  text-transform: uppercase;
+
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.t5-student-name-label {
+  color: #111111;
+  font-weight: 400;
+}
+
+/* DETAILS LINES */
+
+.t5-line {
+  width: 100%;
+
+  font-size: clamp(8px, 3mm, 12px);
+
+  line-height: 1.35;
+
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.t5-line span {
+  font-weight: 700;
+}
+
+/* =========================================================
+   CLASS BADGE
+   ========================================================= */
+
+.t5-class-badge {
+  position: absolute;
+
+  right: 3.5%;
+  top: 51%;
+
+  width: 12%;
+  aspect-ratio: 1 / 1;
+
+  background: #d8202f;
+  color: #ffffff;
+
+  clip-path: polygon(
+    50% 0%,
+    62% 25%,
+    100% 5%,
+    77% 40%,
+    100% 50%,
+    77% 60%,
+    100% 95%,
+    62% 75%,
+    50% 100%,
+    38% 75%,
+    0% 95%,
+    23% 60%,
+    0% 50%,
+    23% 40%,
+    0% 5%,
+    38% 25%
+  );
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  z-index: 4;
+}
+
+.t5-class-content {
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+
+  padding: 1mm;
+
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.t5-class-label {
+  font-size: clamp(5px, 1.8mm, 8px);
+}
+
+.t5-class-value {
+  font-size: clamp(7px, 2.6mm, 11px);
+
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   FOOTER BACKGROUND
+   ========================================================= */
+
+.t5-footer {
+  position: absolute;
+
+  left: 0;
+  bottom: 0;
+
+  width: 100%;
+  height: 23%;
+
+  background: #006b13;
+
+  z-index: 1;
+}
+
+/* =========================================================
+   GOLD ACCENT
+   ========================================================= */
+
+.t5-footer-gold {
+  position: absolute;
+
+  left: 22%;
+  bottom: 0;
+
+  width: 8%;
+  height: 28%;
+
+  background: #d9aa38;
+
+  clip-path: polygon(
+    50% 0%,
+    100% 0%,
+    100% 100%,
+    0% 100%
+  );
+
+  z-index: 2;
+}
+
+/* =========================================================
+   YELLOW DIAGONAL ACCENT
+   IMPORTANT: RESTRICTED TO THE BOTTOM SECTION
+   ========================================================= */
+
+.t5-footer-accent {
+  position: absolute;
+
+  left: 27%;
+  bottom: 0;
+
+  width: 20%;
+  height: 28%;
+
+  background: #fff000;
+
+  clip-path: polygon(
+    0% 0%,
+    43% 0%,
+    100% 100%,
+    57% 100%
+  );
+
+  z-index: 3;
+}
+
+/* =========================================================
+   PRINCIPAL SIGNATURE
+   ========================================================= */
+
+.t5-principal {
+  position: absolute;
+
+  left: 5.5%;
+  bottom: 3mm;
+
+  color: #ffffff;
+
+  font-size: 10px;
+  line-height: 1.2;
+
+  z-index: 5;
+}
+
+.t5-signature {
+  display: block;
+
+  width: 20mm;
+  height: 9mm;
+
+  object-fit: contain;
+  object-position: left center;
+
+  margin-bottom: 1mm;
+}
+
+.t5-principal-label {
+  font-size: 10px;
+}
+
+/* =========================================================
+   BACK SIDE
+   ========================================================= */
+
+.t5-back {
+  width: 100%;
+  height: 100%;
+
+  box-sizing: border-box;
+  padding: 4mm;
+
+  background: #ffffff;
+  color: #111111;
+
+  font-family: Arial, Helvetica, sans-serif;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  overflow: hidden;
+}
+
+.t5-back-title {
+  font-size: 13px;
+  font-weight: 900;
+
+  color: #006b13;
+
+  text-align: center;
+
+  margin-bottom: 3mm;
+}
+
+.t5-back-list {
+  font-size: 9px;
+  line-height: 1.8;
+
+  padding-left: 5mm;
+  margin: 0;
+}
+
+.t5-back-footer {
+  margin-top: 3mm;
+
+  border-top: 1px solid #dddddd;
+
+  padding-top: 2mm;
+
+  text-align: center;
+
+  font-size: 8px;
+  color: #555555;
+}
+
+/* =========================================================
+   CARD SIZE
+   ========================================================= */
+
+.card-size-template_5 {
+  width: 94mm;
+  height: 58.5mm;
+
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   TEMPLATE 5 — FINAL LAYOUT CORRECTIONS
+   Prevent yellow accents from overlapping text and logo.
+   ========================================================= */
+
+/* Keep the header and logo above all other elements */
+.t5-header {
+  top: 0;
+  height: 24%;
+  z-index: 10;
+}
+
+/* Thin yellow divider directly below the header */
+.t5-yellow-line {
+  top: 24%;
+  height: 1.5mm;
+  z-index: 11;
+}
+
+/* Move mobile number below the yellow divider */
+.t5-mobile {
+  top: 28%;
+  left: 3.2%;
+  max-width: 47%;
+  z-index: 12;
+}
+
+/* Keep session label aligned with the mobile number */
+.t5-session {
+  top: 28%;
+  right: 2.5%;
+  max-width: 43%;
+  z-index: 12;
+}
+
+/* Keep photo in the left column */
+.t5-photo-area {
+  top: 34%;
+  left: 3.5%;
+  width: 23%;
+  height: 35%;
+  z-index: 4;
+}
+
+/* Position photo label below the photo */
+.t5-photo-label {
+  top: 70%;
+  left: 3.5%;
+  width: 23%;
+  z-index: 4;
+}
+
+/* =========================================================
+   STUDENT DETAILS — KEEP ABOVE FOOTER
+   ========================================================= */
+
+.t5-details {
+  position: absolute;
+
+  left: 29%;
+  right: 16%;
+
+  top: 40%;
+  height: 33%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 1mm;
+
+  overflow: hidden;
+  box-sizing: border-box;
+
+  z-index: 5;
+}
+
+/* Student name */
+.t5-student-name {
+  font-size: clamp(9px, 3.5mm, 15px);
+  line-height: 1.15;
+
+  overflow-wrap: anywhere;
+  margin-bottom: 0.5mm;
+}
+
+/* Student detail rows */
+.t5-line {
+  font-size: clamp(7px, 2.7mm, 11px);
+  line-height: 1.25;
+
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   FOOTER — KEEP BELOW STUDENT DETAILS
+   ========================================================= */
+
+.t5-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+
+  width: 100%;
+  height: 23%;
+
+  background: #006b13;
+  z-index: 6;
+}
+
+/* Yellow diagonal must remain in the footer */
+.t5-footer-accent {
+  position: absolute;
+
+  left: 27%;
+  bottom: 0;
+
+  width: 20%;
+  height: 23%;
+
+  background: #fff000;
+
+  clip-path: polygon(
+    0 0,
+    43% 0,
+    100% 100%,
+    57% 100%
+  );
+
+  z-index: 8;
+}
+
+/* Gold accent */
+.t5-footer-gold {
+  position: absolute;
+
+  left: 22%;
+  bottom: 0;
+
+  width: 8%;
+  height: 23%;
+
+  background: #d9aa38;
+
+  clip-path: polygon(
+    50% 0,
+    100% 0,
+    100% 100%,
+    0 100%
+  );
+
+  z-index: 7;
+}
+
+/* Principal stays visible above footer */
+.t5-principal {
+  left: 5.5%;
+  bottom: 3mm;
+  z-index: 9;
+}
+
+/* Class badge */
+.t5-class-badge {
+  right: 3.5%;
+  top: 51%;
+  z-index: 9;
+}

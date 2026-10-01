@@ -502,3 +502,50 @@ nav {
     display: none !important;
   }
 }
+
+.pdf-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #0d6efd;
+  border-radius: 50%;
+  margin: 0 auto;
+  animation: pdfSpin 0.8s linear infinite;
+}
+
+@keyframes pdfSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media print {
+  #cardPagination,
+  #cardSection > div:first-child {   /* the Print / Download PDF button row */
+    display: none !important;
+  }
+}
+
+
+/* ===== ORIENTATION-AWARE GRID (PORTRAIT CARD VARIANT) ===== */
+/* The existing .page rules above are the LANDSCAPE-card layout.
+   This override applies ONLY when a template's cards are portrait-oriented. */
+
+.page.page-portrait {
+  width: 297mm;
+  height: 210mm;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+@media print {
+  .page.page-portrait {
+    margin: 0;
+  }
+}
+
+/* Custom (drag-and-drop) templates draw their own full design via background image —
+   no border/padding wrapper needed, unlike built-in templates */
+.id-card.custom-card {
+  border: none;
+  padding: 0;
+  background: none;
+}

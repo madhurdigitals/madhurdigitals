@@ -5,6 +5,7 @@
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
+  <script src="card_templates/template_registry.js"></script>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -103,6 +104,23 @@
     .badge-admin    { background: #dbeafe; color: #1d4ed8; }
     .badge-employee { background: #dcfce7; color: #166534; }
     .badge-school   { background: #fef9c3; color: #854d0e; }
+
+    /* VENDOR (owner) */
+    .top-bar { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+    .vendor-filter { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #374151; }
+    .vendor-filter select {
+      padding: 7px 10px; border-radius: 7px; border: 1px solid #d1d5db;
+      background: white; font-size: 13px; min-width: 220px;
+    }
+    .showing-note { font-size: 12px; color: #6b7280; }
+    .vendor-chip {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      background: #eef2ff; color: #4338ca; font-size: 11px; font-weight: 600; white-space: nowrap;
+    }
+    .vendor-chip.holding  { background: #f1f5f9; color: #475569; }
+    .vendor-chip.platform { background: #dbeafe; color: #1d4ed8; }
+    .popup select:disabled { color: #6b7280; cursor: not-allowed; }
+    .vendor-hint { font-size: 11px; color: #6b7280; margin: -6px 0 12px; }
   </style>
 </head>
 
@@ -120,6 +138,13 @@
 
 <div class="top-bar">
   <b>Total Schools: <span id="totalSchools">0</span></b>
+  <label class="vendor-filter">
+    Vendor:
+    <select id="vendorFilter" onchange="renderSchools()">
+      <option value="">All vendors</option>
+    </select>
+  </label>
+  <span class="showing-note" id="showingNote"></span>
 </div>
 
 <div class="table-wrapper">
@@ -128,6 +153,7 @@
       <tr>
         <th>ID</th>
         <th>Code</th>
+        <th>Vendor</th>
         <th>School Name</th>
         <th>Address</th>
         <th>Contact</th>
@@ -156,6 +182,10 @@
   <label class="field-label">School Code</label>
   <input id="edit_school" disabled>
 
+  <label class="field-label">Vendor (owner)</label>
+  <select id="edit_vendor"></select>
+  <div class="vendor-hint" id="editVendorHint"></div>
+
   <label class="field-label">School Name</label>
   <input id="edit_school_name" placeholder="School Name">
 
@@ -169,7 +199,7 @@
   <input id="edit_fields" placeholder="Fields">
 
   <label class="field-label">Template</label>
-  <input id="edit_template" placeholder="Template">
+  <select id="edit_template" required></select>
 
   <label class="field-label">Logo URL</label>
   <input id="edit_logo" placeholder="Logo">
@@ -234,9 +264,59 @@ schoolsData = [];
 
 const ALL_PERMS = ["add","manage","print","form","export","bulk","schools","restore"];
 
+/* ── VENDORS (owner of each school) ── */
+let vendorsData = [];   // from getVendors(); empty if they could not be loaded
+
+function escHtml(v) {
+  return String(v === undefined || v === null ? "" : v)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function vKind(v)        { return String(v.kind || "").trim().toLowerCase(); }
+function vIsPlatform(v)  { return vKind(v) === "platform" || String(v.vendor_id) === "1"; }
+function vIsHolding(v)   { return vKind(v) === "holding"; }
+function vIsArchived(v)  { return String(v.status || "").toLowerCase() === "archived"; }
+function schoolVendorId(s) { const v = String(s.vendor_id === undefined ? "" : s.vendor_id).trim(); return v === "" ? "1" : v; }
+function findVendorById(id) { return vendorsData.find(v => String(v.vendor_id) === String(id)); }
+function vendorChip(id) {
+  const v = findVendorById(id);
+  if (!v) return `<span class="vendor-chip">vendor ${escHtml(id)}</span>`;
+  const cls = vIsHolding(v) ? "holding" : vIsPlatform(v) ? "platform" : "";
+  return `<span class="vendor-chip ${cls}">${escHtml(v.name)}</span>`;
+}
+
+// Only an admin with Manage Vendors may change a school's owner (the server checks this too).
+function iCanManageVendors() {
+  return getRole() === "admin" && getPermissions().includes("vendors");
+}
+
+async function loadVendorsForSchools() {
+  const res = await getVendors();
+  vendorsData = (res && !res.error && Array.isArray(res.vendors)) ? res.vendors : [];
+}
+
+function fillVendorFilter() {
+  const sel  = document.getElementById("vendorFilter");
+  const keep = sel.value;
+  const counts = {};
+  schoolsData.forEach(s => { const id = schoolVendorId(s); counts[id] = (counts[id] || 0) + 1; });
+
+  // every vendor that isn't archived, plus any vendor that owns a school (even if not loaded)
+  const ids = vendorsData.filter(v => !vIsArchived(v)).map(v => String(v.vendor_id));
+  Object.keys(counts).forEach(id => { if (!ids.includes(id)) ids.push(id); });
+  ids.sort((a, b) => Number(a) - Number(b));
+
+  sel.innerHTML = `<option value="">All vendors (${schoolsData.length})</option>` + ids.map(id => {
+    const v = findVendorById(id);
+    const name = v ? v.name : "vendor " + id;
+    return `<option value="${escHtml(id)}">${escHtml(name)} (${counts[id] || 0})</option>`;
+  }).join("");
+  sel.value = ids.includes(keep) ? keep : "";
+}
+
 /* LOAD */
 async function loadSchools() {
-  const raw = await getSchools(true);
+  const [raw] = await Promise.all([getSchools(true), loadVendorsForSchools()]);
   const headers = raw[0];
 
   schoolsData = raw.slice(1).map(r => {
@@ -246,20 +326,29 @@ async function loadSchools() {
   });
 
   document.getElementById("totalSchools").innerText = schoolsData.length;
+  fillVendorFilter();
+  renderSchools();
+}
+
+function renderSchools() {
+  const filter = document.getElementById("vendorFilter").value;
+  const list   = filter ? schoolsData.filter(s => schoolVendorId(s) === filter) : schoolsData;
+  document.getElementById("showingNote").innerText =
+    filter ? `Showing ${list.length} of ${schoolsData.length}` : "";
 
   const table = document.getElementById("schoolTable");
-  table.innerHTML = schoolsData.map(s => `
+  table.innerHTML = list.map(s => `
     <tr>
       <td>${s.school_id}</td>
       <td><b>${s.school}</b></td>
+      <td>${vendorChip(schoolVendorId(s))}</td>
       <td>${s.school_name}</td>
       <td>${s.address || "-"}</td>
       <td>${s.contact || "-"}</td>
       <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.fields || "-"}</td>
       <td><div style="background:${s.card_color};width:24px;height:24px;border-radius:4px;border:1px solid #ccc;"></div></td>
       <td style="font-size:12px;">
-        <b>User:</b> ${String(s.school||"").toLowerCase()}<br>
-        <b>Pass:</b> ${s.school_id}
+        <b>User:</b> ${String(s.school||"").toLowerCase()}
       </td>
       <td style="font-size:12px;">${formatPerms(s.permissions)}</td>
       <td style="font-size:12px;">${s.created_at || "-"}</td>
@@ -271,6 +360,13 @@ async function loadSchools() {
     </tr>
   `).join("");
 }
+
+document.getElementById("edit_template").addEventListener("change", function() {
+  if (this.value === "__build_new__") {
+    window.open("template_builder.html", "_blank");
+    this.value = "";
+  }
+});
 
 function formatPerms(perms) {
   if (!perms) return "-";
@@ -288,9 +384,28 @@ function editSchool(id) {
   document.getElementById("edit_address").value     = s.address;
   document.getElementById("edit_contact").value     = s.contact;
   document.getElementById("edit_fields").value      = s.fields;
-  document.getElementById("edit_template").value    = s.template;
+  const isCustomTemplate = String(s.template || "").indexOf("custom_") === 0;
+  const resolvedTemplate = isCustomTemplate ? s.template : resolveTemplateId(s.template);
+  populateTemplateDropdownWithCustom(document.getElementById("edit_template"), resolvedTemplate, false);
   document.getElementById("edit_logo").value        = s.logo;
   document.getElementById("edit_color").value       = s.card_color || "#FF5733";
+
+  // Vendor (owner): active + suspended vendors and Unassigned Schools; never archived ones
+  // (unless it is the school's current owner, so the popup shows the truth).
+  const vendorSel = document.getElementById("edit_vendor");
+  const curVid    = schoolVendorId(s);
+  const options   = vendorsData.filter(v => !vIsArchived(v) || String(v.vendor_id) === curVid)
+    .sort((a, b) => Number(a.vendor_id) - Number(b.vendor_id));
+  if (!options.some(v => String(v.vendor_id) === curVid)) options.unshift({ vendor_id: curVid, name: "vendor " + curVid });
+  vendorSel.innerHTML = options.map(v => {
+    const tag = vIsHolding(v) ? " (waiting for a new owner)" : vIsPlatform(v) ? " (your own schools)" : vIsArchived(v) ? " (archived)" : "";
+    return `<option value="${escHtml(v.vendor_id)}">${escHtml(v.name)}${tag}</option>`;
+  }).join("");
+  vendorSel.value = curVid;
+  vendorSel.disabled = !iCanManageVendors() || !vendorsData.length;
+  document.getElementById("editVendorHint").innerText = !vendorsData.length
+    ? "Vendors could not be loaded - the owner will not change."
+    : vendorSel.disabled ? "Only an admin with Manage Vendors can change the owner." : "";
 
   // 🔥 Set permission checkboxes
   const currentPerms = (s.permissions || "").split(",").map(p => p.trim());
@@ -316,6 +431,12 @@ async function updateSchoolData() {
     return;
   }
 
+  const templateValue = document.getElementById("edit_template").value;
+  if (!templateValue) {
+    alert("Please select a template");
+    return;
+  }
+
   const data = {
     school_id:   document.getElementById("edit_school_id").value,
     school:      document.getElementById("edit_school").value,
@@ -328,6 +449,17 @@ async function updateSchoolData() {
     card_color:  document.getElementById("edit_color").value,
     permissions: permissions   // 🔥
   };
+
+  // Owner: only sent when it changes. Unchanged = the school keeps its vendor.
+  const vendorSel = document.getElementById("edit_vendor");
+  const s         = schoolsData.find(x => String(x.school_id) === String(data.school_id));
+  const oldVid    = s ? schoolVendorId(s) : "";
+  if (!vendorSel.disabled && vendorSel.value && vendorSel.value !== oldVid) {
+    const from = findVendorById(oldVid), to = findVendorById(vendorSel.value);
+    const ok = confirm(`Move "${data.school}" from ${from ? from.name : "vendor " + oldVid} to ${to ? to.name : "vendor " + vendorSel.value}?\n\nThis changes who owns the school. It is recorded in the vendor history.`);
+    if (!ok) return;
+    data.vendor_id = vendorSel.value;
+  }
 
   const res = await updateSchool(data);
 

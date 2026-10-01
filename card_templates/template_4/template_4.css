@@ -1,0 +1,155 @@
+.card-size-template_4 { width: 94mm; height: 51mm; }
+.t2-card-template_4 { padding: 0 !important; overflow: hidden; }
+
+.t4-front {
+  width: 100%; height: 100%; box-sizing: border-box;
+  display: flex; flex-direction: column;
+  font-family: 'Trebuchet MS', 'Segoe UI', Arial, sans-serif;
+  background: #fff;
+  position: relative;
+}
+
+/* HEADER */
+.t4-header {
+  display: flex; align-items: center; gap: 1.6mm;
+  background: linear-gradient(180deg, #0e8038, #0a5f28);
+  padding: 1.6mm 2mm;
+}
+.t4-logo {
+  width: 8mm; height: 8mm; border-radius: 50%;
+  border: 0.4mm solid #fff; object-fit: cover; flex-shrink: 0;
+}
+.t4-header-text { color: #fff; min-width: 0; flex: 1; }
+.t4-school-name {
+  font-weight: 900; font-size: 5mm; text-transform: uppercase;
+  line-height: 0.95; letter-spacing: 0.3px;
+  text-shadow: 0 0.3mm 0.4mm rgba(0,0,0,0.3);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.t4-school-address {
+  font-size: 1.9mm; font-weight: 700; margin-top: 0.6mm; opacity: 0.97;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-transform: uppercase; letter-spacing: 0.2px;
+}
+
+/* YELLOW STRIP */
+.t4-yellow-strip { height: 0.9mm; background: linear-gradient(90deg, #f5c400, #ffdd55, #f5c400); }
+
+/* TOP LINE — mobile + identity badge */
+.t4-topline {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.9mm 2.3mm 0;
+}
+.t4-mob { color: #c81e1e; font-weight: 700; font-size: 1.9mm; }
+.t4-idcard-badge {
+  background: #b91c1c; color: #fff; font-weight: 700; font-size: 1.5mm;
+  padding: 0.6mm 2mm; border-radius: 0.8mm;
+}
+
+/* BODY */
+.t4-body {
+  flex: 1; display: flex; align-items: center; gap: 2.3mm;
+  padding: 1mm 2.3mm; position: relative;
+}
+
+.t4-left { flex-shrink: 0; }
+.t4-photo-wrap {
+  width: 18mm; height: 21mm;
+  border: 0.7mm solid #f5c400; border-radius: 1.2mm;
+  overflow: hidden; background: #f1f5f9;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0.3mm 0.6mm rgba(0,0,0,0.15);
+}
+.t4-photo-img { width: 100%; height: 100%; object-fit: cover; }
+.t4-photo-placeholder { font-size: 2mm; color: #94a3b8; font-style: italic; }
+
+/* FIELDS — significantly larger, bolder, tighter line spacing to fit */
+.t4-right { flex: 1; min-width: 0; }
+.t4-row {
+  font-size: 2.6mm; display: flex; gap: 1.3mm; margin-bottom: 0.7mm;
+  color: #1e293b; line-height: 1.15; font-weight: 600;
+}
+.t4-row-name { margin-bottom: 1mm; }
+.t4-k { font-weight: 600; white-space: nowrap; flex-shrink: 0; color: #1e293b; }
+.t4-v {
+  color: #0f172a; font-weight: 700;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.t4-name-value {
+  color: #c81e1e; font-weight: 800; font-size: 3mm;
+  text-transform: uppercase; letter-spacing: 0.2px;
+}
+
+/* CLASS STARBURST */
+.t4-class-wrap {
+  position: absolute; top: 1.8mm; right: 2.3mm;
+  display: flex; flex-direction: column; align-items: center;
+  width: 15mm;
+}
+.t4-class-label {
+  font-size: 1.7mm; font-weight: 700; color: #1e293b;
+  margin-bottom: 0.5mm; text-transform: uppercase;
+}
+.t4-burst {
+  position: relative;
+  width: 13mm; height: 13mm;
+  display: flex; align-items: center; justify-content: center;
+}
+.t4-burst::before, .t4-burst::after {
+  content: "";
+  position: absolute;
+  width: 9mm; height: 9mm;
+  background: #c81e1e;
+  top: 2mm; left: 2mm;
+  box-shadow: 0 0.3mm 0.5mm rgba(0,0,0,0.2);
+}
+.t4-burst::before { transform: rotate(0deg); }
+.t4-burst::after  { transform: rotate(45deg); }
+.t4-burst-value {
+  position: relative; z-index: 2;
+  color: #fff; font-weight: 800; font-size: 2.5mm;
+  text-align: center;
+}
+
+/* FOOTER — signature + Principal, bottom-left, on green, matching reference */
+.t4-footer {
+  position: relative;
+  background: #0a5f28;
+  padding: 1mm 2.3mm;
+  display: flex; align-items: center; justify-content: flex-start;
+  min-height: 9mm;
+  overflow: hidden;
+}
+.t4-footer-diagonal {
+  position: absolute; top: 0; left: 14mm;
+  width: 6mm; height: 200%;
+  background: #f5c400;
+  transform: rotate(20deg);
+  transform-origin: top left;
+}
+.t4-sig-block {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center;
+}
+.t4-sig { height: 6.5mm; object-fit: contain; margin-bottom: 0.2mm; }
+.t4-sig-label {
+  color: #fff; font-size: 2mm; font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* ===== BACK ===== */
+.t4-back {
+  width: 100%; height: 100%; box-sizing: border-box;
+  background: #f0fdf4; padding: 3mm;
+  display: flex; flex-direction: column;
+  font-family: 'Trebuchet MS', 'Segoe UI', Arial, sans-serif;
+}
+.t4-back-title {
+  font-weight: 800; font-size: 2.9mm; color: #0a5f28;
+  text-align: center; margin-bottom: 2.2mm; text-transform: uppercase;
+}
+.t4-back-list { font-size: 2mm; padding-left: 4mm; line-height: 1.8; flex: 1; color: #1e293b; }
+.t4-back-footer {
+  border-top: 0.4mm solid #0a5f28; padding-top: 1.6mm;
+  font-size: 1.85mm; text-align: center; color: #14532d; line-height: 1.4;
+}

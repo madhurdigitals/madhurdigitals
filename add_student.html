@@ -6,11 +6,51 @@
   <script src="js/auth.js"></script>
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
-  
 
   <link rel="stylesheet" href="css/add_student.css">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    .photo-upload-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+    .photo-upload-wrap img {
+      width: 70px;
+      height: 70px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid #d1d5db;
+    }
+    .photo-upload-wrap input[type="file"] {
+      flex: 1;
+      min-width: 160px;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      font-size: 13px;
+    }
+    .no-photo-label {
+      color: #9ca3af;
+      font-size: 12px;
+    }
+    .camera-btn {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #0d6efd;
+      background: #fff;
+      color: #0d6efd;
+      cursor: pointer;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .camera-btn:hover { background: #0d6efd; color: #fff; }
+  </style>
 </head>
 
 <body>
@@ -91,6 +131,22 @@
   <div class="modal" id="editModalContent"></div>
 </div>
 
+<!-- CAMERA CAPTURE POPUP -->
+<div id="cameraPopup" class="school-box">
+  <div class="modal" style="width:420px; max-width:95%;">
+    <div class="school-header">
+      <h3>Take Photo</h3>
+      <span class="close-btn" onclick="closeCamera()">✖</span>
+    </div>
+    <video id="cameraVideo" autoplay playsinline style="width:100%; border-radius:10px; background:#000;"></video>
+    <canvas id="cameraCanvas" style="display:none;"></canvas>
+    <div class="btn-group" style="margin-top:12px;">
+      <button class="submit-btn" onclick="capturePhoto()">📸 Capture</button>
+      <button class="clear-btn" onclick="closeCamera()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 
 <script>
 let school = sessionStorage.getItem("school");
@@ -100,6 +156,9 @@ const displayName = school_name || school;
 
 document.getElementById("schoolName").innerText = displayName;
 document.getElementById("schoolNameTop").innerText = displayName;
+
+// Tracks the current student's existing photo public_id during edit (for delete-before-replace)
+let currentEditPhotoLink = "";
 
 /* TOAST */
 function showToast(msg) {
@@ -125,7 +184,7 @@ function clearForm() {
   inputs.forEach(el => {
     const id = el.id;
 
-    // ❌ Do not clear class & section
+    // Do not clear class & section
     if (id === "class" || id === "section") return;
 
     if (el.tagName === "SELECT") {
@@ -134,20 +193,27 @@ function clearForm() {
       el.value = "";
     }
 
-    // 🔥 Reset textarea height
+    // Reset textarea height
     if (el.tagName === "TEXTAREA") {
       el.style.height = "auto";
     }
 
-    // 🔥 Remove any red border (validation reset)
+    // Remove any red border (validation reset)
     el.style.border = "";
   });
 
-  // ✅ Focus first field
+  // Reset photo preview
+  const preview = document.getElementById("photoPreview");
+  if (preview) {
+    preview.src = "";
+    preview.style.display = "none";
+  }
+
+  // Focus first field
   document.getElementById("name")?.focus();
 }
 
-/* ✅ FIXED VALIDATION */
+/* VALIDATION + SUBMIT */
 let isSubmitting = false;
 
 async function submitStudent() {
@@ -173,6 +239,7 @@ async function submitStudent() {
   if (!currentSchool) {
     showToast("School config not found");
     isSubmitting = false;
+    btn.disabled = false;
     return;
   }
 
@@ -233,7 +300,7 @@ async function submitStudent() {
     }
   });
 
-  // 🔥 PHONE VALIDATION
+  // PHONE VALIDATION
   Object.keys(data).forEach(k => {
     if (k.includes("phone") || k.includes("contact")) {
       const val = data[k];
@@ -255,58 +322,109 @@ async function submitStudent() {
   if (!valid) {
     showToast("Fill required fields");
     isSubmitting = false;
-    btn.disabled = false;   // 🔥 ADD THIS
+    btn.disabled = false;
     return;
   }
 
-  showToast("Student Added");
+  // Capture the selected photo file BEFORE clearForm() wipes the input
+  const photoFile = document.getElementById("studentPhoto")?.files[0] || null;
+  const capturedSchoolId = sessionStorage.getItem("school_id");
 
-  // ⚡ 1. Show instantly (without ID)
-  addToRecentTable(data);
+  // Show instantly (without ID). We keep THIS row, so the server's answer lands on it
+  // even if more students are added before the answer arrives.
+  // Receipt for this entry. Retry sends the SAME receipt, so the server can tell
+  // "already saved" apart from "never arrived" and never adds the student twice.
+  data.entry_ref = makeEntryRef();
+
+  const row = addToRecentTable(data);
   clearForm();
+  showToast("Saving…");
 
-  addStudent(data).then(async (res) => {
-    if (res && res.student_id) {
+  saveNewStudent(data, row, photoFile, capturedSchoolId);   // not awaited: the operator can keep typing
 
-      const firstRow = document.querySelector("#recentTable tr");
-
-      if (!firstRow) return;
-
-      // ✅ update student_id
-      firstRow.children[0].innerText = res.student_id;
-
-      // 🔥 fetch latest data for THIS student only
-      const raw = await getStudents(school);
-
-      const headers = raw[0];
-
-      const students = raw.slice(1).map(r => {
-        let obj = {};
-        headers.forEach((h, i) => obj[h] = r[i]);
-        return obj;
-      });
-
-      const updated = students.find(
-        s => s["Student_ID"] == res.student_id
-      );
-
-      if (!updated) return;
-
-      // 🔥 PATCH UI (NO FULL RELOAD)
-      firstRow.children[1].innerText = updated["Name"] || "";
-      firstRow.children[2].innerText = updated["Class"] || "";
-      firstRow.children[3].innerText = updated["Section"] || "";
-      firstRow.style.background = "#d1fae5";
-
-      setTimeout(() => {
-        firstRow.style.background = "";
-      }, 1000);
-    }
-  });
-  
-
-  isSubmitting = false;   // ✅ unlock
+  isSubmitting = false;
   btn.disabled = false;
+}
+
+// Sends one new student and updates ITS row. Never fails silently: if the server does not
+// return an ID, the row turns red, keeps the typed data, and gets a Retry button.
+async function saveNewStudent(data, row, photoFile, schoolIdForPhoto) {
+  row.dataset.state = "saving";
+  let res = null;
+  try { res = await addStudent(data); } catch (err) { res = null; }
+
+  if (!res || !res.student_id) {
+    markRowFailed(row, data, photoFile, schoolIdForPhoto, (res && res.error) || "no answer from the server");
+    return;
+  }
+
+  row.dataset.state = "saved";
+  row.style.background = "";
+  row.children[0].innerText = res.student_id;
+  row.children[4].innerHTML = `
+          <button class="edit-btn" onclick="editRecent(this, event)">Edit</button>
+          <button class="delete-btn" onclick="deleteRecent(this)">Delete</button>`;
+  showToast(res.already_saved
+    ? "Already saved as " + res.student_id + " — not added twice"
+    : "Saved: " + res.student_id);
+
+  // fetch latest data for THIS student only
+  const raw = await getStudents(data.school);
+  const headers = raw[0] || [];
+  const students = raw.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+  const updated = students.find(s => s["Student_ID"] == res.student_id);
+
+  if (updated) {
+    // PATCH UI (NO FULL RELOAD)
+    row.children[1].innerText = updated["Name"] || "";
+    row.children[2].innerText = updated["Class"] || "";
+    row.children[3].innerText = updated["Section"] || "";
+    row.style.background = "#d1fae5";
+    setTimeout(() => { if (row.dataset.state === "saved") row.style.background = ""; }, 1000);
+  }
+
+  // UPLOAD PHOTO (IF SELECTED) — runs after student_id is known
+  if (photoFile) {
+    try {
+      const publicId = await uploadPhotoToCloudinary(photoFile, schoolIdForPhoto, res.student_id);
+      await savePhotoLink(data.school, res.student_id, publicId);
+      showToast("Photo uploaded");
+    } catch (err) {
+      console.error("Photo upload failed:", err);
+      showToast("Student saved, but photo upload failed");
+    }
+  }
+}
+
+// Random receipt like "lq2x8k4f-9d3kz1p0a7" (letters, digits and -).
+function makeEntryRef() {
+  return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
+}
+
+function markRowFailed(row, data, photoFile, schoolIdForPhoto, reason) {
+  row.dataset.state = "failed";
+  row.style.background = "#fee2e2";
+  row.children[0].innerHTML = '<span style="color:#b91c1c;font-weight:600;">Not saved</span>';
+  row.children[4].innerHTML = '<button class="edit-btn">🔁 Retry</button>';
+  row.children[4].querySelector("button").onclick = function (ev) {
+    if (ev) ev.stopPropagation();
+    if (row.dataset.state === "saving") return;
+    this.disabled = true;
+    this.innerText = "Saving…";
+    row.style.background = "";
+    row.children[0].innerText = "";
+    saveNewStudent(data, row, photoFile, schoolIdForPhoto);
+  };
+  showToast("NOT saved: " + reason + " — press Retry");
+}
+
+function hasUnsavedRows() {
+  return [...document.querySelectorAll("#recentTable tr")]
+    .some(r => r.dataset.state === "failed" || r.dataset.state === "saving");
 }
 
 /* CHANGE SCHOOL */
@@ -324,6 +442,12 @@ function applySchoolChange() {
 
   if (!school) {
     alert("Please select a school");
+    school = sessionStorage.getItem("school");
+    return;
+  }
+
+  if (hasUnsavedRows() && !confirm("Some students in Recent Entries are NOT saved yet (red rows). If you change school they disappear from this screen. Change anyway?")) {
+    school = sessionStorage.getItem("school");
     return;
   }
 
@@ -372,7 +496,7 @@ async function loadData() {
 
 
 async function editRecent(btn, e) {
-  if (e) e.stopPropagation();   // ✅ safe check
+  if (e) e.stopPropagation();
 
   const row = btn.closest("tr");
   const student_id = row.children[0].innerText;
@@ -388,7 +512,6 @@ async function editRecent(btn, e) {
 function openEditPopup(student_id, row) {
   const container = document.getElementById("editModalContent");
 
-  // ✅ STEP 1: show loading UI
   container.innerHTML = `
     <div class="school-header">
       <h3>Edit Student</h3>
@@ -402,7 +525,6 @@ function openEditPopup(student_id, row) {
 
   document.getElementById("editPopup").classList.add("active");
 
-  // ✅ STEP 2: fetch data
   loadEditData(student_id);
 }
 
@@ -441,11 +563,27 @@ async function loadEditData(student_id) {
     </div>
   `;
 
-  // ✅ Student ID
   html += `
     <div class="form-row">
       <label>Student ID</label>
       <input value="${student_id}" disabled>
+    </div>
+  `;
+
+  // PHOTO ROW — shows current photo (if any) + file input to replace
+  currentEditPhotoLink = student["Photo_Link"] || "";
+
+  html += `
+    <div class="form-row">
+      <label>Photo</label>
+      <div class="photo-upload-wrap">
+        ${
+          currentEditPhotoLink
+            ? `<img src="${getPhotoUrl(currentEditPhotoLink, 'w_100,h_100,c_fill')}" alt="Current photo">`
+            : `<span class="no-photo-label">No photo</span>`
+        }
+        <input type="file" id="edit_photo_file" accept="image/*">
+      </div>
     </div>
   `;
 
@@ -455,7 +593,6 @@ async function loadEditData(student_id) {
 
     let value = student[original] || "";
 
-    // ✅ FIX DOB FORMAT
     if (key === "dob") {
       value = formatDOB(value);
     }
@@ -536,7 +673,12 @@ async function saveEdit(student_id) {
     }
   });
 
-  // 🔥 find row in table FIRST (for instant update)
+  // Capture new photo file + old photo link BEFORE the popup closes
+  const newPhotoFile = document.getElementById("edit_photo_file")?.files[0] || null;
+  const oldPhotoLink = currentEditPhotoLink;
+  const editSchoolId = sessionStorage.getItem("school_id");
+
+  // find row in table FIRST (for instant update)
   const rows = document.querySelectorAll("#recentTable tr");
   let targetRow = null;
 
@@ -546,20 +688,43 @@ async function saveEdit(student_id) {
     }
   });
 
-  // ⚡ STEP 1: instant UI update
+  // STEP 1: instant UI update
   if (targetRow) {
     targetRow.children[1].innerText = document.getElementById("edit_name")?.value || "";
     targetRow.children[2].innerText = document.getElementById("edit_class")?.value || "";
     targetRow.children[3].innerText = document.getElementById("edit_section")?.value || "";
   }
 
-  showToast("Updated successfully");
+  showToast("Saving…");
   closeEditPopup();
 
-  // 🚀 STEP 2: backend update
-  await fetch(`${API_URL}?${params.toString()}`);
+  // STEP 2: backend update - only report success when the server confirms it
+  let editRes = null;
+  try { editRes = await (await fetch(`${API_URL}?${params.toString()}`)).json(); } catch (err) { editRes = null; }
+  if (!editRes || editRes.error) {
+    showToast("NOT saved: " + ((editRes && editRes.error) || "no answer from the server"));
+    loadData();   // show what is really stored
+    return;
+  }
+  showToast("Updated successfully");
 
-  // 🔥 STEP 3: fetch latest backend data
+  // STEP 2.5: handle photo replacement (delete old → upload new → save link)
+  if (newPhotoFile) {
+    try {
+      if (oldPhotoLink) {
+        const oldPublicId = oldPhotoLink.split("|")[0];
+        await deleteCloudinaryPhoto(oldPublicId);
+      }
+      const publicId = await uploadPhotoToCloudinary(newPhotoFile, editSchoolId, student_id);
+      await savePhotoLink(school, student_id, publicId);
+      showToast("Photo updated");
+    } catch (err) {
+      console.error("Photo update failed:", err);
+      showToast("Details saved, but photo update failed");
+    }
+  }
+
+  // STEP 3: fetch latest backend data
   const rawData = await getStudents(school);
 
   const hdrs = rawData[0];
@@ -573,12 +738,12 @@ async function saveEdit(student_id) {
 
   if (!updated || !targetRow) return;
 
-  // 🔥 STEP 4: patch with REAL backend data
+  // STEP 4: patch with REAL backend data
   targetRow.children[1].innerText = updated["Name"] || "";
   targetRow.children[2].innerText = updated["Class"] || "";
   targetRow.children[3].innerText = updated["Section"] || "";
 
-  // 🔥 STEP 5: highlight
+  // STEP 5: highlight
   targetRow.style.background = "#d1fae5";
 
   setTimeout(() => {
@@ -627,9 +792,14 @@ async function deleteRecent(btn) {
 
   if (!confirm("Delete this student?")) return;
 
-  const url = `${API_URL}?action=deleteStudent&school=${school}&student_id=${student_id}`;
+  const url = `${API_URL}?action=deleteStudent&school=${encodeURIComponent(school)}&student_id=${encodeURIComponent(student_id)}`;
 
-  await fetch(url);
+  let delRes = null;
+  try { delRes = await (await fetch(url)).json(); } catch (err) { delRes = null; }
+  if (!delRes || delRes.error) {
+    showToast("NOT deleted: " + ((delRes && delRes.error) || "no answer from the server"));
+    return;
+  }
 
   row.remove();
 
@@ -642,12 +812,10 @@ async function loadSchools() {
 
   const dropdown = document.getElementById("schoolSelect");
 
-  // ✅ SHOW LOADING (optional but good UX)
   dropdown.innerHTML = "<option>Loading...</option>";
 
   const raw = await getSchools();
 
-  // ✅ store globally (IMPORTANT for performance)
   schoolsData = raw;
 
   // safety check
@@ -664,7 +832,6 @@ async function loadSchools() {
     return obj;
   });
 
-  // ✅ fill dropdown
   dropdown.innerHTML = '<option value="">Select School</option>';
 
   dropdown.innerHTML += schools.map(s => `
@@ -673,14 +840,12 @@ async function loadSchools() {
     </option>
   `).join("");
 
-  // ✅ pre-select current school
   const school = sessionStorage.getItem("school");
 
   if (school) {
     dropdown.value = school;
   }
 
-  // ✅ VERY IMPORTANT: render form AFTER schools loaded
   renderDynamicForm();
   loadData();
 }
@@ -694,6 +859,7 @@ function hideSchoolSelector() {
 document.addEventListener("keydown", function(e) {
   if (e.key === "Escape") {
     hideSchoolSelector();
+    closeCamera();
   }
 });
 
@@ -741,6 +907,18 @@ async function renderDynamicForm() {
   const container = document.getElementById("dynamicForm");
   container.innerHTML = "";
 
+  // PHOTO UPLOAD FIELD (fixed — not part of the school's dynamic field list)
+  container.innerHTML += `
+    <div class="form-row">
+      <label>Photo :</label>
+      <div class="photo-upload-wrap">
+        <img id="photoPreview" src="" alt="" style="display:none;">
+        <input type="file" id="studentPhoto" accept="image/*">
+        <button type="button" class="camera-btn" onclick="openCamera()">📷 Take Photo</button>
+      </div>
+    </div>
+  `;
+
   fields.forEach((f) => {
 
     const original = f.trim();
@@ -748,7 +926,7 @@ async function renderDynamicForm() {
 
     let html = "";
 
-    // 🔥 CLASS + SECTION SAME ROW
+    // CLASS + SECTION SAME ROW
     if (key === "class" && fields.map(x => x.trim().toLowerCase()).includes("section")) {
 
       html = `
@@ -777,7 +955,7 @@ async function renderDynamicForm() {
 
     if (key === "section") return;
 
-    // 🔥 DOB FIELD
+    // DOB FIELD
     if (key === "dob") {
       html = `
         <div class="form-row">
@@ -787,7 +965,7 @@ async function renderDynamicForm() {
       `;
     }
 
-    // 🔥 PHONE FIELD
+    // PHONE FIELD
     else if (key.includes("phone") || key.includes("contact")) {
       html = `
         <div class="form-row">
@@ -797,7 +975,7 @@ async function renderDynamicForm() {
       `;
     }
 
-    // 🔥 ADDRESS FIELD
+    // ADDRESS FIELD
     else if (key.includes("address")) {
       html = `
         <div class="form-row">
@@ -807,7 +985,7 @@ async function renderDynamicForm() {
       `;
     }
 
-    // 🔥 NAME REQUIRED
+    // NAME REQUIRED
     else if (key === "name") {
       html = `
         <div class="form-row">
@@ -817,7 +995,7 @@ async function renderDynamicForm() {
       `;
     }
 
-    // 🔥 DEFAULT FIELD
+    // DEFAULT FIELD
     else {
       html = `
         <div class="form-row">
@@ -830,11 +1008,33 @@ async function renderDynamicForm() {
     container.innerHTML += html;
   });
 
-  // ✅ Attach all behaviors
+  // Attach all behaviors
   attachDOBFormatterAll();
   attachPhoneValidation();
   attachAutoExpand();
   attachEnterNavigation();
+  attachPhotoPreview();
+}
+
+// Live preview when a photo is selected in Add Student form
+function attachPhotoPreview() {
+  const input = document.getElementById("studentPhoto");
+  const preview = document.getElementById("photoPreview");
+  if (!input || !preview) return;
+
+  input.addEventListener("change", () => {
+    const file = input.files[0];
+    if (!file) {
+      preview.style.display = "none";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      preview.src = e.target.result;
+      preview.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function addToRecentTable(data) {
@@ -853,14 +1053,68 @@ function addToRecentTable(data) {
     </tr>
   `;
 
-  // ✅ add new row at top
-  table.innerHTML = row + table.innerHTML;
+  // insertAdjacentHTML keeps the existing rows (rebuilding them would lose which row is which)
+  table.insertAdjacentHTML("afterbegin", row);
+  const newRow = table.firstElementChild;
 
-  // ✅ keep only last 3 rows
-  const rows = table.querySelectorAll("tr");
-  if (rows.length > 3) {
-    rows[rows.length - 1].remove();
+  // Keep 3 rows, but never drop a row that is still saving or failed (it holds data for Retry)
+  let rows = [...table.querySelectorAll("tr")];
+  while (rows.length > 3) {
+    const victim = rows.slice().reverse().find(r => r.dataset.state !== "failed" && r.dataset.state !== "saving");
+    if (!victim) break;
+    victim.remove();
+    rows = [...table.querySelectorAll("tr")];
   }
+  return newRow;
+}
+
+/* CAMERA CAPTURE */
+let cameraStream = null;
+
+async function openCamera() {
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user" }
+    });
+    document.getElementById("cameraVideo").srcObject = cameraStream;
+    document.getElementById("cameraPopup").classList.add("active");
+  } catch (err) {
+    console.error("Camera access failed:", err);
+    showToast("Camera access denied or unavailable");
+  }
+}
+
+function closeCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+  }
+  const popup = document.getElementById("cameraPopup");
+  if (popup) popup.classList.remove("active");
+}
+
+function capturePhoto() {
+  const video  = document.getElementById("cameraVideo");
+  const canvas = document.getElementById("cameraCanvas");
+
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0);
+
+  canvas.toBlob(blob => {
+    const file = new File([blob], `student_photo_${Date.now()}.jpg`, { type: "image/jpeg" });
+
+    // Push the captured photo into the SAME file input used for uploads
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    document.getElementById("studentPhoto").files = dataTransfer.files;
+
+    // Trigger the existing preview logic (already wired via attachPhotoPreview)
+    document.getElementById("studentPhoto").dispatchEvent(new Event("change"));
+
+    closeCamera();
+    showToast("Photo captured");
+  }, "image/jpeg", 0.9);
 }
 
 loadSchools();   // first load schools + form
@@ -870,13 +1124,11 @@ function formatDOB(value) {
 
   let str = value.toString().trim();
 
-  // replace - with /
   str = str.replace(/-/g, "/");
 
-  // remove all non-digits
   let digits = str.replace(/\D/g, "");
 
-  // 🔥 Case 1: 8 digit input (12072001)
+  // Case 1: 8 digit input (12072001)
   if (digits.length === 8) {
     let day = digits.substring(0, 2);
     let month = digits.substring(2, 4);
@@ -885,7 +1137,7 @@ function formatDOB(value) {
     return `${day}/${month}/${year}`;
   }
 
-  // 🔥 Case 2: split input (12/7/2001 etc.)
+  // Case 2: split input (12/7/2001 etc.)
   let parts = str.split("/");
 
   if (parts.length === 3) {

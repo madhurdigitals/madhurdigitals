@@ -3,6 +3,7 @@
    - Original edit/delete logic preserved exactly
    - Date filter added
    - Stats + skeleton added
+   - 📸 Photo column + upload/replace added
    ============================================= */
 
 let school      = sessionStorage.getItem("school");
@@ -18,6 +19,7 @@ let rowsPerPage     = 50;
 let headersGlobal   = [];
 let filteredData    = [];
 let selectedFilters = [];
+let currentEditPhotoLink = "";   // 📸 tracks the current student's photo public_id during edit
 
 function normalizeKey(str) {
   return str.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_");
@@ -124,7 +126,7 @@ function countActiveFilters() {
   return n;
 }
 
-/* ── RENDER TABLE (original logic) ── */
+/* ── RENDER TABLE (photo column added) ── */
 function renderTable(data, headers) {
   const visibleHeaders = headers.filter(h => {
     const key = h.toLowerCase();
@@ -140,20 +142,29 @@ function renderTable(data, headers) {
 
   thead.innerHTML = `
     <tr>
+      <th>Photo</th>
       ${visibleHeaders.map(h => `<th>${h}</th>`).join("")}
       <th>Action</th>
     </tr>
   `;
 
-  tbody.innerHTML = data.map(s => `
-    <tr>
-      ${visibleHeaders.map(h => `<td>${s[h] || ""}</td>`).join("")}
-      <td>
-        <button class="btn-edit"   onclick="openEdit('${s["Student_ID"]}')">Edit</button>
-        <button class="btn-delete" onclick="deleteStudent('${s["Student_ID"]}')">Delete</button>
-      </td>
-    </tr>
-  `).join("");
+  tbody.innerHTML = data.map(s => {
+    const photoLink = s["Photo_Link"] || "";
+    const thumb = photoLink
+      ? `<img src="${getPhotoUrl(photoLink, 'w_40,h_40,c_fill')}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">`
+      : `<span style="color:#9ca3af;font-size:11px;">No photo</span>`;
+
+    return `
+      <tr>
+        <td>${thumb}</td>
+        ${visibleHeaders.map(h => `<td>${s[h] || ""}</td>`).join("")}
+        <td>
+          <button class="btn-edit"   onclick="openEdit('${s["Student_ID"]}')">Edit</button>
+          <button class="btn-delete" onclick="deleteStudent('${s["Student_ID"]}')">Delete</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
 }
 
 /* ── APPLY FILTER ── */
@@ -273,7 +284,7 @@ async function deleteStudent(id) {
   window.scrollTo(0, scrollPos);
 }
 
-/* ── OPEN EDIT (original logic preserved exactly) ── */
+/* ── OPEN EDIT (photo row added) ── */
 async function openEdit(id) {
   const container = document.getElementById("editPopup");
 
@@ -313,6 +324,23 @@ async function openEdit(id) {
     <div class="form-row">
       <label>Student ID</label>
       <input value="${id}" disabled>
+    </div>
+  `;
+
+  // 📸 PHOTO ROW
+  currentEditPhotoLink = student["Photo_Link"] || "";
+
+  html += `
+    <div class="form-row">
+      <label>Photo</label>
+      <div class="photo-upload-wrap">
+        ${
+          currentEditPhotoLink
+            ? `<img src="${getPhotoUrl(currentEditPhotoLink, 'w_100,h_100,c_fill')}" alt="Current photo">`
+            : `<span class="no-photo-label">No photo</span>`
+        }
+        <input type="file" id="edit_photo_file" accept="image/*">
+      </div>
     </div>
   `;
 
@@ -361,7 +389,7 @@ function closeEdit() {
   document.getElementById("editPopup").style.display = "none";
 }
 
-/* ── SAVE EDIT (original logic preserved exactly) ── */
+/* ── SAVE EDIT (photo upload/replace wired in) ── */
 async function saveEditDynamic(id) {
   let params = new URLSearchParams({
     action:     "updateStudent",
@@ -399,18 +427,23 @@ async function saveEditDynamic(id) {
     updatedValues[key] = value;
   });
 
+  // 📸 Capture photo file + old link BEFORE closing the popup
+  const newPhotoFile = document.getElementById("edit_photo_file")?.files[0] || null;
+  const oldPhotoLink = currentEditPhotoLink;
+  const editSchoolId = sessionStorage.getItem("school_id");
+
   // Find target row
   const rows = document.querySelectorAll("#studentTable tr");
   let targetRow = null;
   rows.forEach(row => { if (row.innerHTML.includes(id)) targetRow = row; });
 
-  // Instant UI update
+  // Instant UI update — offset by 1 because Photo is now the first <td>
   if (targetRow) {
     const cells = targetRow.querySelectorAll("td");
     visibleHeaders.forEach((h, index) => {
       const key = normalizeKey(h);
-      if (updatedValues[key] !== undefined && cells[index]) {
-        cells[index].innerText = updatedValues[key];
+      if (updatedValues[key] !== undefined && cells[index + 1]) {
+        cells[index + 1].innerText = updatedValues[key];
       }
     });
   }
@@ -419,6 +452,22 @@ async function saveEditDynamic(id) {
 
   // Backend save
   await fetch(`${API_URL}?${params.toString()}`);
+
+  // 📸 Handle photo replacement
+  if (newPhotoFile) {
+    try {
+      if (oldPhotoLink) {
+        const oldPublicId = oldPhotoLink.split("|")[0]; 
+        await deleteCloudinaryPhoto(oldPublicId);
+      }
+      const publicId = await uploadPhotoToCloudinary(newPhotoFile, editSchoolId, id);
+      await savePhotoLink(school, id, publicId);
+      showToast("Photo updated", "success");
+    } catch (err) {
+      console.error("Photo update failed:", err);
+      showToast("Details saved, but photo update failed", "error");
+    }
+  }
 
   // Patch from backend
   const raw  = await getStudents(school);
@@ -434,8 +483,17 @@ async function saveEditDynamic(id) {
   if (updated && targetRow) {
     const cells = targetRow.querySelectorAll("td");
     visibleHeaders.forEach((h, index) => {
-      if (cells[index]) cells[index].innerText = updated[h] || "";
+      if (cells[index + 1]) cells[index + 1].innerText = updated[h] || "";
     });
+
+    // 📸 Refresh the photo thumbnail
+    const photoLink = updated["Photo_Link"] || "";
+    if (cells[0]) {
+      cells[0].innerHTML = photoLink
+        ? `<img src="${getPhotoUrl(photoLink, 'w_40,h_40,c_fill')}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">`
+        : `<span style="color:#9ca3af;font-size:11px;">No photo</span>`;
+    }
+
     targetRow.style.background = "#d1fae5";
     setTimeout(() => { targetRow.style.background = ""; }, 1000);
   }

@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Template Builder</title>
+  <script src="js/protect.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="custom_template_renderer.js"></script>
+  <link rel="stylesheet" href="css/manage_student.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    .tb-container { max-width: 1300px; margin: 20px auto; padding: 15px; }
+
+    .tb-setup-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
+    .tb-field { display: flex; flex-direction: column; gap: 4px; }
+    .tb-field label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; }
+    .tb-field input, .tb-field select {
+      padding: 8px 10px; border-radius: 7px; border: 1px solid #d1d5db;
+      background: #f9fafb; font-size: 13px; min-width: 120px;
+    }
+
+    .tb-preview-row {
+      display: flex; align-items: center; gap: 10px; background: #eff6ff;
+      border: 1px solid #bfdbfe; border-radius: 8px; padding: 8px 12px; margin-bottom: 15px;
+    }
+    .tb-preview-row .tb-preview-label { font-size: 12px; color: #1e40af; font-weight: 600; }
+    .tb-preview-nav-btn {
+      width: 26px; height: 26px; border-radius: 50%; border: 1px solid #93c5fd;
+      background: #fff; color: #1d4ed8; cursor: pointer; font-size: 13px; line-height: 1;
+    }
+    .tb-preview-nav-btn:hover { background: #dbeafe; }
+
+    .tb-side-tab {
+      padding: 8px 20px; border-radius: 7px 7px 0 0; border: 1px solid #d1d5db;
+      border-bottom: none; background: #f1f5f9; font-size: 13px; font-weight: 600;
+      color: #6b7280; cursor: pointer;
+    }
+    .tb-side-tab.active { background: #fff; color: #0d6efd; border-color: #0d6efd; }
+
+    .tb-palette-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .tb-palette-btn {
+      padding: 7px 12px; border-radius: 7px; border: 1px solid #d1d5db;
+      background: #f9fafb; font-size: 12px; cursor: pointer; color: #374151;
+    }
+    .tb-palette-btn:hover { background: #e0f2fe; border-color: #0d6efd; }
+
+    .tb-workspace { display: flex; gap: 12px; }
+
+    .tb-canvas-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+    .tb-canvas-wrap {
+      background: #e5e7eb; border-radius: 12px; padding: 30px;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 320px; overflow: auto;
+    }
+    .tb-canvas {
+      position: relative;
+      background: #fff;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      border-radius: 4px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .tb-canvas > img {
+      width: 100%; height: 100%; display: block; object-fit: cover;
+      position: absolute; top: 0; left: 0; z-index: 0;
+    }
+    .tb-canvas-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      color: #9ca3af; font-size: 14px;
+      position: absolute; top: 0; left: 0;
+    }
+
+    .tb-field-box {
+      position: absolute;
+      cursor: move;
+      display: flex;
+      box-sizing: border-box;
+      outline: 1px dashed rgba(13, 110, 253, 0.35);
+      overflow: hidden;
+    }
+    .tb-field-box:hover { outline: 1px dashed #0d6efd; }
+    .tb-field-box.selected { outline: 2px solid #dc2626; z-index: 10; }
+    .tb-field-box .tb-inner-text {
+      width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .tb-field-box img { pointer-events: none; width: 100%; height: 100%; }
+    .tb-placeholder-text { color: #94a3b8; font-style: italic; font-size: 10px; }
+
+    .tb-handle {
+      position: absolute;
+      width: 8px; height: 8px;
+      background: #dc2626;
+      border: 1.5px solid #fff;
+      border-radius: 50%;
+      z-index: 15;
+    }
+    .tb-handle.nw { top: -4px; left: -4px; cursor: nwse-resize; }
+    .tb-handle.n  { top: -4px; left: 50%; margin-left: -4px; cursor: ns-resize; }
+    .tb-handle.ne { top: -4px; right: -4px; cursor: nesw-resize; }
+    .tb-handle.e  { top: 50%; right: -4px; margin-top: -4px; cursor: ew-resize; }
+    .tb-handle.se { bottom: -4px; right: -4px; cursor: nwse-resize; }
+    .tb-handle.s  { bottom: -4px; left: 50%; margin-left: -4px; cursor: ns-resize; }
+    .tb-handle.sw { bottom: -4px; left: -4px; cursor: nesw-resize; }
+    .tb-handle.w  { top: 50%; left: -4px; margin-top: -4px; cursor: ew-resize; }
+
+    .tb-snap-line {
+      position: absolute;
+      background: #ec4899;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .tb-snap-line.v { width: 1px; top: 0; bottom: 0; }
+    .tb-snap-line.h { height: 1px; left: 0; right: 0; }
+
+    /* RIGHT INSPECTOR PANEL */
+    .tb-inspector { width: 170px; flex-shrink: 0; }
+    .tb-inspector-section {
+      background: #1f2937; color: #e5e7eb; border-radius: 8px;
+      padding: 10px; margin-bottom: 10px;
+    }
+    .tb-inspector-section h5 {
+      margin: 0 0 8px; font-size: 10px; text-transform: uppercase;
+      letter-spacing: 0.5px; color: #9ca3af; text-align: center;
+    }
+    .tb-zoom-controls { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px; }
+    .tb-zoom-controls button {
+      width: 26px; height: 26px; border-radius: 6px; border: 1px solid #4b5563;
+      background: #374151; color: #fff; cursor: pointer;
+    }
+    .tb-zoom-controls span { font-size: 12px; min-width: 36px; text-align: center; }
+    .tb-inspector-section .tb-quick-btn {
+      display: block; width: 100%; padding: 7px; margin-bottom: 5px;
+      border-radius: 6px; border: 1px solid #4b5563; background: #374151;
+      color: #e5e7eb; font-size: 11px; cursor: pointer;
+    }
+    .tb-inspector-section .tb-quick-btn:hover { background: #4b5563; }
+    .tb-dim-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .tb-dim-row label { font-size: 11px; color: #9ca3af; }
+    .tb-dim-row input {
+      width: 60px; padding: 4px 6px; border-radius: 5px; border: 1px solid #4b5563;
+      background: #111827; color: #fff; font-size: 12px; text-align: right;
+    }
+
+    /* BOTTOM PROPERTY TOOLBAR */
+    .tb-bottom-toolbar {
+      display: none;
+      background: #1f2937; border-radius: 8px; padding: 10px 14px;
+      margin-top: 10px; gap: 14px; align-items: flex-end; flex-wrap: wrap;
+    }
+    .tb-bottom-toolbar.visible { display: flex; }
+    .tb-bt-field { display: flex; flex-direction: column; gap: 3px; }
+    .tb-bt-field label { font-size: 10px; color: #9ca3af; text-transform: uppercase; }
+    .tb-bt-field input, .tb-bt-field select {
+      padding: 6px 8px; border-radius: 6px; border: 1px solid #4b5563;
+      background: #111827; color: #fff; font-size: 12px;
+    }
+    .tb-bt-field input[type="color"] { padding: 2px; width: 40px; height: 30px; }
+    .tb-bt-checkbox { display: flex; align-items: center; gap: 5px; color: #e5e7eb; font-size: 12px; }
+    .tb-bt-delete {
+      padding: 7px 14px; border-radius: 6px; border: none;
+      background: #dc2626; color: #fff; cursor: pointer; font-size: 12px;
+      margin-left: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <div class="logo" onclick="location.href='dashboard.html'" style="cursor:pointer;">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <div class="title-text">Madhur Digitals</div>
+  </div>
+  <div class="nav-actions">
+    <button onclick="location.href='dashboard.html'">Dashboard</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="heading-wrapper">
+  <div class="heading-badge">🎨 Template Builder</div>
+</div>
+
+<div class="tb-container">
+
+  <div class="card">
+    <h3>Card Setup</h3>
+
+    <div class="tb-setup-row">
+      <div class="tb-field">
+        <label>Existing Templates</label>
+        <select id="tbLoadSelect" onchange="handleLoadSelect()">
+          <option value="">-- New Template --</option>
+        </select>
+      </div>
+
+      <div class="tb-field">
+        <label>Template Name</label>
+        <input id="tbName" placeholder="e.g. Sunrise School Card">
+      </div>
+
+      <div class="tb-field">
+        <label>Preset Size</label>
+        <select id="tbPreset" onchange="applyPreset()">
+          <option value="landscape86x54">86mm × 54mm (Horizontal) ISO Standard</option>
+          <option value="portrait54x86">54mm × 86mm (Vertical) ISO Standard</option>
+          <option value="landscape100x70">100mm × 70mm (Horizontal)</option>
+          <option value="portrait70x100">70mm × 100mm (Vertical)</option>
+          <option value="portrait80x110">80mm × 110mm (Vertical)</option>
+          <option value="portrait54x130">54mm × 130mm (Vertical)</option>
+          <option value="portrait102x140">102mm × 140mm (Vertical)</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      <div class="tb-field">
+        <label>Width (mm)</label>
+        <input id="tbWidth" type="number" value="86" onchange="renderCanvas()">
+      </div>
+
+      <div class="tb-field">
+        <label>Height (mm)</label>
+        <input id="tbHeight" type="number" value="54" onchange="renderCanvas()">
+      </div>
+
+      <div class="tb-field">
+        <label id="tbBgLabel">Front Background</label>
+        <input type="file" id="tbBgFile" accept="image/*" onchange="handleBgUpload()">
+      </div>
+    </div>
+
+    <div id="tbUploadStatus" style="font-size:13px; color:#6b7280; margin-bottom:10px;"></div>
+
+    <div class="tb-preview-row">
+      <span class="tb-preview-label">Preview with:</span>
+      <select id="tbSchoolSelect" onchange="loadPreviewStudents()" style="min-width:180px; padding:6px 8px; border-radius:6px; border:1px solid #bfdbfe;">
+        <option value="">Loading schools...</option>
+      </select>
+      <button class="tb-preview-nav-btn" onclick="cyclePreviewStudent(-1)" title="Previous student">‹</button>
+      <span id="tbPreviewStudentLabel" class="tb-preview-label" style="min-width:160px;">Sample Student</span>
+      <button class="tb-preview-nav-btn" onclick="cyclePreviewStudent(1)" title="Next student">›</button>
+      <span style="font-size:11px; color:#6b7280; margin-left:auto;">This is only a live preview — the template itself works for any school.</span>
+    </div>
+
+    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+      <button class="tb-side-tab active" id="tbTabFront" onclick="switchSide('front')">Front</button>
+      <button class="tb-side-tab" id="tbTabBack" onclick="switchSide('back')">Back</button>
+    </div>
+
+    <div class="tb-palette-row">
+      <button class="tb-palette-btn" onclick="addField('text')">+ Text</button>
+      <button class="tb-palette-btn" onclick="addField('photo')">+ Photo</button>
+      <button class="tb-palette-btn" onclick="addField('image')">+ Image</button>
+      <button class="tb-palette-btn" onclick="addField('signature')">+ Signature</button>
+      <button class="tb-palette-btn" onclick="addField('qr')">+ QR Code</button>
+      <button class="tb-palette-btn" onclick="addField('static')">+ Static Text</button>
+    </div>
+
+    <div class="tb-workspace">
+
+      <div class="tb-canvas-col">
+        <div class="tb-canvas-wrap">
+          <div class="tb-canvas" id="tbCanvas">
+            <div class="tb-canvas-placeholder" id="tbPlaceholder">
+              Upload a background image to begin
+            </div>
+          </div>
+        </div>
+
+        <div class="tb-bottom-toolbar" id="tbBottomToolbar">
+
+          <div class="tb-bt-field" id="btDataSourceWrap">
+            <label>Data Source</label>
+            <select id="ppDataSource" onchange="updatePropertyPanel()"></select>
+          </div>
+
+          <div class="tb-bt-field" id="btStaticTextWrap" style="display:none;">
+            <label>Text</label>
+            <input id="ppStaticText" oninput="updateSelectedField()">
+          </div>
+
+          <div class="tb-bt-field" id="btImageWrap" style="display:none;">
+            <label>Image</label>
+            <input type="file" id="ppImageFile" accept="image/*" onchange="handleFieldImageUpload()" style="font-size:11px;">
+          </div>
+
+          <div class="tb-bt-field" id="btLabelWrap">
+            <label>Prefix</label>
+            <input id="ppLabel" placeholder="e.g. Class:" oninput="updateSelectedField()" style="width:70px;">
+          </div>
+
+          <div class="tb-bt-field" id="btFontWrap">
+            <label>Font</label>
+            <select id="ppFont" onchange="updateSelectedField()">
+              <option value="Arial">Arial</option>
+              <option value="'Trebuchet MS'">Trebuchet MS</option>
+              <option value="Georgia">Georgia</option>
+              <option value="'Times New Roman'">Times New Roman</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Tahoma">Tahoma</option>
+              <option value="'Courier New'">Courier New</option>
+              <option value="Impact">Impact</option>
+              <option value="'Comic Sans MS'">Comic Sans MS</option>
+              <option value="'Segoe UI'">Segoe UI</option>
+            </select>
+          </div>
+
+          <div class="tb-bt-field" id="btSizeWrap">
+            <label>Size (mm)</label>
+            <input id="ppFontSize" type="number" step="0.5" value="3" oninput="updateSelectedField()" style="width:55px;">
+          </div>
+
+          <div class="tb-bt-field" id="btColorWrap">
+            <label>Color</label>
+            <input id="ppColor" type="color" value="#000000" oninput="updateSelectedField()">
+          </div>
+
+          <div class="tb-bt-field">
+            <label>H Align</label>
+            <select id="ppAlign" onchange="updateSelectedField()">
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+
+          <div class="tb-bt-field">
+            <label>V Align</label>
+            <select id="ppValign" onchange="updateSelectedField()">
+              <option value="top">Top</option>
+              <option value="middle">Middle</option>
+              <option value="bottom">Bottom</option>
+            </select>
+          </div>
+
+          <div class="tb-bt-field" id="btShapeWrap" style="display:none;">
+            <label>Shape</label>
+            <select id="ppShape" onchange="updateSelectedField()">
+              <option value="square">Square</option>
+              <option value="rounded">Rounded</option>
+              <option value="circle">Circle</option>
+            </select>
+          </div>
+
+          <div class="tb-bt-field">
+            <label>Degree</label>
+            <input id="ppRotation" type="number" value="0" oninput="updateSelectedField()" style="width:50px;">
+          </div>
+
+          <label class="tb-bt-checkbox">
+            <input type="checkbox" id="ppBold" onchange="updateSelectedField()"> Bold
+          </label>
+
+          <button class="tb-bt-delete" onclick="deleteSelectedField()">🗑 Delete</button>
+
+        </div>
+
+        <p id="tbNoSelectionHint" style="font-size:12px; color:#9ca3af; margin-top: 10px;">
+          Click a field to edit it. Drag to move, corners/edges to resize, arrow keys to nudge (Shift = bigger steps).
+        </p>
+      </div>
+
+      <div class="tb-inspector">
+
+        <div class="tb-inspector-section">
+          <h5>Zoom</h5>
+          <div class="tb-zoom-controls">
+            <button onclick="adjustZoom(-0.1)">−</button>
+            <span id="tbZoomLabel">100%</span>
+            <button onclick="adjustZoom(0.1)">+</button>
+          </div>
+          <button class="tb-quick-btn" onclick="setZoom(1)">Best Fit</button>
+        </div>
+
+        <div class="tb-inspector-section" id="tbQuickLinksSection">
+          <h5>Quick Links</h5>
+          <button class="tb-quick-btn" onclick="autoFitFieldWidth()">Fit to Text</button>
+          <button class="tb-quick-btn" onclick="centerFieldHorizontally()">Hori. Center</button>
+          <button class="tb-quick-btn" onclick="centerFieldVertically()">Vert. Center</button>
+        </div>
+
+        <div class="tb-inspector-section" id="tbDimensionsSection">
+          <h5>Dimensions</h5>
+          <div class="tb-dim-row"><label>Left (mm)</label><input id="dimLeft" type="number" step="0.1" onchange="applyDimensionsPanel()"></div>
+          <div class="tb-dim-row"><label>Top (mm)</label><input id="dimTop" type="number" step="0.1" onchange="applyDimensionsPanel()"></div>
+          <div class="tb-dim-row"><label>Width (mm)</label><input id="dimWidth" type="number" step="0.1" onchange="applyDimensionsPanel()"></div>
+          <div class="tb-dim-row"><label>Height (mm)</label><input id="dimHeight" type="number" step="0.1" onchange="applyDimensionsPanel()"></div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div style="margin-top: 15px; display:flex; gap:10px;">
+      <button class="submit-btn" style="flex:1;" onclick="saveTemplate()">💾 Save Template</button>
+      <button class="clear-btn" onclick="resetBuilder()">+ New Template</button>
+    </div>
+
+  </div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+
+const PX_PER_MM = 4;   // baseline editing scale before zoom
+const SNAP_THRESHOLD_PX = 5;
+
+let tbZoom = 1;   // 1 = 100%
+
+function mmToPx(mm) { return mm * PX_PER_MM * tbZoom; }
+function pxToMm(px)  { return px / (PX_PER_MM * tbZoom); }
+
+const AVAILABLE_DATA_FIELDS = [
+  { key: "Name", label: "Student Name" },
+  { key: "class_section", label: "Class - Section" },
+  { key: "father_s_name", label: "Father's Name" },
+  { key: "dob", label: "Date of Birth" },
+  { key: "phone", label: "Phone" },
+  { key: "address", label: "Address" },
+  { key: "Student_ID", label: "Student ID" }
+];
+
+const AVAILABLE_SCHOOL_FIELDS = [
+  { key: "school_name", label: "School Name" },
+  { key: "address", label: "School Address" },
+  { key: "contact", label: "School Contact" }
+];
+
+// Fallback sample data shown before any real school/student has loaded
+const FALLBACK_STUDENT = {
+  Name: "Sample Student", Class: "5", Section: "A",
+  father_s_name: "Sample Father", dob: "01/01/2015",
+  phone: "9999999999", address: "Sample Address, City", Photo_Link: "", Student_ID: "10001"
+};
+const FALLBACK_SCHOOL = { school_name: "Sample School", address: "Sample Address, City", contact: "9999999999" };
+
+let tbPreviewStudents = [];
+let tbPreviewIndex = 0;
+let tbPreviewSchoolInfo = FALLBACK_SCHOOL;
+
+function getPreviewStudent() {
+  return tbPreviewStudents[tbPreviewIndex] || FALLBACK_STUDENT;
+}
+
+/* ── PER-SIDE STATE ── */
+let tbCurrentSide = "front";
+let tbSides = {
+  front: { bgLink: "", fields: [] },
+  back:  { bgLink: "", fields: [] }
+};
+
+let tbFieldCounter = 0;
+let tbSelectedFieldId = null;
+let tbEditingTemplateId = null;
+let tbTemplatesCache = [];
+
+let dragState = null;
+let resizeState = null;
+
+function getCurrentFields() { return tbSides[tbCurrentSide].fields; }
+
+function showToast(msg, type) {
+  const t = document.getElementById("toast");
+  if (!t) return;
+  t.innerText = msg;
+  t.className = "toast" + (type ? " toast-" + type : "");
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 2800);
+}
+
+/* ── SCHOOL / PREVIEW STUDENT ── */
+async function loadSchoolListForBuilder() {
+  try {
+    const raw = await getSchools(true);
+    const headers = raw[0];
+    const schools = raw.slice(1).map(r => {
+      let obj = {};
+      headers.forEach((h, i) => obj[h] = r[i]);
+      return obj;
+    });
+
+    const select = document.getElementById("tbSchoolSelect");
+    select.innerHTML = schools.map(s => `<option value="${s.school}">${s.school_name || s.school}</option>`).join("");
+
+    window._tbAllSchools = schools;
+
+    if (schools.length > 0) {
+      select.value = schools[0].school;
+      await loadPreviewStudents();
+    }
+  } catch (err) {
+    console.error("Failed to load schools:", err);
+  }
+}
+
+async function loadPreviewStudents() {
+  const schoolCode = document.getElementById("tbSchoolSelect").value;
+  if (!schoolCode) return;
+
+  const schoolRow = (window._tbAllSchools || []).find(s => s.school === schoolCode);
+  tbPreviewSchoolInfo = schoolRow || FALLBACK_SCHOOL;
+
+  try {
+    const raw = await getStudents(schoolCode);
+    if (raw && raw.length > 1) {
+      const headers = raw[0];
+      tbPreviewStudents = raw.slice(1).map(r => {
+        let obj = {};
+        headers.forEach((h, i) => obj[h] = r[i]);
+        return obj;
+      });
+    } else {
+      tbPreviewStudents = [];
+    }
+  } catch (err) {
+    console.error("Failed to load students for preview:", err);
+    tbPreviewStudents = [];
+  }
+
+  tbPreviewIndex = 0;
+  updatePreviewLabel();
+  renderFields();
+}
+
+function cyclePreviewStudent(direction) {
+  if (tbPreviewStudents.length === 0) return;
+  tbPreviewIndex = (tbPreviewIndex + direction + tbPreviewStudents.length) % tbPreviewStudents.length;
+  updatePreviewLabel();
+  renderFields();
+}
+
+function updatePreviewLabel() {
+  const label = document.getElementById("tbPreviewStudentLabel");
+  const s = getPreviewStudent();
+  if (tbPreviewStudents.length === 0) {
+    label.innerText = "Sample Student (no real data yet)";
+  } else {
+    label.innerText = `${s.Name || "?"} (${tbPreviewIndex + 1} of ${tbPreviewStudents.length})`;
+  }
+}
+
+/* ── CARD SETUP ── */
+function applyPreset() {
+  const preset = document.getElementById("tbPreset").value;
+  const sizes = {
+    landscape86x54:  [86, 54], portrait54x86:   [54, 86],
+    landscape100x70: [100, 70], portrait70x100: [70, 100],
+    portrait80x110:  [80, 110], portrait54x130: [54, 130],
+    portrait102x140: [102, 140]
+  };
+  if (sizes[preset]) {
+    document.getElementById("tbWidth").value  = sizes[preset][0];
+    document.getElementById("tbHeight").value = sizes[preset][1];
+  }
+  renderCanvas();
+}
+
+function renderCanvas() {
+  const widthMm  = parseFloat(document.getElementById("tbWidth").value) || 86;
+  const heightMm = parseFloat(document.getElementById("tbHeight").value) || 54;
+  const canvas = document.getElementById("tbCanvas");
+  canvas.style.width  = mmToPx(widthMm) + "px";
+  canvas.style.height = mmToPx(heightMm) + "px";
+  renderFields();
+}
+
+/* ── ZOOM ── */
+function adjustZoom(delta) {
+  setZoom(Math.max(0.4, Math.min(2, tbZoom + delta)));
+}
+function setZoom(z) {
+  tbZoom = z;
+  document.getElementById("tbZoomLabel").innerText = Math.round(z * 100) + "%";
+  renderCanvas();
+}
+
+/* ── FRONT / BACK TABS ── */
+function switchSide(side) {
+  tbCurrentSide = side;
+  tbSelectedFieldId = null;
+
+  document.getElementById("tbTabFront").classList.toggle("active", side === "front");
+  document.getElementById("tbTabBack").classList.toggle("active", side === "back");
+  document.getElementById("tbBgLabel").innerText = side === "front" ? "Front Background" : "Back Background";
+
+  const canvas = document.getElementById("tbCanvas");
+  const existingImg = canvas.querySelector(":scope > img");
+  if (existingImg) existingImg.remove();
+  const existingPlaceholder = document.getElementById("tbPlaceholder");
+  if (existingPlaceholder) existingPlaceholder.remove();
+
+  const bgLink = tbSides[side].bgLink;
+  if (bgLink) {
+    const publicId = bgLink.split("|")[0];
+    const img = document.createElement("img");
+    img.src = getPhotoUrl(publicId, "w_1000");
+    canvas.insertBefore(img, canvas.firstChild);
+  } else {
+    const ph = document.createElement("div");
+    ph.className = "tb-canvas-placeholder";
+    ph.id = "tbPlaceholder";
+    ph.innerText = "Upload a background image to begin";
+    canvas.insertBefore(ph, canvas.firstChild);
+  }
+
+  renderFields();
+  showPropertyPanel();
+}
+
+/* ── BACKGROUND UPLOAD ── */
+async function handleBgUpload() {
+  const file = document.getElementById("tbBgFile").files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById("tbUploadStatus");
+  statusEl.innerText = "Uploading background...";
+
+  try {
+    const uploadedLink = await uploadTemplateAsset(file, tbCurrentSide + "_bg");
+    tbSides[tbCurrentSide].bgLink = uploadedLink;
+    statusEl.innerText = "Background uploaded successfully.";
+
+    const publicId = uploadedLink.split("|")[0];
+    const url = getPhotoUrl(publicId, "w_1000");
+
+    const canvas = document.getElementById("tbCanvas");
+    const existingImg = canvas.querySelector(":scope > img");
+    if (existingImg) existingImg.remove();
+    const placeholder = document.getElementById("tbPlaceholder");
+    if (placeholder) placeholder.remove();
+
+    const img = document.createElement("img");
+    img.src = url;
+    canvas.insertBefore(img, canvas.firstChild);
+
+    showToast(tbCurrentSide === "front" ? "Front background uploaded" : "Back background uploaded", "success");
+  } catch (err) {
+    console.error(err);
+    statusEl.innerText = "Upload failed. Please try again.";
+    showToast("Upload failed", "error");
+  }
+}
+
+/* ── FIELDS ── */
+function addField(type) {
+  tbFieldCounter++;
+  const defaults = {
+    text:      { width: 40, height: 8,  internalName: "Text Field", dataField: "Name", source: "student" },
+    static:    { width: 30, height: 6,  internalName: "Static Text", text: "Sample Text" },
+    photo:     { width: 20, height: 24, internalName: "Photo", shape: "square" },
+    image:     { width: 20, height: 20, internalName: "Image", shape: "square" },
+    signature: { width: 25, height: 10, internalName: "Signature" },
+    qr:        { width: 15, height: 15, internalName: "QR Code" }
+  };
+  const base = defaults[type] || { width: 30, height: 8, internalName: type };
+
+  const field = Object.assign({
+    id: "field_" + tbFieldCounter,
+    type: type,
+    x: 5, y: 5,
+    font: "Arial", fontSize: 3, color: "#000000",
+    align: "center", valign: "middle",
+    bold: false, label: "", rotation: 0
+  }, base);
+
+  getCurrentFields().push(field);
+  tbSelectedFieldId = field.id;
+  renderFields();
+  showPropertyPanel();
+}
+
+/* Renders the ACTUAL live content (real font/size/color/align + real preview data),
+   reusing the same helpers the real print renderer uses, so what you see here is
+   genuinely what will print. */
+function renderFields() {
+  document.querySelectorAll(".tb-field-box, .tb-snap-line").forEach(el => el.remove());
+  const canvas = document.getElementById("tbCanvas");
+  const student = getPreviewStudent();
+  const schoolInfo = tbPreviewSchoolInfo;
+
+  getCurrentFields().forEach(field => {
+    const isSelected = field.id === tbSelectedFieldId;
+    const box = document.createElement("div");
+    box.className = "tb-field-box" + (isSelected ? " selected" : "");
+    box.dataset.fieldId = field.id;
+    box.style.left   = mmToPx(field.x) + "px";
+    box.style.top    = mmToPx(field.y) + "px";
+    box.style.width  = mmToPx(field.width) + "px";
+    box.style.height = mmToPx(field.height) + "px";
+    box.style.transform = `rotate(${field.rotation || 0}deg)`;
+
+    const vAlignMap = { top: "flex-start", middle: "center", bottom: "flex-end" };
+    const hAlignMap = { left: "flex-start", center: "center", right: "flex-end" };
+    box.style.alignItems = vAlignMap[field.valign] || "center";
+    box.style.justifyContent = hAlignMap[field.align] || "center";
+
+    if (field.type === "photo") {
+      const shapeRadius = field.shape === "circle" ? "50%" : field.shape === "rounded" ? "4px" : "0";
+      box.style.background = "#f1f5f9";
+      box.style.borderRadius = shapeRadius;
+      if (student["Photo_Link"]) {
+        box.innerHTML = `<img src="${getPhotoUrl(student['Photo_Link'], 'w_300,h_300,c_fill')}" style="object-fit:cover; border-radius:${shapeRadius};">`;
+      } else {
+        box.innerHTML = `<span class="tb-placeholder-text">Photo</span>`;
+      }
+
+    } else if (field.type === "image") {
+      const shapeRadius = field.shape === "circle" ? "50%" : field.shape === "rounded" ? "4px" : "0";
+      if (field.imageLink) {
+        box.innerHTML = `<img src="${getPhotoUrl(field.imageLink.split('|')[0], 'w_300')}" style="object-fit:contain; border-radius:${shapeRadius};">`;
+      } else {
+        box.innerHTML = `<span class="tb-placeholder-text">Image</span>`;
+      }
+
+    } else if (field.type === "signature") {
+      box.innerHTML = `<span class="tb-placeholder-text" style="font-size:${mmToPx(field.fontSize || 3)}px;">Signature</span>`;
+
+    } else if (field.type === "qr") {
+      box.style.background = "#fff";
+      box.style.border = "1px solid #ccc";
+      box.innerHTML = `<span class="tb-placeholder-text">QR</span>`;
+
+    } else if (field.type === "static") {
+      const span = document.createElement("div");
+      span.className = "tb-inner-text";
+      span.style.fontFamily = field.font || "Arial";
+      span.style.fontSize = mmToPx(field.fontSize || 3) + "px";
+      span.style.fontWeight = field.bold ? "700" : "400";
+      span.style.color = field.color || "#000";
+      span.style.textAlign = field.align || "center";
+      span.innerText = field.text || "Sample Text";
+      box.appendChild(span);
+
+    } else {
+      // "text" — bound to real student/school data, using the same lookup as the print renderer
+      let value = "";
+      if (field.source === "school") {
+        value = schoolInfo[field.dataField] || "";
+      } else {
+        value = (typeof ctrGetField === "function") ? ctrGetField(student, field.dataField) : (student[field.dataField] || "");
+      }
+      if (field.dataField === "class_section") {
+        const cls = student.Class || "";
+        const sec = student.Section || "";
+        value = sec ? `${cls} - ${sec}` : cls;
+      }
+
+      const span = document.createElement("div");
+      span.className = "tb-inner-text";
+      span.style.fontFamily = field.font || "Arial";
+      span.style.fontSize = mmToPx(field.fontSize || 3) + "px";
+      span.style.fontWeight = field.bold ? "700" : "400";
+      span.style.color = field.color || "#000";
+      span.style.textAlign = field.align || "center";
+
+      const prefix = field.label ? `<span style="font-weight:600;margin-right:4px;">${field.label}</span>` : "";
+      span.innerHTML = prefix + (value || `<span class="tb-placeholder-text">${(AVAILABLE_DATA_FIELDS.find(f => f.key === field.dataField) || {}).label || "Text"}</span>`);
+      box.appendChild(span);
+    }
+
+    box.addEventListener("mousedown", (e) => {
+      if (e.target.classList.contains("tb-handle")) return;
+      startDragField(e, field.id);
+      tbSelectedFieldId = field.id;
+      showPropertyPanel();
+    });
+
+    if (isSelected) {
+      ["nw","n","ne","e","se","s","sw","w"].forEach(dir => {
+        const handle = document.createElement("div");
+        handle.className = "tb-handle " + dir;
+        handle.addEventListener("mousedown", (e) => startResizeField(e, field.id, dir));
+        box.appendChild(handle);
+      });
+    }
+
+    canvas.appendChild(box);
+  });
+}
+
+/* ── PROPERTY PANEL (bottom toolbar) ── */
+function showPropertyPanel() {
+  const field = getCurrentFields().find(f => f.id === tbSelectedFieldId);
+  const toolbar = document.getElementById("tbBottomToolbar");
+  document.getElementById("tbNoSelectionHint").style.display = field ? "none" : "block";
+  toolbar.classList.toggle("visible", !!field);
+  if (field) {
+    populatePropertyPanel(field);
+    updateDimensionsPanel(field);
+  }
+}
+
+function populatePropertyPanel(field) {
+  const sourceWrap = document.getElementById("btDataSourceWrap");
+  const sourceSelect = document.getElementById("ppDataSource");
+
+  if (field.type === "text") {
+    sourceSelect.innerHTML =
+      `<optgroup label="Student Data">` +
+      AVAILABLE_DATA_FIELDS.map(f => `<option value="student:${f.key}">${f.label}</option>`).join("") +
+      `</optgroup><optgroup label="School Data">` +
+      AVAILABLE_SCHOOL_FIELDS.map(f => `<option value="school:${f.key}">${f.label}</option>`).join("") +
+      `</optgroup>`;
+    sourceSelect.value = `${field.source}:${field.dataField}`;
+    sourceWrap.style.display = "flex";
+  } else {
+    sourceWrap.style.display = "none";
+  }
+
+  document.getElementById("btStaticTextWrap").style.display = field.type === "static" ? "flex" : "none";
+  if (field.type === "static") document.getElementById("ppStaticText").value = field.text || "";
+
+  document.getElementById("btImageWrap").style.display = field.type === "image" ? "flex" : "none";
+
+  const isTextLike = field.type === "text" || field.type === "static";
+  document.getElementById("btLabelWrap").style.display = field.type === "text" ? "flex" : "none";
+  document.getElementById("btFontWrap").style.display = isTextLike ? "flex" : "none";
+  document.getElementById("btSizeWrap").style.display = isTextLike ? "flex" : "none";
+  document.getElementById("btColorWrap").style.display = isTextLike ? "flex" : "none";
+  document.getElementById("btShapeWrap").style.display = (field.type === "photo" || field.type === "image") ? "flex" : "none";
+
+  document.getElementById("ppLabel").value = field.label || "";
+  document.getElementById("ppFont").value = field.font || "Arial";
+  document.getElementById("ppFontSize").value = field.fontSize || 3;
+  document.getElementById("ppColor").value = field.color || "#000000";
+  document.getElementById("ppAlign").value = field.align || "center";
+  document.getElementById("ppValign").value = field.valign || "middle";
+  document.getElementById("ppShape").value = field.shape || "square";
+  document.getElementById("ppBold").checked = !!field.bold;
+  document.getElementById("ppRotation").value = field.rotation || 0;
+}
+
+function updatePropertyPanel() {
+  const field = getCurrentFields().find(f => f.id === tbSelectedFieldId);
+  if (!field) return;
+  const sourceValue = document.getElementById("ppDataSource").value;
+  if (sourceValue) {
+    const [source, dataField] = sourceValue.split(":");
+    field.source = source;
+    field.dataField = dataField;
+  }
+  renderFields();
+}
+
+async function handleFieldImageUpload() {
+  const file = document.getElementById("ppImageFile").files[0];
+  if (!file) return;
+  const field = getCurrentFields().find(f => f.id === tbSelectedFieldId);
+  if (!field) return;
+
+  showToast("Uploading image...");
+  try {
+    field.imageLink = await uploadTemplateAsset(file, "field_image");
+    renderFields();
+    showToast("Image uploaded", "success");
+  } catch (err) {
+    console.error(err);
+    showToast("Image upload failed", "error");
+  }
+}
+
+function updateSelectedField() {
+  const field = getCurrentFields().find(f => f.id === tbSelectedFieldId);
+  if (!field) return;
+
+  if (field.type === "static") field.text = document.getElementById("ppStaticText").value;
+  field.label = document.getElementById("ppLabel").value;
+  field.font = document.getElementById("ppFont").value;
+  field.fontSize = parseFloat(document.getElementById("ppFontSize").value) || 3;
+  field.color = document.getElementById("ppColor").value;
+  field.align = document.getElementById("ppAlign").value;
+  field.valign = document.getElementById("ppValign").value;
+  field.shape = document.getElementById("ppShape").value;
+  field.bold = document.getElementById("ppBold").checked;
+  field.rotation = parseFloat(document.getElementById("ppRotation").value) || 0;
+
+  renderFields();
+}
+
+function deleteSelectedField() {
+  tbSides[tbCurrentSide].fields = tbSides[tbCurrentSide].fields.filter(f => f.id !== tbSelectedFieldId);
+  tbSelectedFieldId = null;
+  renderFields();
+  showPropertyPanel();
+}
+
+/* ── RIGHT INSPECTOR: DIMENSIONS ── */
+function updateDimensionsPanel(field) {
+  document.getElementById("dimLeft").value   = field.x.toFixed(1);
+  document.getElementById("dimTop").value    = field.y.toFixed(1);
+  document.getElementById("dimWidth").value  = field.width.toFixed(1);
+  document.getElementById("dimHeight").value = field.height.toFixed(1);
+}
+
+function applyDimensionsPanel() {
+  const field = getCurrentFields().find(f => f.id === tbSelectedFieldId);
+  if (!field) return;
+  field.x      = parseFloat(document.getElementById("dimLeft").value)   || 0;
+  field.y      = parseFloat(document.getElementById("dimTop").value)    || 0;
+  field.width  = Math.max(2, parseFloat(document.getElementById("dimWidth").value)  || 2);
+  field.height = Math.max(2, parseFloat(document.getElementById("dimHeight").value) || 2);
+  renderFields();
+}
+
+/* ── RIGHT INSPECTOR: QUICK LINKS ── */
+function centerFieldHorizontally() {
+  const field = getCurrentFields().find(f => f.id === tbSelectedFieldId);
+  if (!field) return;
+  const widthMm = parseFloat(document.getElementById("tbWidth").value) || 86;
+  field.x = (widthMm - field.width) / 2;
+  renderFields();
+  updateDimensionsPanel(field);
+}
+
+function centerFieldVertically() {
+  const field = getCurrentFields().find(f => f.id === tbSelectedFieldId);
+  if (!field) return;
+  const heightMm = parseFloat(document.getElementById("tbHeight").value) || 54;
+  field.y = (heightMm - field.height) / 2;
+  renderFields();
+  updateDimensionsPanel(field);
+}
+
+function autoFitFieldWidth() {
+  const field = getCurrentFields().find(f => f.id === tbSelectedFieldId);
+  if (!field || (field.type !== "text" && field.type !== "static")) return;
+
+  const box = document.querySelector(`.tb-field-box[data-field-id="${field.id}"] .tb-inner-text`);
+  if (!box) return;
+
+  const measurer = document.createElement("span");
+  measurer.style.cssText = `position:absolute; visibility:hidden; white-space:nowrap; font-family:${field.font}; font-size:${mmToPx(field.fontSize)}px; font-weight:${field.bold ? 700 : 400};`;
+  measurer.innerText = box.innerText;
+  document.body.appendChild(measurer);
+  const widthPx = measurer.getBoundingClientRect().width;
+  document.body.removeChild(measurer);
+
+  field.width = pxToMm(widthPx) + 4; // small padding
+  renderFields();
+  updateDimensionsPanel(field);
+}
+
+/* ── SNAP GUIDES ── */
+function drawSnapLine(type, positionPx) {
+  const canvas = document.getElementById("tbCanvas");
+  const line = document.createElement("div");
+  line.className = "tb-snap-line " + type;
+  if (type === "v") line.style.left = positionPx + "px"; else line.style.top = positionPx + "px";
+  canvas.appendChild(line);
+}
+function clearSnapLines() { document.querySelectorAll(".tb-snap-line").forEach(el => el.remove()); }
+
+function getSnappedPosition(field, rawXPx, rawYPx, canvasWidthPx, canvasHeightPx) {
+  clearSnapLines();
+  const widthPx = mmToPx(field.width);
+  const heightPx = mmToPx(field.height);
+
+  let snappedX = rawXPx, snappedY = rawYPx;
+  const candidatesX = [canvasWidthPx / 2 - widthPx / 2];
+  const candidatesY = [canvasHeightPx / 2 - heightPx / 2];
+
+  getCurrentFields().forEach(other => {
+    if (other.id === field.id) return;
+    const oX = mmToPx(other.x), oY = mmToPx(other.y), oW = mmToPx(other.width), oH = mmToPx(other.height);
+    candidatesX.push(oX, oX + oW - widthPx, oX + oW / 2 - widthPx / 2);
+    candidatesY.push(oY, oY + oH - heightPx, oY + oH / 2 - heightPx / 2);
+  });
+
+  for (const cx of candidatesX) {
+    if (Math.abs(rawXPx - cx) < SNAP_THRESHOLD_PX) { snappedX = cx; drawSnapLine("v", cx + widthPx / 2); break; }
+  }
+  for (const cy of candidatesY) {
+    if (Math.abs(rawYPx - cy) < SNAP_THRESHOLD_PX) { snappedY = cy; drawSnapLine("h", cy + heightPx / 2); break; }
+  }
+  return { x: snappedX, y: snappedY };
+}
+
+/* ── DRAG ── */
+function startDragField(e, fieldId) {
+  e.preventDefault(); e.stopPropagation();
+  tbSelectedFieldId = fieldId;
+  renderFields();
+
+  const field = getCurrentFields().find(f => f.id === fieldId);
+  const canvasRect = document.getElementById("tbCanvas").getBoundingClientRect();
+
+  dragState = {
+    fieldId, startMouseX: e.clientX, startMouseY: e.clientY,
+    startFieldXPx: mmToPx(field.x), startFieldYPx: mmToPx(field.y),
+    canvasWidthPx: canvasRect.width, canvasHeightPx: canvasRect.height
+  };
+  document.addEventListener("mousemove", onDragFieldMove);
+  document.addEventListener("mouseup", onDragFieldEnd);
+}
+
+function onDragFieldMove(e) {
+  if (!dragState) return;
+  const field = getCurrentFields().find(f => f.id === dragState.fieldId);
+  if (!field) return;
+
+  let rawXPx = dragState.startFieldXPx + (e.clientX - dragState.startMouseX);
+  let rawYPx = dragState.startFieldYPx + (e.clientY - dragState.startMouseY);
+  rawXPx = Math.max(0, Math.min(rawXPx, dragState.canvasWidthPx - mmToPx(field.width)));
+  rawYPx = Math.max(0, Math.min(rawYPx, dragState.canvasHeightPx - mmToPx(field.height)));
+
+  const snapped = getSnappedPosition(field, rawXPx, rawYPx, dragState.canvasWidthPx, dragState.canvasHeightPx);
+  field.x = pxToMm(snapped.x);
+  field.y = pxToMm(snapped.y);
+
+  renderFields();
+  updateDimensionsPanel(field);
+}
+
+function onDragFieldEnd() {
+  dragState = null;
+  clearSnapLines();
+  document.removeEventListener("mousemove", onDragFieldMove);
+  document.removeEventListener("mouseup", onDragFieldEnd);
+}
+
+/* ── RESIZE ── */
+function startResizeField(e, fieldId, direction) {
+  e.preventDefault(); e.stopPropagation();
+  const field = getCurrentFields().find(f => f.id === fieldId);
+  const canvasRect = document.getElementById("tbCanvas").getBoundingClientRect();
+
+  resizeState = {
+    fieldId, direction, startMouseX: e.clientX, startMouseY: e.clientY,
+    startXPx: mmToPx(field.x), startYPx: mmToPx(field.y),
+    startWidthPx: mmToPx(field.width), startHeightPx: mmToPx(field.height),
+    canvasWidthPx: canvasRect.width, canvasHeightPx: canvasRect.height
+  };
+  document.addEventListener("mousemove", onResizeFieldMove);
+  document.addEventListener("mouseup", onResizeFieldEnd);
+}
+
+function onResizeFieldMove(e) {
+  if (!resizeState) return;
+  const field = getCurrentFields().find(f => f.id === resizeState.fieldId);
+  if (!field) return;
+
+  const deltaX = e.clientX - resizeState.startMouseX;
+  const deltaY = e.clientY - resizeState.startMouseY;
+  const dir = resizeState.direction;
+
+  let newX = resizeState.startXPx, newY = resizeState.startYPx;
+  let newW = resizeState.startWidthPx, newH = resizeState.startHeightPx;
+  const MIN_SIZE_PX = 20;
+
+  if (dir.includes("e")) newW = Math.max(MIN_SIZE_PX, resizeState.startWidthPx + deltaX);
+  if (dir.includes("s")) newH = Math.max(MIN_SIZE_PX, resizeState.startHeightPx + deltaY);
+  if (dir.includes("w")) { newW = Math.max(MIN_SIZE_PX, resizeState.startWidthPx - deltaX); newX = resizeState.startXPx + (resizeState.startWidthPx - newW); }
+  if (dir.includes("n")) { newH = Math.max(MIN_SIZE_PX, resizeState.startHeightPx - deltaY); newY = resizeState.startYPx + (resizeState.startHeightPx - newH); }
+
+  newX = Math.max(0, newX); newY = Math.max(0, newY);
+  newW = Math.min(newW, resizeState.canvasWidthPx - newX);
+  newH = Math.min(newH, resizeState.canvasHeightPx - newY);
+
+  field.x = pxToMm(newX); field.y = pxToMm(newY);
+  field.width = pxToMm(newW); field.height = pxToMm(newH);
+
+  renderFields();
+  updateDimensionsPanel(field);
+}
+
+function onResizeFieldEnd() {
+  resizeState = null;
+  document.removeEventListener("mousemove", onResizeFieldMove);
+  document.removeEventListener("mouseup", onResizeFieldEnd);
+}
+
+/* ── KEYBOARD NUDGE ── */
+document.addEventListener("keydown", (e) => {
+  if (!tbSelectedFieldId) return;
+  if (!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) return;
+  const tag = document.activeElement.tagName;
+  if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+
+  e.preventDefault();
+  const field = getCurrentFields().find(f => f.id === tbSelectedFieldId);
+  if (!field) return;
+
+  const step = e.shiftKey ? 1 : 0.25;
+  if (e.key === "ArrowUp")    field.y = Math.max(0, field.y - step);
+  if (e.key === "ArrowDown")  field.y = field.y + step;
+  if (e.key === "ArrowLeft")  field.x = Math.max(0, field.x - step);
+  if (e.key === "ArrowRight") field.x = field.x + step;
+
+  renderFields();
+  updateDimensionsPanel(field);
+});
+
+/* ── SELECTION ── */
+document.addEventListener("mousedown", (e) => {
+  if (e.target.id === "tbCanvas" || e.target.id === "tbPlaceholder" || (e.target.tagName === "IMG" && e.target.parentElement.id === "tbCanvas")) {
+    tbSelectedFieldId = null;
+    renderFields();
+    showPropertyPanel();
+  }
+});
+
+/* ── SAVE / LOAD ── */
+async function loadTemplateList() {
+  try {
+    const params = new URLSearchParams({ action: "getCustomTemplates" });
+    const res = await fetch(`${API_URL}?${params.toString()}`);
+    const raw = await res.json();
+    const select = document.getElementById("tbLoadSelect");
+
+    if (!raw || raw.length < 2) {
+      tbTemplatesCache = [];
+      select.innerHTML = `<option value="">-- New Template --</option>`;
+      return;
+    }
+    const headers = raw[0];
+    tbTemplatesCache = raw.slice(1).map(r => {
+      let obj = {}; headers.forEach((h, i) => obj[h] = r[i]); return obj;
+    });
+    select.innerHTML = `<option value="">-- New Template --</option>` +
+      tbTemplatesCache.map(t => `<option value="${t.template_id}">${t.template_name}</option>`).join("");
+  } catch (err) {
+    console.error("Failed to load template list:", err);
+  }
+}
+
+function handleLoadSelect() {
+  const id = document.getElementById("tbLoadSelect").value;
+  if (!id) { resetBuilder(); return; }
+
+  const row = tbTemplatesCache.find(r => r.template_id === id);
+  if (!row) { showToast("Template not found", "error"); return; }
+
+  let layout;
+  try { layout = JSON.parse(row.layout_json || "{}"); } catch (e) { layout = {}; }
+
+  tbEditingTemplateId = row.template_id;
+  document.getElementById("tbName").value = row.template_name || "";
+
+  const widthMm  = (layout.front && layout.front.width_mm)  || 86;
+  const heightMm = (layout.front && layout.front.height_mm) || 54;
+  document.getElementById("tbWidth").value  = widthMm;
+  document.getElementById("tbHeight").value = heightMm;
+  document.getElementById("tbPreset").value = "custom";
+
+  tbSides.front = { bgLink: row.front_bg_link || "", fields: (layout.front && layout.front.fields) || [] };
+  tbSides.back  = { bgLink: row.back_bg_link  || "", fields: (layout.back  && layout.back.fields)  || [] };
+
+  let maxNum = 0;
+  [...tbSides.front.fields, ...tbSides.back.fields].forEach(f => {
+    const match = /field_(\d+)/.exec(f.id || "");
+    if (match) maxNum = Math.max(maxNum, parseInt(match[1], 10));
+  });
+  tbFieldCounter = maxNum;
+
+  tbSelectedFieldId = null;
+  renderCanvas();
+  switchSide("front");
+  showToast("Template loaded", "success");
+}
+
+function resetBuilder() {
+  tbEditingTemplateId = null;
+  tbSelectedFieldId = null;
+  document.getElementById("tbLoadSelect").value = "";
+  document.getElementById("tbName").value = "";
+  document.getElementById("tbPreset").value = "landscape86x54";
+  document.getElementById("tbWidth").value = 86;
+  document.getElementById("tbHeight").value = 54;
+  tbSides = { front: { bgLink: "", fields: [] }, back: { bgLink: "", fields: [] } };
+  renderCanvas();
+  switchSide("front");
+}
+
+async function saveTemplate() {
+  const name = document.getElementById("tbName").value.trim();
+  if (!name) { showToast("Please enter a template name", "error"); return; }
+  if (!tbSides.front.bgLink) { showToast("Please upload a front background first", "error"); return; }
+
+  const widthMm  = parseFloat(document.getElementById("tbWidth").value)  || 86;
+  const heightMm = parseFloat(document.getElementById("tbHeight").value) || 54;
+  const orientation = widthMm >= heightMm ? "landscape" : "portrait";
+
+  const layout = { front: { width_mm: widthMm, height_mm: heightMm, fields: tbSides.front.fields } };
+  const hasBackContent = !!tbSides.back.bgLink || tbSides.back.fields.length > 0;
+  if (hasBackContent) layout.back = { width_mm: widthMm, height_mm: heightMm, fields: tbSides.back.fields };
+
+  const payload = {
+    template_name: name, front_bg_link: tbSides.front.bgLink, back_bg_link: tbSides.back.bgLink || "",
+    layout_json: JSON.stringify(layout), orientation: orientation
+  };
+
+  try {
+    let res;
+    if (tbEditingTemplateId) {
+      const params = new URLSearchParams({ action: "updateCustomTemplate", template_id: tbEditingTemplateId, ...payload });
+      res = await fetch(`${API_URL}?${params.toString()}`).then(r => r.json());
+    } else {
+      const params = new URLSearchParams({ action: "saveCustomTemplate", ...payload });
+      res = await fetch(`${API_URL}?${params.toString()}`).then(r => r.json());
+      if (res && res.template_id) tbEditingTemplateId = res.template_id;
+    }
+    if (res && res.error) { showToast(res.error, "error"); return; }
+
+    showToast("Template saved", "success");
+    await loadTemplateList();
+    if (tbEditingTemplateId) document.getElementById("tbLoadSelect").value = tbEditingTemplateId;
+  } catch (err) {
+    console.error(err);
+    showToast("Save failed", "error");
+  }
+}
+
+/* ── INIT ── */
+updatePreviewLabel();
+renderCanvas();
+switchSide("front");
+loadTemplateList();
+loadSchoolListForBuilder();
+
+</script>
+
+</body>
+</html>
