@@ -58,7 +58,7 @@ function applyFilter() {
     s.name.toLowerCase().includes(name) &&
     (cls === "" || s.class == cls) &&
     (sec === "" || s.section === sec) &&
-    (sch === "" || s.school === sch)
+       (sch === "" || String(s.school) === String(sch))
   );
 
   renderTable(filtered);

@@ -251,6 +251,16 @@ function getSchools(forceRefresh = false) {
         delete window[callbackName];
         return;
       }
+      // School codes can be numbers in the sheet (e.g. 224145) but pages compare them as text.
+      // Turning the "school" column into text here fixes that for every page at once.
+      try {
+        const sIdx = Array.isArray(data[0]) ? data[0].indexOf("school") : -1;
+        if (sIdx !== -1) {
+          data.forEach((row, i) => {
+            if (i > 0 && row[sIdx] !== null && row[sIdx] !== undefined && row[sIdx] !== "") row[sIdx] = String(row[sIdx]);
+          });
+        }
+      } catch (err) { /* never block loading the schools */ }
       sessionStorage.setItem("schoolsCache", JSON.stringify(data)); // 🔥 renamed
       resolve(data);
       delete window[callbackName];
