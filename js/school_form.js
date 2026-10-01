@@ -75,9 +75,10 @@ async function loadSchool() {
     return obj;
   });
 
+  // String(): school codes can be numbers (e.g. 224145) - a number has no toLowerCase()
   schoolInfo = schools.find(
-    s => s.school && school &&
-         s.school.toLowerCase() === school.toLowerCase()
+    s => s.school !== "" && s.school !== null && s.school !== undefined && school &&
+         String(s.school).toLowerCase() === String(school).toLowerCase()
   );
 
   if (!schoolInfo) {
