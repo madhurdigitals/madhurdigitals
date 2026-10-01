@@ -13,8 +13,15 @@
     "add_school.html":        "schools",
     "restore_students.html":  "restore",
     "manage_users.html":      "users",
+    "manage_photos.html":     "manage",     // NEW: was ungated
+    "template_builder.html":  "schools",    // NEW: was ungated
+    "manage_vendors.html":    "vendors",    // plus admin role (adminOnlyPages below)
     "dashboard.html":         null
   };
+
+  // Pages only the super admin (role "admin") may open, whatever permissions a user has.
+  // This only hides the page; the server refuses the actions themselves for anyone else.
+  const adminOnlyPages = ["manage_vendors.html"];
 
   let path        = window.location.pathname;
   let currentPage = path.substring(path.lastIndexOf("/") + 1);
@@ -52,6 +59,13 @@
   // Not logged in → redirect
   if (!isLoggedIn) {
     window.location.replace("login.html");
+    return;
+  }
+
+  // ── ADMIN-ONLY PAGES ──
+  if (adminOnlyPages.includes(currentPage) && sessionStorage.getItem("role") !== "admin") {
+    sessionStorage.setItem("accessDenied", currentPage);
+    window.location.replace("dashboard.html");
     return;
   }
 

@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Manage Vendors</title>
+  <script src="js/protect.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <link rel="stylesheet" href="css/manage_student.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    /* ── PAGE (same look as Manage Users) ── */
+    body { background: #f5f7fb; }
+
+    .container { max-width: 1150px; margin: 20px auto; padding: 15px; }
+
+    .heading-wrapper { text-align: center; margin: 15px 0 5px; }
+    .heading-badge {
+      display: inline-block; padding: 8px 18px;
+      background: rgba(13,110,253,0.1); color: #0d6efd;
+      border-radius: 20px; font-weight: 600;
+    }
+
+    table { font-size: 13px; }
+    td, th { padding: 10px 8px; }
+    td.vendor-name { text-align: left; font-weight: 600; max-width: 220px; }
+
+    /* ── BADGES / CHIPS ── */
+    .badge {
+      display: inline-block; padding: 3px 10px;
+      border-radius: 12px; font-size: 11px; font-weight: 600;
+    }
+    .badge-active    { background: #dcfce7; color: #166534; }
+    .badge-suspended { background: #fee2e2; color: #991b1b; }
+    .badge-platform  { background: #dbeafe; color: #1d4ed8; }
+
+    .slug-chip {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      background: #f1f5f9; color: #475569; font-size: 11px;
+    }
+
+    .swatch {
+      display: inline-block; width: 22px; height: 22px; border-radius: 5px;
+      border: 1px solid #d1d5db; vertical-align: middle;
+    }
+
+    .logo-thumb {
+      width: 26px; height: 26px; border-radius: 6px; object-fit: contain;
+      vertical-align: middle; margin-right: 6px; border: 1px solid #e5e7eb; background: #fff;
+    }
+
+    /* ── TABLE ACTION BUTTONS ── */
+    .btn-edit    { background: #fef9c3; color: #854d0e; border: 1px solid #fbbf24; }
+    .btn-suspend { background: #fee2e2; color: #991b1b; border: 1px solid #dc2626;
+                   padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; margin-left: 4px; }
+    .btn-activate{ background: #dcfce7; color: #166534; border: 1px solid #16a34a;
+                   padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; margin-left: 4px; }
+
+    .badge-holding   { background: #f1f5f9; color: #475569; }
+    .badge-archived  { background: #e5e7eb; color: #4b5563; }
+    tr.row-archived td { color: #9ca3af; }
+
+    .btn-archive { background: #f3f4f6; color: #374151; border: 1px solid #9ca3af;
+                   padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; margin-left: 4px; }
+    .btn-restore { background: #dbeafe; color: #1d4ed8; border: 1px solid #3b82f6;
+                   padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+    .toggle-archived { display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
+                       color: #4b5563; margin-left: 16px; cursor: pointer; }
+    .toggle-archived input { accent-color: #0d6efd; }
+
+    .empty-row td { color: #6b7280; padding: 24px; }
+
+    /* ── ARCHIVE / RESTORE DIALOGS ── */
+    .dlg-section { margin-bottom: 14px; }
+    .dlg-section p { font-size: 13px; color: #374151; margin-bottom: 6px; line-height: 1.5; }
+    .dlg-list {
+      max-height: 170px; overflow-y: auto; border: 1px solid #e5e7eb;
+      border-radius: 7px; padding: 6px; background: #f9fafb;
+    }
+    .dlg-item { display: flex; align-items: center; gap: 8px; padding: 5px 6px; font-size: 13px; border-radius: 5px; }
+    .dlg-item input { width: auto; margin: 0; accent-color: #0d6efd; }
+    .dlg-item.disabled { color: #9ca3af; }
+    .dlg-item .why { margin-left: auto; font-size: 11px; color: #9ca3af; }
+    .dlg-note { font-size: 12px; color: #6b7280; background: #f8fafc; border-left: 3px solid #cbd5e1;
+                padding: 8px 10px; border-radius: 4px; margin-bottom: 12px; }
+    .popup select {
+      width: 100%; padding: 9px 11px; box-sizing: border-box; border-radius: 7px;
+      border: 1px solid #d1d5db; background: #f9fafb; font-size: 14px; margin-bottom: 4px;
+    }
+    .btn-danger { background: #dc2626; color: white; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-danger:disabled, .btn-save:disabled { opacity: 0.6; cursor: wait; }
+
+    /* ── OVERLAY + POPUP ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 999;
+      backdrop-filter: blur(3px);
+    }
+
+    .popup {
+      display: none; position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: white; padding: 25px; border-radius: 14px;
+      z-index: 1000; width: 460px; max-width: 95%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      max-height: 92vh; overflow-y: auto;
+    }
+
+    .popup h3 { margin: 0 0 16px; color: #0d6efd; }
+
+    .field-label {
+      display: block; font-size: 11px; font-weight: 700;
+      color: #6b7280; text-transform: uppercase;
+      letter-spacing: 0.5px; margin-bottom: 4px;
+    }
+
+    .popup input {
+      width: 100%; padding: 9px 11px; box-sizing: border-box;
+      border-radius: 7px; border: 1px solid #d1d5db;
+      background: #f9fafb; font-size: 14px; margin-bottom: 12px;
+    }
+    .popup input:focus {
+      outline: none; border-color: #0d6efd;
+      box-shadow: 0 0 0 3px rgba(13,110,253,0.12);
+      background: #fff;
+    }
+    .popup input:disabled { color: #9ca3af; cursor: not-allowed; }
+
+    .color-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+    .color-row input[type="color"] { width: 56px; height: 40px; padding: 3px; margin: 0; cursor: pointer; }
+    .color-row input[type="text"]  { margin: 0; flex: 1; }
+
+    .hint { font-size: 11px; color: #6b7280; margin: -8px 0 12px; }
+
+    /* ── POPUP ACTIONS ── */
+    .popup-actions { display: flex; gap: 10px; margin-top: 8px; }
+    .popup-actions button { flex: 1; padding: 10px; border-radius: 7px; border: none; cursor: pointer; font-size: 14px; }
+    .btn-save   { background: #0d6efd; color: white; }
+    .btn-save:hover { background: #0b5ed7; }
+    .btn-save:disabled { background: #93c5fd; cursor: wait; }
+    .btn-cancel { background: #e5e7eb; color: #333; }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <div class="logo" onclick="location.href='dashboard.html'" style="cursor:pointer;">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <div>
+      <div class="title-text">Madhur Digitals</div>
+    </div>
+  </div>
+  <div class="nav-actions">
+    <button onclick="location.href='school_management.html'">Schools</button>
+    <button onclick="location.href='dashboard.html'">Dashboard</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="heading-wrapper">
+  <div class="heading-badge">🤝 Manage Vendors</div>
+</div>
+
+<div class="container">
+
+  <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding:16px 20px;">
+    <div>
+      <b>Total Vendors: <span id="totalVendors">0</span></b>
+      <label class="toggle-archived">
+        <input type="checkbox" id="showArchived" onchange="renderVendors()"> Show archived (<span id="archivedCount">0</span>)
+      </label>
+    </div>
+    <button class="submit-btn" onclick="openAddPopup()" style="flex:none;width:auto;padding:10px 20px;">
+      ➕ Add Vendor
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Vendor</th>
+            <th>Contact Person</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Web Name</th>
+            <th>Color</th>
+            <th>Schools</th>
+            <th>Users</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="vendorsTable">
+          <tr class="empty-row"><td colspan="11">Loading vendors…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closePopup()"></div>
+
+<!-- ADD / EDIT POPUP -->
+<div class="popup" id="vendorPopup">
+
+  <h3 id="popupTitle">Add Vendor</h3>
+
+  <div id="idRow" style="display:none;">
+    <label class="field-label">Vendor ID</label>
+    <input id="pv_id" disabled>
+  </div>
+
+  <label class="field-label">Vendor Name *</label>
+  <input id="pv_name" placeholder="e.g. ABC Digital Services" oninput="updateSlugHint()">
+
+  <label class="field-label">Contact Person</label>
+  <input id="pv_contact" placeholder="e.g. Ravi Kumar">
+
+  <label class="field-label">Phone</label>
+  <input id="pv_phone" placeholder="e.g. 9876543210">
+
+  <label class="field-label">Email</label>
+  <input id="pv_email" placeholder="e.g. ravi@abc.com">
+
+  <label class="field-label">Logo URL</label>
+  <input id="pv_logo" placeholder="https://...">
+
+  <label class="field-label">Brand Color</label>
+  <div class="color-row">
+    <input type="color" id="pv_color_pick" value="#0d6efd"
+      oninput="document.getElementById('pv_color').value = this.value.toLowerCase()">
+    <input type="text" id="pv_color" value="#0d6efd" maxlength="7"
+      oninput="syncColorPicker()">
+  </div>
+
+  <label class="field-label">Web Name</label>
+  <input id="pv_slug" placeholder="made from the name if left blank" oninput="updateSlugHint()">
+  <div class="hint" id="slugHint">Used later for the vendor's own login link. English letters, numbers and dashes.</div>
+
+  <div class="popup-actions">
+    <button class="btn-save" id="saveBtn" onclick="saveVendor()">Add Vendor</button>
+    <button class="btn-cancel" onclick="closePopup()">Cancel</button>
+  </div>
+
+</div>
+
+<!-- ARCHIVE POPUP -->
+<div class="popup" id="archivePopup">
+  <h3 id="archiveTitle">Archive Vendor</h3>
+  <div id="archiveBody"></div>
+  <div class="popup-actions">
+    <button class="btn-danger" id="archiveBtn" onclick="confirmArchive()">Archive vendor</button>
+    <button class="btn-cancel" onclick="closePopup()">Cancel</button>
+  </div>
+</div>
+
+<!-- RESTORE POPUP -->
+<div class="popup" id="restorePopup">
+  <h3 id="restoreTitle">Restore Vendor</h3>
+  <div id="restoreBody"></div>
+  <div class="popup-actions">
+    <button class="btn-save" id="restoreBtn" onclick="confirmRestore()">Restore vendor</button>
+    <button class="btn-cancel" onclick="closePopup()">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── STATE ── */
+let allVendors    = [];
+let schoolCounts  = {};     // vendor_id (string) -> number of schools it owns
+let allSchools    = [];     // [{ school_id, school, school_name, vendor_id }]
+let allUsers      = null;   // from getUsers(); null = could not load
+let dialogVendor  = null;   // vendor shown in the archive / restore dialog
+let editingId     = null;   // null = add mode
+let saving        = false;  // blocks double clicks on Save
+
+/* ── HELPERS ── */
+function esc(v) {
+  return String(v === undefined || v === null ? "" : v)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// Same rule the server uses, so the preview matches what gets saved.
+function makeSlug(text) {
+  return String(text || "").toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+    .substring(0, 40).replace(/-+$/g, "");
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById("toast");
+  t.innerText = msg;
+  t.className = "toast " + (isError ? "toast-error" : "toast-success");
+  t.style.display = "block";
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => { t.style.display = "none"; }, 2800);
+}
+
+// Handles a server reply. Returns true if it was an error (already shown to the user).
+function handleError(res, fallback) {
+  if (!res) { alert(fallback); return true; }
+  if (!res.error) return false;
+  // Session over: api.js shows the "log in again" box on top of this page - no message, no logout here.
+  if (["no_token", "invalid_token", "expired_token"].includes(res.auth_error)) return true;
+  alert(res.error);
+  return true;
+}
+
+// Same meaning as on the server: kind "platform" = Madhur Digitals, "holding" = Unassigned Schools.
+function kindOf(v)     { return String(v.kind || "").trim().toLowerCase(); }
+function isPlatform(v) { return kindOf(v) === "platform" || String(v.vendor_id) === "1"; }
+function isHolding(v)  { return kindOf(v) === "holding"; }
+function isArchived(v) { return String(v.status || "").toLowerCase() === "archived"; }
+function vendorName(id) {
+  const v = allVendors.find(x => String(x.vendor_id) === String(id));
+  return v ? v.name : "vendor " + id;
+}
+function userVendor(u) { return String(u.vendor_id === undefined || u.vendor_id === "" ? "1" : u.vendor_id); }
+
+/* ── INIT ── */
+async function init() {
+  await Promise.all([loadVendors(), loadSchoolCounts(), loadUsers()]);
+  renderVendors();
+}
+
+async function loadVendors() {
+  const res = await getVendors();
+  if (handleError(res, "Failed to load vendors")) {
+    allVendors = [];
+    return;
+  }
+  allVendors = (res.vendors || []).slice().sort((a, b) => Number(a.vendor_id) - Number(b.vendor_id));
+}
+
+async function loadSchoolCounts() {
+  schoolCounts = {};
+  allSchools   = [];
+  try {
+    const raw = await getSchools(true);
+    const headers = raw[0] || [];
+    const col = name => headers.indexOf(name);
+    raw.slice(1).forEach(r => {
+      if (String(r[0]).trim() === "") return;
+      const vIdx = col("vendor_id");
+      const vid  = vIdx === -1 || String(r[vIdx]).trim() === "" ? "1" : String(r[vIdx]).trim();
+      schoolCounts[vid] = (schoolCounts[vid] || 0) + 1;
+      allSchools.push({ school_id: String(r[col("school_id")]), school: String(r[col("school")]),
+                        school_name: String(r[col("school_name")] || ""), vendor_id: vid });
+    });
+  } catch (err) {
+    console.error("School count error:", err);
+  }
+}
+
+async function loadUsers() {
+  const res = await getUsers();
+  allUsers = (res && !res.error && Array.isArray(res.users)) ? res.users : null;
+}
+
+function activeUsersOf(vendorId) {
+  if (!allUsers) return [];
+  return allUsers.filter(u => userVendor(u) === String(vendorId) &&
+                              String(u.active || "").toLowerCase() === "yes");
+}
+
+/* ── TABLE ── */
+function renderVendors() {
+  const archived   = allVendors.filter(isArchived);
+  const showArch   = document.getElementById("showArchived").checked;
+  const list       = showArch ? allVendors : allVendors.filter(v => !isArchived(v));
+
+  document.getElementById("totalVendors").innerText  = allVendors.length - archived.length;
+  document.getElementById("archivedCount").innerText = archived.length;
+  const tbody = document.getElementById("vendorsTable");
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="11">No vendors to show. If this is the first time, run setupVendorColumns() in Apps Script.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(v => {
+    const id       = String(v.vendor_id);
+    const status   = String(v.status || "active").toLowerCase();
+    const color    = /^#[0-9a-fA-F]{6}$/.test(String(v.brand_color)) ? v.brand_color : "#ffffff";
+    const logo     = String(v.logo || "").trim();
+    const users    = allUsers ? activeUsersOf(id).length : "?";
+
+    let badge, actions;
+    if (isArchived(v)) {
+      badge   = `<span class="badge badge-archived">Archived</span>`;
+      actions = `<button class="btn-restore" onclick="openRestore('${esc(id)}')">Restore</button>`;
+    } else if (isPlatform(v)) {
+      badge   = `<span class="badge badge-platform">Platform</span>`;
+      actions = `<button class="btn-edit" onclick="openEditPopup('${esc(id)}')">✏️ Edit</button>`;
+    } else if (isHolding(v)) {
+      badge   = `<span class="badge badge-holding">Holding</span>`;
+      actions = `<button class="btn-edit" onclick="openEditPopup('${esc(id)}')">✏️ Edit</button>`;
+    } else {
+      badge   = `<span class="badge badge-${status === "suspended" ? "suspended" : "active"}">${status === "suspended" ? "Suspended" : "Active"}</span>`;
+      actions = `<button class="btn-edit" onclick="openEditPopup('${esc(id)}')">✏️ Edit</button>` +
+        (status === "suspended"
+          ? `<button class="btn-activate" onclick="changeStatus('${esc(id)}', 'active')">Activate</button>`
+          : `<button class="btn-suspend"  onclick="changeStatus('${esc(id)}', 'suspended')">Suspend</button>`) +
+        `<button class="btn-archive" onclick="openArchive('${esc(id)}')">Archive</button>`;
+    }
+
+    return `
+      <tr class="${isArchived(v) ? "row-archived" : ""}">
+        <td>${esc(id)}</td>
+        <td class="vendor-name">
+          ${logo ? `<img class="logo-thumb" src="${esc(logo)}" alt="" onerror="this.style.display='none'">` : ""}${esc(v.name)}
+        </td>
+        <td>${esc(v.contact) || "-"}</td>
+        <td>${esc(v.phone) || "-"}</td>
+        <td>${esc(v.email) || "-"}</td>
+        <td><span class="slug-chip">${esc(v.slug) || "-"}</span></td>
+        <td><span class="swatch" style="background:${color};" title="${esc(v.brand_color)}"></span></td>
+        <td>${schoolCounts[id] || 0}</td>
+        <td>${users}</td>
+        <td>${badge}</td>
+        <td>${actions}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+/* ── POPUP ── */
+function fillPopup(v) {
+  document.getElementById("pv_id").value      = v ? v.vendor_id : "";
+  document.getElementById("pv_name").value    = v ? (v.name || "") : "";
+  document.getElementById("pv_contact").value = v ? (v.contact || "") : "";
+  document.getElementById("pv_phone").value   = v ? (v.phone || "") : "";
+  document.getElementById("pv_email").value   = v ? (v.email || "") : "";
+  document.getElementById("pv_logo").value    = v ? (v.logo || "") : "";
+  document.getElementById("pv_slug").value    = v ? (v.slug || "") : "";
+  const color = v && /^#[0-9a-fA-F]{6}$/.test(String(v.brand_color)) ? String(v.brand_color).toLowerCase() : "#0d6efd";
+  document.getElementById("pv_color").value      = color;
+  document.getElementById("pv_color_pick").value = color;
+  updateSlugHint();
+}
+
+function openAddPopup() {
+  editingId = null;
+  document.getElementById("popupTitle").innerText = "Add Vendor";
+  document.getElementById("saveBtn").innerText    = "Add Vendor";
+  document.getElementById("idRow").style.display  = "none";
+  fillPopup(null);
+  openPopup();
+}
+
+function openEditPopup(id) {
+  const v = allVendors.find(x => String(x.vendor_id) === String(id));
+  if (!v) return;
+  editingId = String(v.vendor_id);
+  document.getElementById("popupTitle").innerText = `Edit Vendor: ${v.name}`;
+  document.getElementById("saveBtn").innerText    = "Save Changes";
+  document.getElementById("idRow").style.display  = "block";
+  fillPopup(v);
+  openPopup();
+}
+
+function openPopup() {
+  document.getElementById("overlay").style.display     = "block";
+  document.getElementById("vendorPopup").style.display = "block";
+  document.getElementById("pv_name").focus();
+}
+
+function closePopup() {
+  if (saving) return;
+  ["overlay", "vendorPopup", "archivePopup", "restorePopup"].forEach(id => {
+    document.getElementById(id).style.display = "none";
+  });
+  dialogVendor = null;
+}
+
+function syncColorPicker() {
+  const val = document.getElementById("pv_color").value.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) document.getElementById("pv_color_pick").value = val.toLowerCase();
+}
+
+function updateSlugHint() {
+  const typed = document.getElementById("pv_slug").value.trim();
+  const slug  = typed ? makeSlug(typed) : makeSlug(document.getElementById("pv_name").value);
+  const hint  = document.getElementById("slugHint");
+  if (typed && !slug) {
+    hint.innerText = "Use English letters or numbers.";
+  } else if (slug) {
+    hint.innerText = `Will be saved as: ${slug}`;
+  } else {
+    hint.innerText = "Used later for the vendor's own login link. English letters, numbers and dashes.";
+  }
+}
+
+/* ── SAVE ── */
+async function saveVendor() {
+  if (saving) return;
+
+  const data = {
+    name:        document.getElementById("pv_name").value.trim(),
+    contact:     document.getElementById("pv_contact").value.trim(),
+    phone:       document.getElementById("pv_phone").value.trim(),
+    email:       document.getElementById("pv_email").value.trim(),
+    logo:        document.getElementById("pv_logo").value.trim(),
+    brand_color: document.getElementById("pv_color").value.trim().toLowerCase(),
+    slug:        document.getElementById("pv_slug").value.trim()
+  };
+
+  if (!data.name) { alert("Vendor name is required"); return; }
+  if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) { alert("Enter a valid email address"); return; }
+  if (data.brand_color && !/^#[0-9a-f]{6}$/.test(data.brand_color)) { alert("Brand color must look like #1a2b3c"); return; }
+  if (data.slug && !makeSlug(data.slug)) { alert("Web name must use English letters or numbers"); return; }
+  if (!data.slug && !makeSlug(data.name)) { alert("Enter a web name using English letters or numbers"); return; }
+  if (editingId && !data.slug) { alert("Web name cannot be empty"); return; }
+
+  saving = true;
+  const btn = document.getElementById("saveBtn");
+  const btnText = btn.innerText;
+  btn.disabled = true;
+  btn.innerText = "Saving…";
+
+  try {
+    const res = editingId
+      ? await updateVendor(Object.assign({ vendor_id: editingId }, data))
+      : await addVendor(data);
+
+    if (handleError(res, "Failed to save vendor")) return;
+
+    saving = false;
+    closePopup();
+    if (editingId) {
+      showToast(res.changed ? "Vendor saved" : "No changes to save");
+    } else {
+      showToast(`Vendor added (web name: ${res.slug})`);
+    }
+    await loadVendors();
+    renderVendors();
+
+  } finally {
+    saving = false;
+    btn.disabled = false;
+    btn.innerText = btnText;
+  }
+}
+
+/* ── SUSPEND / ACTIVATE ── */
+async function changeStatus(id, status) {
+  const v = allVendors.find(x => String(x.vendor_id) === String(id));
+  if (!v) return;
+
+  const question = status === "suspended"
+    ? `Suspend "${v.name}"?\n\nThis blocks the vendor's own logins. Their ${schoolCounts[String(id)] || 0} school(s) keep working.`
+    : `Activate "${v.name}" again?`;
+  if (!confirm(question)) return;
+
+  const res = await setVendorStatus(id, status);
+  if (handleError(res, "Failed to change status")) return;
+
+  showToast(status === "suspended" ? "Vendor suspended" : "Vendor activated");
+  await loadVendors();
+  renderVendors();
+}
+
+/* ── ARCHIVE ── */
+function openArchive(id) {
+  const v = allVendors.find(x => String(x.vendor_id) === String(id));
+  if (!v) return;
+  dialogVendor = v;
+
+  const schools = allSchools.filter(s => s.vendor_id === String(id));
+  const users   = activeUsersOf(id);
+  const me      = (sessionStorage.getItem("username") || "").toLowerCase();
+  const willOff = users.filter(u => String(u.role).toLowerCase() !== "admin" && String(u.username).toLowerCase() !== me);
+  const staysOn = users.filter(u => !willOff.includes(u));
+
+  // Where the schools can go: any vendor that isn't archived and isn't this one. Holding first.
+  const targets = allVendors
+    .filter(x => !isArchived(x) && String(x.vendor_id) !== String(id))
+    .sort((a, b) => (isHolding(b) - isHolding(a)) || (isPlatform(b) - isPlatform(a)) || (Number(a.vendor_id) - Number(b.vendor_id)));
+  const holding = targets.find(isHolding);
+  const optionLabel = x => esc(x.name) + (isHolding(x) ? " (waiting for a new owner)" : isPlatform(x) ? " (your own schools)" : "");
+
+  let html = "";
+
+  html += `<div class="dlg-section">`;
+  if (!schools.length) {
+    html += `<p>Owns no schools.</p>`;
+  } else {
+    html += `<p>Owns <b>${schools.length}</b> school(s). They will be moved, never deleted — their students are not touched:</p>
+             <div class="dlg-list">${schools.map(s => `<div class="dlg-item">${esc(s.school_name || s.school)} <span class="why">${esc(s.school)}</span></div>`).join("")}</div>
+             <p style="margin-top:10px;"><b>Move them to:</b></p>
+             <select id="archiveMoveTo">${targets.map(x => `<option value="${esc(x.vendor_id)}" ${holding && x === holding ? "selected" : ""}>${optionLabel(x)}</option>`).join("")}</select>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="dlg-section">`;
+  if (!allUsers) {
+    html += `<p>Users could not be loaded. The server will still deactivate this vendor's users.</p>`;
+  } else if (!users.length) {
+    html += `<p>Has no active users.</p>`;
+  } else {
+    if (willOff.length) {
+      html += `<p><b>${willOff.length}</b> user(s) will be deactivated and logged out:</p>
+               <div class="dlg-list">${willOff.map(u => `<div class="dlg-item">${esc(u.username)} <span class="why">${esc(u.role)}</span></div>`).join("")}</div>`;
+    }
+    if (staysOn.length) {
+      html += `<p style="margin-top:8px;">Stay active (admins and you): ${staysOn.map(u => esc(u.username)).join(", ")}</p>`;
+    }
+  }
+  html += `</div>`;
+
+  html += `<div class="dlg-note">Later you can restore this vendor and choose which of these schools and users to bring back.</div>`;
+
+  document.getElementById("archiveTitle").innerText = `Archive "${v.name}"?`;
+  document.getElementById("archiveBody").innerHTML  = html;
+  document.getElementById("overlay").style.display      = "block";
+  document.getElementById("archivePopup").style.display = "block";
+}
+
+async function confirmArchive() {
+  if (saving || !dialogVendor) return;
+  const v      = dialogVendor;
+  const sel    = document.getElementById("archiveMoveTo");
+  const moveTo = sel ? sel.value : "";   // blank = Unassigned Schools (server default)
+
+  saving = true;
+  const btn = document.getElementById("archiveBtn");
+  btn.disabled = true; btn.innerText = "Archiving…";
+  try {
+    const res = await archiveVendor(v.vendor_id, moveTo);
+    if (handleError(res, "Failed to archive vendor")) return;
+    saving = false;
+    closePopup();
+    showToast(`Archived "${v.name}": ${res.moved_schools} school(s) moved to ${vendorName(res.moved_to)}, ${res.deactivated_users} user(s) deactivated`);
+    await Promise.all([loadVendors(), loadSchoolCounts(), loadUsers()]);
+    renderVendors();
+  } finally {
+    saving = false;
+    btn.disabled = false; btn.innerText = "Archive vendor";
+  }
+}
+
+/* ── RESTORE ── */
+function openRestore(id) {
+  const v = allVendors.find(x => String(x.vendor_id) === String(id));
+  if (!v) return;
+  dialogVendor = v;
+
+  let note = {};
+  try { note = JSON.parse(v.archive_note || "{}") || {}; } catch (e) { note = {}; }
+  const noteSchools = note.schools || [];
+  const noteUsers   = note.users || [];
+  const movedTo     = String(note.moved_to || "");
+
+  let html = `<div class="dlg-note">Restoring makes the vendor active again. Schools that can go back are ticked — untick any that should stay where they are. Users are only reactivated if you tick them.</div>`;
+
+  html += `<div class="dlg-section">`;
+  if (!noteSchools.length) {
+    html += `<p>No schools were moved when this vendor was archived.</p>`;
+  } else {
+    html += `<p>When archived, ${noteSchools.length} school(s) were moved to <b>${esc(note.moved_to_name || vendorName(movedTo))}</b>. Ticked ones will be moved back:</p><div class="dlg-list">`;
+    noteSchools.forEach(ns => {
+      const cur = allSchools.find(s => s.school_id === String(ns.school_id));
+      let why = "";
+      if (!cur) why = "school was deleted";
+      else if (cur.vendor_id !== movedTo) why = "now with " + vendorName(cur.vendor_id) + " — left there";
+      html += why
+        ? `<label class="dlg-item disabled"><input type="checkbox" disabled> ${esc(ns.school)} <span class="why">${esc(why)}</span></label>`
+        : `<label class="dlg-item"><input type="checkbox" class="rs-school" value="${esc(ns.school_id)}" checked> ${esc(cur.school_name || ns.school)} <span class="why">${esc(ns.school)}</span></label>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="dlg-section">`;
+  if (!noteUsers.length) {
+    html += `<p>No users were deactivated when this vendor was archived.</p>`;
+  } else {
+    html += `<p>Tick the users to reactivate:</p><div class="dlg-list">`;
+    noteUsers.forEach(name => {
+      const u = allUsers ? allUsers.find(x => String(x.username).toLowerCase() === String(name).toLowerCase()) : null;
+      let why = "";
+      if (allUsers && !u) why = "user was deleted";
+      else if (u && String(u.active).toLowerCase() === "yes") why = "already active";
+      html += why
+        ? `<label class="dlg-item disabled"><input type="checkbox" disabled> ${esc(name)} <span class="why">${esc(why)}</span></label>`
+        : `<label class="dlg-item"><input type="checkbox" class="rs-user" value="${esc(name)}"> ${esc(name)}</label>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div>`;
+
+  document.getElementById("restoreTitle").innerText = `Restore "${v.name}"?`;
+  document.getElementById("restoreBody").innerHTML  = html;
+  document.getElementById("overlay").style.display      = "block";
+  document.getElementById("restorePopup").style.display = "block";
+}
+
+async function confirmRestore() {
+  if (saving || !dialogVendor) return;
+  const v       = dialogVendor;
+  const schools = [...document.querySelectorAll("#restoreBody .rs-school:checked")].map(c => c.value);
+  const users   = [...document.querySelectorAll("#restoreBody .rs-user:checked")].map(c => c.value);
+
+  saving = true;
+  const btn = document.getElementById("restoreBtn");
+  btn.disabled = true; btn.innerText = "Restoring…";
+  try {
+    const res = await restoreVendor(v.vendor_id, schools, users);
+    if (handleError(res, "Failed to restore vendor")) return;
+    saving = false;
+    closePopup();
+    showToast(`Restored "${v.name}": ${res.moved_back} school(s) moved back, ${res.reactivated} user(s) reactivated`);
+    if (res.skipped && res.skipped.length) alert("Some items were left as they are:\n\n" + res.skipped.join("\n"));
+    await Promise.all([loadVendors(), loadSchoolCounts(), loadUsers()]);
+    renderVendors();
+  } finally {
+    saving = false;
+    btn.disabled = false; btn.innerText = "Restore vendor";
+  }
+}
+
+document.addEventListener("keydown", e => { if (e.key === "Escape") closePopup(); });
+
+// Logged in again through the "Session expired" box -> load the lists that failed
+window.addEventListener("sessionrestored", () => { init(); });
+
+init();
+</script>
+
+</body>
+</html>

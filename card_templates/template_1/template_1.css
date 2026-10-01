@@ -1,0 +1,6 @@
+/* Intrinsic card size — used only by the orientation auto-detection probe.
+   Does not affect actual print/PDF rendering (that's controlled by the grid cell). */
+.card-size-template_1 {
+  width: 94mm;
+  height: 51mm;
+}

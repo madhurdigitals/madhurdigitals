@@ -50,6 +50,14 @@ function filterActionCards() {
     }
   });
 
+  
+  // Cards for one role only (e.g. Manage Vendors = super admin), whatever permissions others have
+  document.querySelectorAll(".action-card[data-role]").forEach(card => {
+    if (card.getAttribute("data-role") !== userRole) {
+      card.style.display = "none";
+    }
+  });
+
   // Hide Top Data Operators chart for non-admins
   const operatorsChart = document.getElementById("chartAddedByCard");
   if (operatorsChart && userRole !== "admin") {
@@ -480,7 +488,8 @@ function continueAction() {
   const routes = {
     add: "add_student.html", manage: "manage_student.html",
     print: "print_student.html", bulk: "bulk_upload.html",
-    form: "school_form.html", export: "export_student.html"
+    form: "school_form.html", export: "export_student.html",
+    photos: "manage_photos.html"
   };
   if (routes[mode]) window.location.href = routes[mode];
 }

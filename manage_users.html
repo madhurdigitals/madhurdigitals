@@ -137,6 +137,30 @@
     table { font-size: 13px; }
     td, th { padding: 10px 8px; }
 
+    /* ── PASSWORDS ── */
+    .weak-badge {
+      display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 10px;
+      background: #fef3c7; color: #92400e; font-size: 10px; font-weight: 700; white-space: nowrap;
+    }
+    .pw-info-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -4px 0 12px; }
+    .pw-info { font-size: 11px; color: #6b7280; line-height: 1.5; }
+    .btn-reset {
+      width: auto !important; flex: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;
+      background: #fff7ed; color: #9a3412; border: 1px solid #fdba74; white-space: nowrap;
+    }
+    .btn-reset:disabled { opacity: 0.5; cursor: not-allowed; }
+    #resetPopup { z-index: 1100; width: 400px; }
+    .reset-opt { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 10px; cursor: pointer; }
+    .reset-opt input { width: auto; margin: 0; accent-color: #0d6efd; }
+    .pw-hint { font-size: 11px; color: #6b7280; margin: -6px 0 12px; }
+    .pw-result {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 12px 14px; margin: 8px 0 12px;
+    }
+    .pw-result code { font-size: 20px; font-weight: 700; letter-spacing: 1px; color: #166534; user-select: all; }
+    .pw-result button { width: auto; padding: 6px 12px; border-radius: 6px; border: 1px solid #16a34a; background: #fff; color: #166534; cursor: pointer; }
+    .pw-warn { font-size: 12px; color: #92400e; background: #fffbeb; padding: 8px 10px; border-radius: 6px; margin-bottom: 12px; }
+
     .heading-wrapper { text-align: center; margin: 15px 0 5px; }
     .heading-badge {
       display: inline-block; padding: 8px 18px;
@@ -215,6 +239,10 @@
     <input id="pu_password" type="password" placeholder="Enter password">
     <span class="pass-eye" onclick="togglePassVis('pu_password', this)">👁️</span>
   </div>
+  <div class="pw-info-row">
+    <div class="pw-info" id="pwInfo"></div>
+    <button type="button" class="btn-reset" id="resetPwBtn" onclick="openResetPopup()" style="display:none;">🔑 Reset password</button>
+  </div>
 
   <label class="field-label">Role</label>
   <select id="pu_role" onchange="handleRoleChange()">
@@ -277,6 +305,11 @@
       <input type="checkbox" value="users">
       <span>👥 Manage Users</span>
     </label>
+    <!-- Only shown when Role = Admin. Only an admin who has it can tick/untick it. -->
+    <label class="perm-item" id="vendorsPermItem" style="display:none;">
+      <input type="checkbox" value="vendors" id="vendorsPermBox">
+      <span>🤝 Manage Vendors</span>
+    </label>
 
   </div>
 
@@ -285,6 +318,43 @@
     <button class="btn-cancel" onclick="closePopup()">Cancel</button>
   </div>
 
+</div>
+
+<!-- RESET PASSWORD POPUP -->
+<div class="popup" id="resetPopup">
+  <h3 id="resetTitle">Reset password</h3>
+
+  <div id="resetForm">
+    <label class="reset-opt">
+      <input type="radio" name="resetMode" value="generate" checked onchange="resetModeChanged()">
+      Generate a strong password
+    </label>
+    <label class="reset-opt">
+      <input type="radio" name="resetMode" value="own" onchange="resetModeChanged()">
+      Type my own
+    </label>
+    <div id="ownPwWrap" style="display:none;">
+      <input id="reset_pw" type="text" autocomplete="off" placeholder="New password">
+      <div class="pw-hint">At least 6 characters, not only digits, not the username, not a common password.</div>
+    </div>
+    <div class="pw-warn">Their current sessions will be logged out.</div>
+    <div class="popup-actions">
+      <button class="btn-save" id="resetGoBtn" onclick="doReset()">Reset password</button>
+      <button class="btn-cancel" onclick="closeResetPopup()">Cancel</button>
+    </div>
+  </div>
+
+  <div id="resetResult" style="display:none;">
+    <p style="font-size:14px;">New password for <b id="resetUserName"></b>:</p>
+    <div class="pw-result">
+      <code id="resetNewPw"></code>
+      <button type="button" id="copyPwBtn" onclick="copyNewPassword()">📋 Copy</button>
+    </div>
+    <div class="pw-warn">⚠ Copy it now — it will not be shown again. Nobody can see it later, not even an admin.</div>
+    <div class="popup-actions">
+      <button class="btn-save" onclick="closeResetPopup()">Done</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -296,8 +366,42 @@ let editingUsername = null; // null = add mode
 const PERM_LABELS = {
   add:"➕ Add", manage:"🧾 Manage", print:"🖨 Print",
   export:"💾 Export", bulk:"📤 Bulk", form:"📄 Forms",
-  schools:"🏫 Schools", restore:"♻️ Restore", users:"👥 Users"
+  schools:"🏫 Schools", restore:"♻️ Restore", users:"👥 Users",
+  vendors:"🤝 Vendors"
 };
+
+// The logged-in person may give / take Manage Vendors (the server checks this too).
+function iCanManageVendors() {
+  return getRole() === "admin" && getPermissions().includes("vendors");
+}
+
+/* ── PASSWORD RULES (same as the server, which has the final say) ── */
+const COMMON_PASSWORDS = [
+  "password", "password1", "passw0rd", "admin", "admin123", "administrator", "qwerty", "qwerty123",
+  "abc123", "abcdef", "abcd1234", "letmein", "welcome", "welcome1", "iloveyou", "monkey", "dragon",
+  "school", "school123", "student", "teacher", "india", "india123", "test", "test123", "user", "user123",
+  "changeme", "secret", "login", "master", "sunshine", "princess", "football", "cricket"
+];
+function passwordProblem(p, username) {
+  if (p.length < 6) return "Password must be at least 6 characters.";
+  if (/^\d+$/.test(p)) return "Password must not be only digits.";
+  if (username && p.toLowerCase() === username.toLowerCase()) return "Password must not be the same as the username.";
+  if (COMMON_PASSWORDS.includes(p.toLowerCase())) return "This password is too common. Please choose another.";
+  return "";
+}
+
+function passwordInfoText(u) {
+  const parts = [];
+  if (u.password_changed_at) {
+    const when = new Date(u.password_changed_at);
+    parts.push("Password last changed: " + (isNaN(when) ? u.password_changed_at : when.toLocaleString()) +
+               (u.password_changed_by ? " by " + u.password_changed_by : ""));
+  } else {
+    parts.push("Password last changed: not recorded");
+  }
+  if (u.password_weak) parts.push("⚠ Weak password (" + u.password_weak + ") — please reset it.");
+  return parts.join("<br>");
+}
 
 /* ── INIT ── */
 async function init() {
@@ -321,7 +425,7 @@ async function loadSchoolList() {
 /* ── LOAD USERS ── */
 async function loadUsers() {
   const res = await getUsers();
-  if (res.error) { alert(res.error); return; }
+  if (res.error) { if (!isSessionError(res)) alert(res.error); return; }
 
   allUsers = res.users || [];
   document.getElementById("totalUsers").innerText = allUsers.length;
@@ -356,7 +460,7 @@ async function loadUsers() {
     return `
       <tr>
         <td>${idx + 1}</td>
-        <td><b>${u.username}</b></td>
+        <td><b>${u.username}</b>${u.password_weak ? `<span class="weak-badge" title="${String(u.password_weak).replace(/"/g, "&quot;")}">⚠ Weak password</span>` : ""}</td>
         <td><span class="badge ${badgeClass}">${role}</span></td>
         <td style="max-width:160px;">${schoolDisplay}</td>
         <td style="max-width:200px;">${permChips || "-"}</td>
@@ -417,6 +521,15 @@ function handleRoleChange() {
   } else {
     section.style.display = "block";
   }
+
+  // Manage Vendors exists only for admins
+  const vItem = document.getElementById("vendorsPermItem");
+  const vBox  = document.getElementById("vendorsPermBox");
+  vItem.style.display = role === "admin" ? "" : "none";
+  if (role !== "admin") vBox.checked = false;
+  vBox.disabled       = !iCanManageVendors();
+  vItem.style.opacity = vBox.disabled ? "0.55" : "";
+  vItem.title         = vBox.disabled ? "Only an admin with Manage Vendors can change this" : "";
 }
 
 /* ── OPEN ADD POPUP ── */
@@ -427,6 +540,10 @@ function openAddPopup() {
   document.getElementById("pu_username").disabled = false;
   document.getElementById("pu_password").value    = "";
   document.getElementById("pu_role").value        = "employee";
+
+  document.getElementById("pu_password").placeholder = "Enter password";
+  document.getElementById("pwInfo").innerHTML        = "At least 6 characters, not only digits.";
+  document.getElementById("resetPwBtn").style.display = "none";
 
   // Default perms: none
   document.querySelectorAll("#permGrid input").forEach(cb => cb.checked = false);
@@ -450,12 +567,21 @@ function openEditPopup(username) {
   document.getElementById("pu_username").value    = username;
   document.getElementById("pu_username").disabled = true;
   document.getElementById("pu_password").value    = ""; // blank = no change
+  document.getElementById("pu_password").placeholder = "Leave blank to keep the current password";
+  document.getElementById("pwInfo").innerHTML        = passwordInfoText(user);
+  const resetBtn = document.getElementById("resetPwBtn");
+  resetBtn.style.display = "";
+  // Only an admin may reset an admin's password (the server checks this too)
+  resetBtn.disabled = user.role === "admin" && getRole() !== "admin";
+  resetBtn.title    = resetBtn.disabled ? "Only an admin can reset an admin's password" : "";
   document.getElementById("pu_role").value        = user.role || "employee";
 
   // Permissions
+  // "all" = every box ticked (for an admin that includes Manage Vendors)
   const perms = (user.permissions || "").split(",").map(p => p.trim());
+  const isAllPerms = perms.includes("all");
   document.querySelectorAll("#permGrid input").forEach(cb => {
-    cb.checked = perms.includes(cb.value);
+    cb.checked = isAllPerms || perms.includes(cb.value);
   });
 
   // Schools
@@ -479,8 +605,15 @@ async function saveUser() {
 
   if (!username) { alert("Username is required"); return; }
 
+  if (password) {
+    const problem = passwordProblem(password, username);
+    if (problem) { alert(problem); return; }
+  }
+
   const perms  = [...document.querySelectorAll("#permGrid input:checked")]
-                   .map(cb => cb.value).join(",");
+                   .map(cb => cb.value)
+                   .filter(p => role === "admin" || p !== "vendors")   // Manage Vendors is for admins only
+                   .join(",");
 
   const school = role === "admin" ? "*" : getSelectedSchools();
 
@@ -503,7 +636,7 @@ async function saveUser() {
   }
 
   if (res && res.error) {
-    alert(res.error);
+    if (!isSessionError(res)) alert(res.error);
   } else {
     closePopup();
     await loadUsers();
@@ -513,7 +646,7 @@ async function saveUser() {
 /* ── TOGGLE ── */
 async function handleToggle(username) {
   const res = await toggleUser(username);
-  if (res && res.error) { alert(res.error); return; }
+  if (res && res.error) { if (!isSessionError(res)) alert(res.error); return; }
   await loadUsers();
 }
 
@@ -521,7 +654,7 @@ async function handleToggle(username) {
 async function handleDelete(username) {
   if (!confirm(`Delete user "${username}"? This cannot be undone.`)) return;
   const res = await deleteUser(username);
-  if (res && res.error) { alert(res.error); return; }
+  if (res && res.error) { if (!isSessionError(res)) alert(res.error); return; }
   await loadUsers();
 }
 
@@ -539,8 +672,78 @@ function openPopup() {
 }
 
 function closePopup() {
-  document.getElementById("overlay").style.display   = "none";
-  document.getElementById("userPopup").style.display = "none";
+  document.getElementById("overlay").style.display    = "none";
+  document.getElementById("userPopup").style.display  = "none";
+  document.getElementById("resetPopup").style.display = "none";
+}
+
+/* ── RESET PASSWORD ── */
+let resetting = false;
+
+function openResetPopup() {
+  if (!editingUsername) return;
+  document.getElementById("resetTitle").innerText = `Reset password: ${editingUsername}`;
+  document.querySelector('input[name="resetMode"][value="generate"]').checked = true;
+  document.getElementById("reset_pw").value = "";
+  resetModeChanged();
+  document.getElementById("resetForm").style.display   = "";
+  document.getElementById("resetResult").style.display = "none";
+  document.getElementById("userPopup").style.display   = "none";
+  document.getElementById("resetPopup").style.display  = "block";
+  document.getElementById("overlay").style.display     = "block";
+}
+
+function resetModeChanged() {
+  const own = document.querySelector('input[name="resetMode"]:checked').value === "own";
+  document.getElementById("ownPwWrap").style.display = own ? "" : "none";
+}
+
+async function doReset() {
+  if (resetting || !editingUsername) return;
+  const own = document.querySelector('input[name="resetMode"]:checked').value === "own";
+  const typed = document.getElementById("reset_pw").value.trim();
+  if (own) {
+    const problem = passwordProblem(typed, editingUsername);
+    if (problem) { alert(problem); return; }
+  }
+
+  resetting = true;
+  const btn = document.getElementById("resetGoBtn");
+  btn.disabled = true; btn.innerText = "Resetting…";
+  try {
+    const res = await resetUserPassword(editingUsername, own ? typed : "");
+    if (!res || res.error) { if (!isSessionError(res)) alert((res && res.error) || "Password NOT reset - no answer from the server"); return; }
+    document.getElementById("resetUserName").innerText = res.username;
+    document.getElementById("resetNewPw").innerText    = res.password;
+    document.getElementById("copyPwBtn").innerText     = "📋 Copy";
+    document.getElementById("resetForm").style.display   = "none";
+    document.getElementById("resetResult").style.display = "";
+  } finally {
+    resetting = false;
+    btn.disabled = false; btn.innerText = "Reset password";
+  }
+}
+
+async function copyNewPassword() {
+  const text = document.getElementById("resetNewPw").innerText;
+  let copied = false;
+  try { await navigator.clipboard.writeText(text); copied = true; } catch (err) { copied = false; }
+  if (!copied) {   // older browsers / file:// pages
+    const tmp = document.createElement("textarea");
+    tmp.value = text; document.body.appendChild(tmp); tmp.select();
+    try { copied = document.execCommand("copy"); } catch (err) { copied = false; }
+    tmp.remove();
+  }
+  document.getElementById("copyPwBtn").innerText = copied ? "✅ Copied" : "Select it and press Ctrl+C";
+}
+
+// Logged in again through the "Session expired" box -> load the lists again
+window.addEventListener("sessionrestored", () => { init(); });
+
+function closeResetPopup() {
+  document.getElementById("resetNewPw").innerText = "";   // don't leave it on the page
+  closePopup();
+  loadUsers();
 }
 </script>
 

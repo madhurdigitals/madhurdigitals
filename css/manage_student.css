@@ -677,3 +677,21 @@ td:first-child {
 @media (max-width: 480px) {
   .filter-grid { grid-template-columns: 1fr; }
 }
+
+.photo-upload-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.photo-upload-wrap img {
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #d1d5db;
+}
+.no-photo-label {
+  color: #9ca3af;
+  font-size: 12px;
+}

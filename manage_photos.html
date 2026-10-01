@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Manage Photos — Madhur Digitals</title>
+
+  <script src="js/protect.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/manage_photos.js" defer></script>
+
+  <link rel="stylesheet" href="css/manage_student.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    /* ── STATS ── */
+    .photo-stats-row {
+      display: flex; gap: 12px; flex-wrap: wrap; margin: 15px 0;
+    }
+    .photo-stat-pill {
+      background: #fff; border-radius: 12px; padding: 10px 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-size: 13px; color: #374151;
+    }
+    .photo-stat-pill b { color: #0d6efd; font-size: 16px; }
+
+    /* ── DROPZONE ── */
+    .dropzone {
+      border: 2px dashed #93c5fd; border-radius: 14px; padding: 40px 20px;
+      text-align: center; background: #f0f7ff; cursor: pointer;
+      transition: 0.2s; margin-bottom: 10px;
+    }
+    .dropzone:hover, .dropzone.dragover {
+      background: #e0f2fe; border-color: #0d6efd;
+    }
+    .dropzone p { margin: 6px 0; color: #374151; }
+    .dropzone .sub { font-size: 12px; color: #9ca3af; }
+
+    /* ── STUDENT GRID ── */
+    .photo-toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 10px; margin-bottom: 15px;
+    }
+    .photo-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 14px;
+    }
+    .photo-card {
+      background: #fff; border-radius: 12px; padding: 10px; text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; transition: 0.15s;
+    }
+    .photo-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+    .photo-card img, .photo-card .no-photo-box {
+      width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px;
+      background: #f1f5f9; display: flex; align-items: center; justify-content: center;
+      color: #9ca3af; font-size: 11px;
+    }
+    .photo-card .pc-name { font-weight: 600; font-size: 12px; margin-top: 6px; color: #374151;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .photo-card .pc-id { font-size: 11px; color: #9ca3af; }
+    .photo-card.missing { border: 1px solid #fca5a5; }
+
+    /* ── STAGING REVIEW ── */
+    .stage-section { margin-bottom: 22px; }
+    .stage-section h4 { margin-bottom: 8px; color: #374151; }
+    .stage-row {
+      display: flex; align-items: center; gap: 14px; background: #fff;
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .stage-row img { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; }
+    .stage-row .stage-info { flex: 1; min-width: 0; }
+    .stage-row .stage-info b { display: block; font-size: 13px; }
+    .stage-row .stage-info span { font-size: 11px; color: #9ca3af; }
+    .stage-row.unmatched { opacity: 0.7; }
+    .stage-row .compare-thumbs { display: flex; gap: 6px; align-items: center; }
+    .stage-row .compare-thumbs .arrow { color: #9ca3af; }
+
+    .toggle-group { display: flex; gap: 6px; }
+    .toggle-btn {
+      padding: 5px 12px; border-radius: 6px; border: 1px solid #d1d5db;
+      background: #f9fafb; cursor: pointer; font-size: 12px;
+    }
+    .toggle-btn.skip.active { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
+    .toggle-btn.replace.active { background: #dcfce7; border-color: #16a34a; color: #166534; }
+
+    .zoom-btn {
+      padding: 4px 8px; border-radius: 6px; border: 1px solid #d1d5db;
+      background: #fff; cursor: pointer; font-size: 11px;
+    }
+
+    /* ── ZOOM MODAL ── */
+    .zoom-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 99999; align-items: center; justify-content: center;
+    }
+    .zoom-overlay.active { display: flex; }
+    .zoom-content {
+      background: #fff; border-radius: 14px; padding: 20px; max-width: 90vw;
+      max-height: 90vh; overflow: auto;
+    }
+    .zoom-images { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+    .zoom-images div { text-align: center; }
+    .zoom-images img { max-width: 400px; max-height: 60vh; border-radius: 10px; object-fit: contain; }
+    .zoom-images p { font-weight: 600; margin-top: 8px; color: #374151; }
+    .zoom-close {
+      float: right; cursor: pointer; font-size: 20px; color: #6b7280;
+    }
+
+    /* ── PROGRESS ── */
+    .upload-progress-wrap { margin: 15px 0; display: none; }
+    .upload-progress-bar-bg {
+      background: #e5e7eb; border-radius: 10px; height: 10px; overflow: hidden;
+    }
+    .upload-progress-bar {
+      background: #0d6efd; height: 100%; width: 0%; transition: width 0.2s;
+    }
+    .upload-progress-text { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+    /* ── RESULTS ── */
+    .result-summary { display: flex; gap: 14px; flex-wrap: wrap; margin: 15px 0; }
+    .result-pill { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; }
+    .result-pill.ok { background: #dcfce7; color: #166534; }
+    .result-pill.fail { background: #fee2e2; color: #991b1b; }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <div class="logo" onclick="location.href='dashboard.html'" style="cursor:pointer;">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <div>
+      <div class="title-text">Madhur Digitals</div>
+      <div class="school-name" id="schoolNameTop"></div>
+    </div>
+  </div>
+  <div class="nav-actions">
+    <button onclick="changeSchool()">Change School</button>
+    <button onclick="location.href='dashboard.html'">Dashboard</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="heading-wrapper">
+  <div class="heading-badge">
+    📸 Manage Photos: <span id="schoolName"></span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- STATS -->
+  <div class="photo-stats-row">
+    <div class="photo-stat-pill"><b id="statTotal">0</b> Total Students</div>
+    <div class="photo-stat-pill"><b id="statWithPhoto">0</b> With Photo</div>
+    <div class="photo-stat-pill"><b id="statMissing">0</b> Missing Photo</div>
+  </div>
+
+  <!-- BULK UPLOAD CARD -->
+  <div class="card">
+    <h3>Bulk Upload Photos</h3>
+    <p style="color:#6b7280; font-size:13px;">
+      Select or drop photo files named exactly by Student ID (e.g. <code>80205.jpg</code>).
+      Nothing uploads until you review and confirm below.
+    </p>
+
+    <div class="dropzone" id="dropzone" onclick="document.getElementById('bulkFileInput').click()">
+      <p><b>📂 Drop photos here or click to select</b></p>
+      <p class="sub">Multiple files supported — JPG/PNG</p>
+      <input type="file" id="bulkFileInput" accept="image/*" multiple style="display:none;">
+    </div>
+
+    <div id="stagingArea" style="display:none;">
+      <div id="stageNew" class="stage-section"></div>
+      <div id="stageConflict" class="stage-section"></div>
+      <div id="stageUnmatched" class="stage-section"></div>
+
+      <div class="btn-group">
+        <button class="submit-btn" id="confirmUploadBtn" onclick="confirmBulkUpload()">
+          ✅ Confirm & Upload
+        </button>
+        <button class="clear-btn" onclick="cancelStaging()">Cancel</button>
+      </div>
+    </div>
+
+    <div class="upload-progress-wrap" id="progressWrap">
+      <div class="upload-progress-bar-bg">
+        <div class="upload-progress-bar" id="progressBar"></div>
+      </div>
+      <div class="upload-progress-text" id="progressText">Uploading 0 / 0...</div>
+    </div>
+
+    <div class="result-summary" id="resultSummary" style="display:none;"></div>
+  </div>
+
+  <!-- STUDENT PHOTO GRID -->
+  <div class="card">
+    <div class="photo-toolbar">
+      <h3 style="margin:0;">Students</h3>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <input id="searchPhotoName" placeholder="Search name..." style="padding:8px; border-radius:8px; border:1px solid #d1d5db;">
+        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#374151;">
+          <input type="checkbox" id="missingOnlyToggle" onchange="renderPhotoGrid()">
+          Missing photos only
+        </label>
+      </div>
+    </div>
+    <div class="photo-grid" id="photoGrid"></div>
+  </div>
+
+</div>
+
+<!-- SINGLE PHOTO UPLOAD/REPLACE POPUP -->
+<div id="singlePhotoPopup" class="school-box">
+  <div class="modal" style="width:340px;">
+    <div class="school-header">
+      <h3 id="singlePhotoTitle">Student Photo</h3>
+      <span class="close-btn" onclick="closeSinglePhotoPopup()">✖</span>
+    </div>
+    <div style="text-align:center; margin: 15px 0;">
+      <img id="singlePhotoPreview" src="" style="width:140px; height:140px; border-radius:10px; object-fit:cover; background:#f1f5f9;">
+    </div>
+    <input type="file" id="singlePhotoFile" accept="image/*" style="width:100%; margin-bottom:12px;">
+    <div class="btn-group">
+      <button class="submit-btn" onclick="uploadSinglePhoto()">Upload / Replace</button>
+      <button class="clear-btn" onclick="closeSinglePhotoPopup()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ZOOM COMPARE MODAL -->
+<div id="zoomOverlay" class="zoom-overlay">
+  <div class="zoom-content">
+    <span class="zoom-close" onclick="closeZoom()">✖</span>
+    <div class="zoom-images" id="zoomImages"></div>
+  </div>
+</div>
+
+<!-- SCHOOL SELECTOR -->
+<div id="schoolBox" class="school-box">
+  <div class="modal">
+    <div class="school-header">
+      <h3>Select School</h3>
+      <span class="close-btn" onclick="hideSchoolSelector()">✖</span>
+    </div>
+    <select id="schoolSelect">
+      <option>Loading...</option>
+    </select>
+    <br><br>
+    <button onclick="applySchoolChange()">Apply</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+</body>
+</html>

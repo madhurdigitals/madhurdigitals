@@ -4,8 +4,13 @@
 
 async function login(username, password) {
   try {
-    const url  = `${API_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
-    const res  = await fetch(url);
+    // POST: the password travels in the request body, not in the URL.
+    // No Content-Type header on purpose - plain text avoids the browser's pre-check
+    // (preflight), which Apps Script cannot answer. The server still reads it as JSON.
+    const res  = await fetch(API_URL, {
+      method: "POST",
+      body:   JSON.stringify({ action: "login", username: username, password: password })
+    });
     const data = await res.json();
 
     if (data.error) return { success: false, error: data.error };
@@ -26,7 +31,10 @@ async function login(username, password) {
       sessionStorage.setItem("school", "*");
     }
 
-    return { success: true, role: data.role, schools: data.schools, permissions: data.permissions };
+    // school: the single school name (or "*") - login.html reads result.school; it was missing before,
+    // so school users ended up with the text "undefined" as their school.
+    return { success: true, role: data.role, school: sessionStorage.getItem("school"),
+             schools: data.schools, permissions: data.permissions };
 
   } catch (err) {
     return { success: false, error: "Network error. Please try again." };
@@ -35,7 +43,13 @@ async function login(username, password) {
 
 async function logout() {
   const token = sessionStorage.getItem("token");
-  if (token) fetch(`${API_URL}?action=logout&token=${encodeURIComponent(token)}`).catch(() => {});
+  if (token) {
+    fetch(API_URL, {
+      method:    "POST",
+      keepalive: true,   // lets the request finish even though the page is about to change
+      body:      JSON.stringify({ action: "logout", token: token })
+    }).catch(() => {});
+  }
   localStorage.clear();
   sessionStorage.clear();
   window.location.href = "index.html";
