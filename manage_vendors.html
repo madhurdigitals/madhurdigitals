@@ -431,6 +431,7 @@ async function loadUsers() {
 function seatUsersOf(vendorId) {
   if (!allUsers) return [];
   return allUsers.filter(u => userVendor(u) === String(vendorId) &&
+    String(u.active || "").toLowerCase() !== "archived" &&          // archived = seat freed (same rule as the server)
     (String(u.role).toLowerCase() === "vendor" || String(u.role).toLowerCase() === "employee"));
 }
 

@@ -567,9 +567,10 @@ async function archiveUser(username) {
   }
 }
 
-async function unarchiveUser(username, overrideLimit) {
+async function unarchiveUser(username, overrideLimit, activate) {
   try {
-    const params = new URLSearchParams({ action: "unarchiveUser", target_username: username, override_limit: overrideLimit ? "1" : "" });
+    const params = new URLSearchParams({ action: "unarchiveUser", target_username: username,
+                                         override_limit: overrideLimit ? "1" : "", activate: activate ? "1" : "" });
     const res = await fetch(`${API_URL}?${params.toString()}`);
     return await res.json();
   } catch (err) {
