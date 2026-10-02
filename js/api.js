@@ -498,7 +498,10 @@ async function addUser(data) {
       password:    data.password,
       role:        data.role,
       school:      data.school,
-      permissions: data.permissions
+      permissions: data.permissions,
+      vendor_id:         data.vendor_id || "",          // vendor login / vendor staff (blank = Madhur Digitals)
+      generate_password: data.generate_password ? "1" : "",
+      override_limit:    data.override_limit ? "1" : ""
     });
   } catch (err) {
     console.error("addUser error:", err);
@@ -514,7 +517,9 @@ async function updateUser(data) {
       password:        data.password    || "",
       role:            data.role        || "",
       school:          data.school      || "",
-      permissions:     data.permissions || ""
+      permissions:     data.permissions || "",
+      vendor_id:       data.vendor_id   || "",
+      override_limit:  data.override_limit ? "1" : ""
     });
   } catch (err) {
     console.error("updateUser error:", err);
@@ -608,7 +613,8 @@ async function addVendor(data) {
       email:       data.email       || "",
       slug:        data.slug        || "",
       logo:        data.logo        || "",
-      brand_color: data.brand_color || ""
+      brand_color: data.brand_color || "",
+      max_users:   data.max_users   || ""
     });
     const res = await fetch(`${API_URL}?${params.toString()}`);
     return await res.json();
@@ -622,7 +628,7 @@ async function addVendor(data) {
 async function updateVendor(data) {
   try {
     const params = new URLSearchParams({ action: "updateVendor", vendor_id: data.vendor_id });
-    ["name", "contact", "phone", "email", "slug", "logo", "brand_color"].forEach(k => {
+    ["name", "contact", "phone", "email", "slug", "logo", "brand_color", "max_users"].forEach(k => {
       if (data[k] !== undefined) params.append(k, data[k]);
     });
     const res = await fetch(`${API_URL}?${params.toString()}`);

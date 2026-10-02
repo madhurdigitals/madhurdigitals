@@ -22,6 +22,10 @@
     .badge-admin    { background: #dbeafe; color: #1d4ed8; }
     .badge-employee { background: #dcfce7; color: #166534; }
     .badge-school   { background: #fef9c3; color: #854d0e; }
+    .badge-vendor   { background: #ede9fe; color: #6d28d9; }
+    .vendor-chip    { display: inline-block; margin-left: 4px; padding: 1px 7px; border-radius: 10px;
+                      background: #eef2ff; color: #4338ca; font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .vendor-note    { font-size: 12px; color: #4338ca; background: #eef2ff; border-radius: 7px; padding: 8px 10px; margin-bottom: 12px; }
 
     /* ── STATUS ── */
     .status-yes { color: #16a34a; font-weight: 600; }
@@ -245,11 +249,21 @@
   </div>
 
   <label class="field-label">Role</label>
-  <select id="pu_role" onchange="handleRoleChange()">
+  <select id="pu_role" onchange="handleRoleChange(true)">
     <option value="employee">Employee</option>
     <option value="school">School</option>
     <option value="admin">Admin</option>
+    <option value="vendor" id="roleVendorOpt">Vendor login</option>
   </select>
+
+  <!-- VENDOR (vendor logins and vendor staff) - only for admins with Manage Vendors -->
+  <div id="vendorFieldRow" style="display:none;">
+    <label class="field-label">Vendor</label>
+    <select id="pu_vendor" onchange="vendorChanged()"></select>
+  </div>
+  <div class="vendor-note" id="vendorSchoolsNote" style="display:none;">
+    A vendor login automatically sees every school this vendor owns - including schools added later.
+  </div>
 
   <!-- SCHOOL ACCESS -->
   <div id="schoolAccessSection">
@@ -257,7 +271,7 @@
 
     <label class="perm-item" style="margin-bottom:8px;">
       <input type="checkbox" id="allSchoolsCheck" onchange="toggleAllSchools(this)">
-      <span>⭐ All Schools (*)</span>
+      <span id="allSchoolsLabel">⭐ All Schools (*)</span>
     </label>
 
     <div class="school-list" id="schoolChecklist">
@@ -403,9 +417,60 @@ function passwordInfoText(u) {
   return parts.join("<br>");
 }
 
+/* ── VENDORS (Phase 2) ── */
+let allVendorsList = [];
+const VENDOR_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form"];
+const VENDOR_STAFF_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form"];
+const VENDOR_LOGIN_DEFAULTS = ["add", "manage", "print", "export", "bulk", "form"];
+const VENDOR_STAFF_DEFAULTS = ["add", "manage", "bulk", "form"];   // Print + Export unticked for staff
+
+function userVendor(u) { return String(u && u.vendor_id !== undefined && u.vendor_id !== "" ? u.vendor_id : "1"); }
+function vendorById(id) { return allVendorsList.find(v => String(v.vendor_id) === String(id)); }
+function isNormalVendor(v) {
+  const kind = String(v.kind || "").toLowerCase();
+  return String(v.vendor_id) !== "1" && kind !== "platform" && kind !== "holding" &&
+         String(v.status || "").toLowerCase() !== "archived";
+}
+
+async function loadVendorsList() {
+  const res = await getVendors();
+  allVendorsList = (res && !res.error && Array.isArray(res.vendors)) ? res.vendors : [];
+}
+
+// The vendor the user in the popup belongs to ("1" = Madhur Digitals)
+function currentVendorId() {
+  if (document.getElementById("vendorFieldRow").style.display !== "none") {
+    return document.getElementById("pu_vendor").value || "1";
+  }
+  if (editingUsername) return userVendor(allUsers.find(u => u.username === editingUsername));
+  return "1";
+}
+
+function isVendorStaffNow() {
+  return document.getElementById("pu_role").value === "employee" && currentVendorId() !== "1";
+}
+
+function fillVendorSelect(role, wanted) {
+  const sel  = document.getElementById("pu_vendor");
+  const keep = wanted !== undefined ? String(wanted) : sel.value;
+  const list = allVendorsList.filter(isNormalVendor).sort((a, b) => Number(a.vendor_id) - Number(b.vendor_id));
+  const opts = (role === "employee" ? [{ vendor_id: "1", name: "Madhur Digitals (your own staff)" }] : []).concat(list);
+  sel.innerHTML = opts.map(v => `<option value="${v.vendor_id}">${String(v.name).replace(/</g, "&lt;")}</option>`).join("");
+  if (opts.some(v => String(v.vendor_id) === keep)) sel.value = keep;
+  else if (opts.length) sel.value = String(opts[0].vendor_id);
+}
+
+function vendorChanged() {
+  const kept = getSelectedSchools();
+  buildSchoolChecklist(kept === "*" ? "*" : kept.split(",").filter(Boolean));
+  handleRoleChange(true);
+}
+
 /* ── INIT ── */
 async function init() {
-  await loadSchoolList();
+  await Promise.all([loadSchoolList(), loadVendorsList()]);
+  const vOpt = document.getElementById("roleVendorOpt");
+  vOpt.disabled = !iCanManageVendors();     // only an admin with Manage Vendors makes vendor logins
   await loadUsers();
 }
 
@@ -440,7 +505,8 @@ async function loadUsers() {
     const schoolStr = String(u.school || "*");
     const lastLogin = u.last_login ? new Date(u.last_login).toLocaleString() : "Never";
 
-    const badgeClass = role === "admin" ? "badge-admin"
+    const badgeClass = role === "vendor" ? "badge-vendor"
+                     : role === "admin" ? "badge-admin"
                      : role === "school" ? "badge-school"
                      : "badge-employee";
 
@@ -461,7 +527,8 @@ async function loadUsers() {
       <tr>
         <td>${idx + 1}</td>
         <td><b>${u.username}</b>${u.password_weak ? `<span class="weak-badge" title="${String(u.password_weak).replace(/"/g, "&quot;")}">⚠ Weak password</span>` : ""}</td>
-        <td><span class="badge ${badgeClass}">${role}</span></td>
+        <td><span class="badge ${badgeClass}">${role}</span>${userVendor(u) !== "1" && vendorById(userVendor(u))
+              ? `<span class="vendor-chip">🤝 ${String(vendorById(userVendor(u)).name).replace(/</g, "&lt;")}</span>` : ""}</td>
         <td style="max-width:160px;">${schoolDisplay}</td>
         <td style="max-width:200px;">${permChips || "-"}</td>
         <td>
@@ -484,7 +551,9 @@ async function loadUsers() {
 function buildSchoolChecklist(selectedSchools) {
   // selectedSchools: "*" or array of "SchoolName(id)" strings
   const container = document.getElementById("schoolChecklist");
-  container.innerHTML = allSchools.map(s => {
+  const vid  = isVendorStaffNow() ? currentVendorId() : null;
+  const list = vid ? allSchools.filter(s => String(s.vendor_id === undefined || s.vendor_id === "" ? 1 : s.vendor_id) === vid) : allSchools;
+  container.innerHTML = list.map(s => {
     const entry   = `${s.school}(${s.school_id})`;
     const checked = selectedSchools !== "*" &&
                     selectedSchools.some(sel => sel.includes(`${s.school}(`));
@@ -512,14 +581,46 @@ function toggleAllSchools(cb) {
 }
 
 /* ── ROLE CHANGE ── */
-function handleRoleChange() {
+function handleRoleChange(userChanged) {
   const role    = document.getElementById("pu_role").value;
   const section = document.getElementById("schoolAccessSection");
-  // Admin always gets * — hide school selector
-  if (role === "admin") {
+
+  // Vendor field: vendor logins and employees, for admins with Manage Vendors
+  const vRow       = document.getElementById("vendorFieldRow");
+  const showVendor = iCanManageVendors() && (role === "vendor" || role === "employee");
+  const wasVendor  = vRow.style.display !== "none" ? document.getElementById("pu_vendor").value : undefined;
+  if (showVendor) fillVendorSelect(role, wasVendor);
+  vRow.style.display = showVendor ? "" : "none";
+  const vendorPerson = role === "vendor" || isVendorStaffNow();
+
+  // Admin always gets * and a vendor login sees its vendor's schools automatically — no school selector
+  if (role === "admin" || role === "vendor") {
     section.style.display = "none";
   } else {
     section.style.display = "block";
+  }
+  document.getElementById("vendorSchoolsNote").style.display = role === "vendor" ? "" : "none";
+  document.getElementById("allSchoolsLabel").innerText = isVendorStaffNow() ? "⭐ All of this vendor's schools" : "⭐ All Schools (*)";
+  if (userChanged && role === "employee") {
+    const kept = getSelectedSchools();
+    buildSchoolChecklist(kept === "*" ? "*" : kept.split(",").filter(Boolean));
+    toggleAllSchools(document.getElementById("allSchoolsCheck"));
+  }
+
+  // Vendor people can only hold student-work permissions
+  const allowed = role === "vendor" ? VENDOR_LOGIN_UI_PERMS : VENDOR_STAFF_UI_PERMS;
+  document.querySelectorAll("#permGrid label.perm-item").forEach(item => {
+    const cb = item.querySelector("input");
+    if (!cb || cb.id === "vendorsPermBox") return;
+    const show = !vendorPerson || allowed.includes(cb.value);
+    item.style.display = show ? "" : "none";
+    if (!show) cb.checked = false;
+  });
+  if (!editingUsername && userChanged && vendorPerson) {
+    const defaults = role === "vendor" ? VENDOR_LOGIN_DEFAULTS : VENDOR_STAFF_DEFAULTS;
+    document.querySelectorAll("#permGrid input").forEach(cb => {
+      if (cb.id !== "vendorsPermBox") cb.checked = defaults.includes(cb.value);
+    });
   }
 
   // Manage Vendors exists only for admins
@@ -541,8 +642,9 @@ function openAddPopup() {
   document.getElementById("pu_password").value    = "";
   document.getElementById("pu_role").value        = "employee";
 
-  document.getElementById("pu_password").placeholder = "Enter password";
-  document.getElementById("pwInfo").innerHTML        = "At least 6 characters, not only digits.";
+  document.getElementById("pu_password").placeholder = "Leave blank to generate a strong password";
+  document.getElementById("pwInfo").innerHTML        = "At least 6 characters, not only digits - or leave blank and one is generated.";
+  fillVendorSelect("employee", "1");
   document.getElementById("resetPwBtn").style.display = "none";
 
   // Default perms: none
@@ -575,6 +677,11 @@ function openEditPopup(username) {
   resetBtn.disabled = user.role === "admin" && getRole() !== "admin";
   resetBtn.title    = resetBtn.disabled ? "Only an admin can reset an admin's password" : "";
   document.getElementById("pu_role").value        = user.role || "employee";
+
+  // Vendor (set before the school list, which depends on it)
+  fillVendorSelect(user.role === "vendor" ? "vendor" : "employee", userVendor(user));
+  document.getElementById("vendorFieldRow").style.display =
+    iCanManageVendors() && (user.role === "vendor" || user.role === "employee") ? "" : "none";
 
   // Permissions
   // "all" = every box ticked (for an admin that includes Manage Vendors)
@@ -615,32 +722,45 @@ async function saveUser() {
                    .filter(p => role === "admin" || p !== "vendors")   // Manage Vendors is for admins only
                    .join(",");
 
-  const school = role === "admin" ? "*" : getSelectedSchools();
+  const school = role === "admin" ? "*" : role === "vendor" ? "" : getSelectedSchools();
 
-  if (!school) { alert("Select at least one school or All Schools"); return; }
+  if (role !== "vendor" && !school) { alert("Select at least one school or All Schools"); return; }
 
-  let res;
+  const vendorVisible = document.getElementById("vendorFieldRow").style.display !== "none";
+  const vendorPart    = vendorVisible ? { vendor_id: currentVendorId() } : {};
 
-  if (editingUsername) {
+  const send = override => editingUsername
     // Edit mode — password blank means no change
-    res = await updateUser({
-      target_username: editingUsername,
-      password:        password,
-      role:            role,
-      school:          school,
-      permissions:     perms
-    });
-  } else {
-    if (!password) { alert("Password is required"); return; }
-    res = await addUser({ username, password, role, school, permissions: perms });
-  }
+    ? updateUser(Object.assign({ target_username: editingUsername, password: password, role: role,
+                                 school: school, permissions: perms, override_limit: override }, vendorPart))
+    // Add mode — password blank means "generate one"
+    : addUser(Object.assign({ username, password, role, school, permissions: perms,
+                              generate_password: !password, override_limit: override }, vendorPart));
+
+  let res = await send(false);
+  if (res && res.limit_reached && confirm(res.error + "\n\nGo ahead anyway?")) res = await send(true);
 
   if (res && res.error) {
-    if (!isSessionError(res)) alert(res.error);
+    if (!isSessionError(res) && !res.limit_reached) alert(res.error);
+  } else if (res && res.password) {
+    showNewPassword(res.username, res.password);      // generated: shown once
   } else {
     closePopup();
     await loadUsers();
   }
+}
+
+// Shows a just-generated password once, in the same box as Reset password
+function showNewPassword(username, password) {
+  document.getElementById("resetTitle").innerText    = "User created";
+  document.getElementById("resetUserName").innerText = username;
+  document.getElementById("resetNewPw").innerText    = password;
+  document.getElementById("copyPwBtn").innerText     = "📋 Copy";
+  document.getElementById("resetForm").style.display   = "none";
+  document.getElementById("resetResult").style.display = "";
+  document.getElementById("userPopup").style.display   = "none";
+  document.getElementById("resetPopup").style.display  = "block";
+  document.getElementById("overlay").style.display     = "block";
 }
 
 /* ── TOGGLE ── */
