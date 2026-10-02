@@ -69,6 +69,20 @@
                        color: #4b5563; margin-left: 16px; cursor: pointer; }
     .toggle-archived input { accent-color: #0d6efd; }
 
+    .btn-logins { background: #eef2ff; color: #4338ca; border: 1px solid #818cf8;
+                  padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; margin-left: 4px; }
+    .seat { font-weight: 600; }
+    .seat.full { color: #b45309; }
+    .seat.over { color: #b91c1c; }
+    .login-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 4px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .login-row:last-child { border-bottom: none; }
+    .perm-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin: 4px 0 12px; font-size: 13px; }
+    .perm-mini label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .perm-mini input { width: auto; margin: 0; accent-color: #0d6efd; }
+    .pw-once { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #f0fdf4;
+               border: 1px solid #86efac; border-radius: 8px; padding: 10px 12px; margin: 8px 0; }
+    .pw-once code { font-size: 18px; font-weight: 700; letter-spacing: 1px; color: #166534; user-select: all; }
+
     .empty-row td { color: #6b7280; padding: 24px; }
 
     /* ── ARCHIVE / RESTORE DIALOGS ── */
@@ -245,11 +259,49 @@
   <input id="pv_slug" placeholder="made from the name if left blank" oninput="updateSlugHint()">
   <div class="hint" id="slugHint">Used later for the vendor's own login link. English letters, numbers and dashes.</div>
 
+  <div id="maxUsersRow">
+    <label class="field-label">Max users</label>
+    <input id="pv_max_users" type="number" min="1" max="999" value="2">
+    <div class="hint">Vendor logins + their staff, active or not. School logins are not counted.</div>
+  </div>
+
   <div class="popup-actions">
     <button class="btn-save" id="saveBtn" onclick="saveVendor()">Add Vendor</button>
     <button class="btn-cancel" onclick="closePopup()">Cancel</button>
   </div>
 
+</div>
+
+<!-- LOGINS POPUP -->
+<div class="popup" id="loginsPopup">
+  <h3 id="loginsTitle">Logins</h3>
+  <div class="dlg-note" id="loginsSeats"></div>
+  <div class="dlg-section">
+    <p><b>Vendor logins</b></p>
+    <div class="dlg-list" id="loginsList"></div>
+  </div>
+  <div class="dlg-section" id="newLoginForm">
+    <p><b>Add a vendor login</b></p>
+    <input id="nl_username" placeholder="Username, e.g. abc_owner" autocomplete="off">
+    <div class="perm-mini" id="nlPerms">
+      <label><input type="checkbox" value="add" checked> ➕ Add</label>
+      <label><input type="checkbox" value="manage" checked> 🧾 Manage</label>
+      <label><input type="checkbox" value="print" checked> 🖨 Print</label>
+      <label><input type="checkbox" value="export" checked> 💾 Export</label>
+      <label><input type="checkbox" value="bulk" checked> 📤 Bulk Upload</label>
+      <label><input type="checkbox" value="form" checked> 📄 Forms</label>
+    </div>
+    <div class="hint" style="margin-top:-6px;">A strong password is generated and shown once. Staff are added on Manage Users (Role: Employee, Vendor: this vendor).</div>
+  </div>
+  <div id="newLoginResult" style="display:none;">
+    <p style="font-size:13px;">Login created for <b id="nlDoneUser"></b>:</p>
+    <div class="pw-once"><code id="nlDonePw"></code><button type="button" id="nlCopy" onclick="copyLoginPassword()">📋 Copy</button></div>
+    <div class="dlg-note">⚠ Copy it now — it will not be shown again.</div>
+  </div>
+  <div class="popup-actions">
+    <button class="btn-save" id="nlCreateBtn" onclick="createVendorLogin()">Create login</button>
+    <button class="btn-cancel" onclick="closePopup()">Close</button>
+  </div>
 </div>
 
 <!-- ARCHIVE POPUP -->
@@ -368,6 +420,13 @@ async function loadUsers() {
   allUsers = (res && !res.error && Array.isArray(res.users)) ? res.users : null;
 }
 
+// Vendor logins + staff of a vendor, active or not - what Max users counts (school logins don't count).
+function seatUsersOf(vendorId) {
+  if (!allUsers) return [];
+  return allUsers.filter(u => userVendor(u) === String(vendorId) &&
+    (String(u.role).toLowerCase() === "vendor" || String(u.role).toLowerCase() === "employee"));
+}
+
 function activeUsersOf(vendorId) {
   if (!allUsers) return [];
   return allUsers.filter(u => userVendor(u) === String(vendorId) &&
@@ -394,7 +453,11 @@ function renderVendors() {
     const status   = String(v.status || "active").toLowerCase();
     const color    = /^#[0-9a-fA-F]{6}$/.test(String(v.brand_color)) ? v.brand_color : "#ffffff";
     const logo     = String(v.logo || "").trim();
-    const users    = allUsers ? activeUsersOf(id).length : "?";
+    let users = allUsers ? activeUsersOf(id).length : "?";
+    if (allUsers && !isPlatform(v) && !isHolding(v) && String(v.max_users === undefined ? "" : v.max_users) !== "") {
+      const used = seatUsersOf(id).length, max = Number(v.max_users);
+      users = `<span class="seat ${used > max ? "over" : used === max ? "full" : ""}" title="Vendor logins + staff (active or not) / Max users">${used} / ${max}</span>`;
+    }
 
     let badge, actions;
     if (isArchived(v)) {
@@ -412,6 +475,7 @@ function renderVendors() {
         (status === "suspended"
           ? `<button class="btn-activate" onclick="changeStatus('${esc(id)}', 'active')">Activate</button>`
           : `<button class="btn-suspend"  onclick="changeStatus('${esc(id)}', 'suspended')">Suspend</button>`) +
+        `<button class="btn-logins" onclick="openLogins('${esc(id)}')">👤 Logins</button>` +
         `<button class="btn-archive" onclick="openArchive('${esc(id)}')">Archive</button>`;
     }
 
@@ -447,6 +511,10 @@ function fillPopup(v) {
   const color = v && /^#[0-9a-fA-F]{6}$/.test(String(v.brand_color)) ? String(v.brand_color).toLowerCase() : "#0d6efd";
   document.getElementById("pv_color").value      = color;
   document.getElementById("pv_color_pick").value = color;
+  // Max users: only for normal vendors (not Madhur Digitals or Unassigned Schools)
+  const special = v && (isPlatform(v) || isHolding(v));
+  document.getElementById("maxUsersRow").style.display = special ? "none" : "";
+  document.getElementById("pv_max_users").value = v && String(v.max_users || "") !== "" ? v.max_users : 2;
   updateSlugHint();
 }
 
@@ -478,7 +546,7 @@ function openPopup() {
 
 function closePopup() {
   if (saving) return;
-  ["overlay", "vendorPopup", "archivePopup", "restorePopup"].forEach(id => {
+  ["overlay", "vendorPopup", "archivePopup", "restorePopup", "loginsPopup"].forEach(id => {
     document.getElementById(id).style.display = "none";
   });
   dialogVendor = null;
@@ -515,6 +583,12 @@ async function saveVendor() {
     brand_color: document.getElementById("pv_color").value.trim().toLowerCase(),
     slug:        document.getElementById("pv_slug").value.trim()
   };
+  if (document.getElementById("maxUsersRow").style.display !== "none") {
+    data.max_users = document.getElementById("pv_max_users").value.trim();
+    if (!/^\d+$/.test(data.max_users) || Number(data.max_users) < 1 || Number(data.max_users) > 999) {
+      alert("Max users must be a whole number from 1 to 999"); return;
+    }
+  }
 
   if (!data.name) { alert("Vendor name is required"); return; }
   if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) { alert("Enter a valid email address"); return; }
@@ -569,6 +643,89 @@ async function changeStatus(id, status) {
   showToast(status === "suspended" ? "Vendor suspended" : "Vendor activated");
   await loadVendors();
   renderVendors();
+}
+
+/* ── LOGINS (vendor logins of one vendor) ── */
+let loginsVendor = null;
+let creatingLogin = false;
+
+function openLogins(id) {
+  const v = allVendors.find(x => String(x.vendor_id) === String(id));
+  if (!v) return;
+  loginsVendor = v;
+  document.getElementById("loginsTitle").innerText = `Logins — ${v.name}`;
+  renderLogins();
+  document.getElementById("nl_username").value = "";
+  document.querySelectorAll("#nlPerms input").forEach(cb => { cb.checked = true; });
+  document.getElementById("newLoginForm").style.display   = "";
+  document.getElementById("newLoginResult").style.display = "none";
+  document.getElementById("nlCreateBtn").style.display    = "";
+  document.getElementById("overlay").style.display     = "block";
+  document.getElementById("loginsPopup").style.display = "block";
+}
+
+function renderLogins() {
+  const v = loginsVendor;
+  const seats = seatUsersOf(v.vendor_id);
+  const logins = seats.filter(u => String(u.role).toLowerCase() === "vendor");
+  const staff  = seats.length - logins.length;
+  const max = String(v.max_users || "") !== "" ? Number(v.max_users) : null;
+  document.getElementById("loginsSeats").innerText =
+    `Users: ${seats.length}${max !== null ? " of " + max : ""} (${logins.length} vendor login(s) + ${staff} staff). School logins are not counted.`;
+  document.getElementById("loginsList").innerHTML = logins.length
+    ? logins.map(u => {
+        const active = String(u.active).toLowerCase() === "yes";
+        const last = u.last_login ? new Date(u.last_login).toLocaleString() : "never logged in";
+        return `<div class="login-row"><span><b>${esc(u.username)}</b> <span style="color:#6b7280;">· ${esc(last)}</span></span>
+                <span class="badge ${active ? "badge-active" : "badge-suspended"}">${active ? "Active" : "Inactive"}</span></div>`;
+      }).join("")
+    : `<div class="dlg-item" style="color:#6b7280;">No vendor logins yet.</div>`;
+}
+
+async function createVendorLogin(override) {
+  if (creatingLogin || !loginsVendor) return;
+  const username = document.getElementById("nl_username").value.trim().toLowerCase();
+  if (!/^[a-z0-9._-]{3,40}$/.test(username)) { alert("Username: 3-40 characters - letters, numbers, dot, dash or underscore"); return; }
+  const perms = [...document.querySelectorAll("#nlPerms input:checked")].map(cb => cb.value).join(",");
+
+  creatingLogin = true;
+  const btn = document.getElementById("nlCreateBtn");
+  btn.disabled = true; btn.innerText = "Creating…";
+  try {
+    const res = await addUser({ username: username, password: "", generate_password: true, role: "vendor",
+                                school: "", permissions: perms, vendor_id: loginsVendor.vendor_id, override_limit: !!override });
+    if (res && res.limit_reached && !override) {
+      creatingLogin = false;
+      if (confirm(res.error + "\n\nCreate it anyway?")) return createVendorLogin(true);
+      return;
+    }
+    if (handleError(res, "Failed to create the login")) return;
+    document.getElementById("nlDoneUser").innerText = res.username;
+    document.getElementById("nlDonePw").innerText   = res.password || "(set by you)";
+    document.getElementById("nlCopy").innerText     = "📋 Copy";
+    document.getElementById("newLoginForm").style.display   = "none";
+    document.getElementById("newLoginResult").style.display = "";
+    btn.style.display = "none";
+    await loadUsers();
+    renderLogins();
+    renderVendors();
+  } finally {
+    creatingLogin = false;
+    btn.disabled = false; btn.innerText = "Create login";
+  }
+}
+
+async function copyLoginPassword() {
+  const text = document.getElementById("nlDoneUser").innerText + " / " + document.getElementById("nlDonePw").innerText;
+  let copied = false;
+  try { await navigator.clipboard.writeText(text); copied = true; } catch (err) { copied = false; }
+  if (!copied) {
+    const tmp = document.createElement("textarea");
+    tmp.value = text; document.body.appendChild(tmp); tmp.select();
+    try { copied = document.execCommand("copy"); } catch (err) { copied = false; }
+    tmp.remove();
+  }
+  document.getElementById("nlCopy").innerText = copied ? "✅ Copied" : "Select + Ctrl+C";
 }
 
 /* ── ARCHIVE ── */
