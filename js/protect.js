@@ -36,10 +36,17 @@
   if (channel) {
     channel.addEventListener("message", ev => {
       const m = ev.data || {};
-      if (m.type === "need-session" && sessionStorage.getItem("token") && sessionStorage.getItem("isLoggedIn") === "true") {
+      if (m.type === "need-session" && !window.__mdSessionDead &&
+          sessionStorage.getItem("token") && sessionStorage.getItem("isLoggedIn") === "true") {
         const data = {};
         SHARED_KEYS.concat(STARTER_KEYS).forEach(k => { data[k] = sessionStorage.getItem(k); });
         channel.postMessage({ type: "session", id: m.id, data: data });
+      }
+      // Another tab of this browser logged in: use that login here too (same person, one login per browser)
+      if (m.type === "session-update" && m.data && m.data.token && !publicPages.includes(currentPage) &&
+          m.data.token !== sessionStorage.getItem("token") &&
+          (!sessionStorage.getItem("username") || sessionStorage.getItem("username") === m.data.username)) {
+        adoptSession(m.data);
       }
       if (m.type === "logout" && sessionStorage.getItem("token")) {
         sessionStorage.clear();
@@ -50,17 +57,33 @@
   }
 
   // Ask the other tabs for their login. found(data) or none() is called once.
-  function askOtherTabs(found, none) {
+  function askOtherTabs(found, none, accept) {
     const id = Math.random().toString(36).slice(2);
     let done = false;
     const timer = setTimeout(() => { if (!done) { done = true; none(); } }, 500);
     channel.addEventListener("message", ev => {
       const m = ev.data || {};
-      if (!done && m.type === "session" && m.id === id && m.data && m.data.token) {
+      if (!done && m.type === "session" && m.id === id && m.data && m.data.token && (!accept || accept(m.data))) {
         done = true; clearTimeout(timer); found(m.data);
       }
     });
     channel.postMessage({ type: "need-session", id: id });
+  }
+
+  // Switch this tab to a working login from another tab, then let the page carry on.
+  function adoptSession(data) {
+    SHARED_KEYS.forEach(k => { if (data[k] !== null && data[k] !== undefined) sessionStorage.setItem(k, data[k]); });
+    localStorage.setItem("isLoggedIn", "true");
+    window.__mdSessionDead = false;
+    try { window.dispatchEvent(new Event("mdsessionadopted")); } catch (err) {}
+  }
+
+  // Used by api.js when this tab's login has ended: is there a WORKING login in another tab?
+  if (channel) {
+    window.__mdFindWorkingSession = function (onFound, onNone) {
+      const mine = sessionStorage.getItem("token");
+      askOtherTabs(data => { adoptSession(data); onFound(); }, onNone, data => data.token !== mine);
+    };
   }
 
   function storeBorrowed(data) {

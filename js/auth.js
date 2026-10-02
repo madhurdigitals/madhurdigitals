@@ -40,6 +40,16 @@ async function login(username, password, force) {
       sessionStorage.setItem("school", "*");
     }
 
+    // Tell the other tabs of this browser: they switch to this login (one login per browser)
+    try {
+      const shared = {};
+      ["token", "username", "role", "schoolRaw", "userSchools", "permissions", "isLoggedIn"]
+        .forEach(k => { shared[k] = sessionStorage.getItem(k); });
+      const ch = new BroadcastChannel("md-session");
+      ch.postMessage({ type: "session-update", data: shared });
+      ch.close();
+    } catch (err) { /* older browsers / file:// pages: each tab logs in on its own */ }
+
     // school: the single school name (or "*") - login.html reads result.school; it was missing before,
     // so school users ended up with the text "undefined" as their school.
     return { success: true, role: data.role, school: sessionStorage.getItem("school"),

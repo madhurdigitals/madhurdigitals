@@ -61,6 +61,29 @@ function showSessionExpired() {
   const page = (location.pathname.split("/").pop() || "").toLowerCase();
   if (sessionBoxOpen || page === "login.html" || page === "index.html" || page === "") return;
   sessionBoxOpen = true;
+  window.__mdSessionDead = true;   // this tab's login has ended - it won't be handed to other tabs
+
+  // Another tab of this browser may already have logged in again: use that login, no box needed.
+  if (typeof window.__mdFindWorkingSession === "function") {
+    window.__mdFindWorkingSession(() => { /* mdsessionadopted handles the rest */ }, buildSessionBox);
+    return;
+  }
+  buildSessionBox();
+}
+
+// A working login arrived from another tab (or was found there): close the box and carry on.
+if (window.addEventListener) window.addEventListener("mdsessionadopted", () => {
+  const b = document.getElementById("sessionExpiredBox");
+  if (b) b.remove();
+  sessionBoxOpen = false;
+  window.__mdSessionDead = false;
+  try { window.dispatchEvent(new Event("sessionrestored")); } catch (err) {}
+  // A page opened in the last few seconds has nothing typed yet: simply load it again with the login.
+  if (typeof performance !== "undefined" && performance.now() < 15000) location.reload();
+});
+
+function buildSessionBox() {
+  if (document.getElementById("sessionExpiredBox")) return;
 
   const user = sessionStorage.getItem("username") || "";
   const box  = document.createElement("div");
@@ -114,6 +137,7 @@ function showSessionExpired() {
     passEl.value = "";
     box.remove();
     sessionBoxOpen = false;
+    window.__mdSessionDead = false;
     // Pages can listen for this to reload what failed to load (e.g. a list)
     try { window.dispatchEvent(new Event("sessionrestored")); } catch (err) {}
   }
