@@ -83,6 +83,13 @@
                border: 1px solid #86efac; border-radius: 8px; padding: 10px 12px; margin: 8px 0; }
     .pw-once code { font-size: 18px; font-weight: 700; letter-spacing: 1px; color: #166534; user-select: all; }
 
+    /* The shared stylesheet limits every cell to 160px and hides the rest ("...").
+       The Actions cell holds up to 4 buttons, so it may grow and wrap instead. */
+    td.actions-cell {
+      max-width: none; min-width: 230px; overflow: visible; white-space: normal; text-overflow: clip;
+    }
+    td.actions-cell button { margin: 2px 2px; }
+
     .empty-row td { color: #6b7280; padding: 24px; }
 
     /* ── ARCHIVE / RESTORE DIALOGS ── */
@@ -493,7 +500,7 @@ function renderVendors() {
         <td>${schoolCounts[id] || 0}</td>
         <td>${users}</td>
         <td>${badge}</td>
-        <td>${actions}</td>
+        <td class="actions-cell">${actions}</td>
       </tr>
     `;
   }).join("");
