@@ -38,6 +38,26 @@
     .btn-archive-user { background: #f3f4f6; color: #374151; border: 1px solid #9ca3af; }
     .btn-unarchive    { background: #dbeafe; color: #1d4ed8; border: 1px solid #3b82f6; }
     tr.row-archived td { color: #9ca3af; }
+
+    /* Active / Inactive: a real button - shows the state, hover shows what a click will do */
+    .btn-toggle {
+      padding: 5px 12px; border-radius: 16px; font-size: 12px; font-weight: 700; cursor: pointer;
+      border: 1.5px solid; box-shadow: 0 1px 2px rgba(0,0,0,.08); transition: background .15s, color .15s, transform .1s;
+      white-space: nowrap;
+    }
+    .btn-toggle:active { transform: scale(.96); }
+    .btn-toggle .act { display: none; }
+    .btn-toggle:hover .state { display: none; }
+    .btn-toggle:hover .act { display: inline; }
+    .btn-active   { background: #dcfce7; color: #166534; border-color: #16a34a; }
+    .btn-active:hover   { background: #fee2e2; color: #991b1b; border-color: #dc2626; }
+    .btn-inactive { background: #fee2e2; color: #991b1b; border-color: #dc2626; }
+    .btn-inactive:hover { background: #dcfce7; color: #166534; border-color: #16a34a; }
+    #usersTable button { cursor: pointer; }
+    #usersTable .btn-edit, #usersTable .btn-archive-user, #usersTable .btn-unarchive, #usersTable .btn-delete {
+      padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; margin: 2px;
+    }
+    #usersTable .btn-edit:hover, #usersTable .btn-archive-user:hover, #usersTable .btn-unarchive:hover, #usersTable .btn-delete:hover { filter: brightness(.95); }
     .vendor-chip    { display: inline-block; margin-left: 4px; padding: 1px 7px; border-radius: 10px;
                       background: #eef2ff; color: #4338ca; font-size: 10px; font-weight: 700; white-space: nowrap; }
     .vendor-note    { font-size: 12px; color: #4338ca; background: #eef2ff; border-radius: 7px; padding: 8px 10px; margin-bottom: 12px; }
@@ -534,7 +554,8 @@ function renderUsers() {
   const tabs = [["all", "All"], ["admin", "Admins"], ["employee", "Employees"], ["vendor", "Vendor logins"], ["school", "Schools"], ["archived", "📦 Archived"]];
   document.getElementById("roleTabs").innerHTML = tabs
     .filter(([key]) => key === "all" || key === "archived" || counts[key] > 0 || key === userTab)
-    .map(([key, label]) => `<button type="button" class="role-tab ${userTab === key ? "active" : ""}" onclick="setUserTab('${key}')">${label}<span class="n">(${counts[key]})</span></button>`)
+    .map(([key, label]) => `<button type="button" class="role-tab ${userTab === key ? "active" : ""}" onclick="setUserTab('${key}')"
+        title="${key === "archived" ? "Users who can't log in anymore - restore or delete them here" : "Show " + label.toLowerCase()}">${label}<span class="n">(${counts[key]})</span></button>`)
     .join("");
   document.getElementById("totalUsers").innerText = counts.all;
 
@@ -583,20 +604,26 @@ function renderUsers() {
     const archived    = active === "archived";
     const amAdmin     = getRole() === "admin";
     const statusCell  = archived
-      ? `<span class="badge badge-archived">📦 Archived</span>`
-      : `<button class="btn-toggle ${toggleClass}" onclick="handleToggle('${u.username}')">${toggleLabel}</button>`;
+      ? `<span class="badge badge-archived" title="Archived: can't log in. Restore or delete it from here.">📦 Archived</span>`
+      : active === "yes"
+        ? `<button class="btn-toggle btn-active" onclick="handleToggle('${u.username}')"
+             title="Active — can log in. Click to deactivate (they are logged out and can't log in until reactivated).">
+             <span class="state">✅ Active</span><span class="act">⏸ Deactivate</span></button>`
+        : `<button class="btn-toggle btn-inactive" onclick="handleToggle('${u.username}')"
+             title="Inactive — can't log in. Click to activate.">
+             <span class="state">❌ Inactive</span><span class="act">▶ Activate</span></button>`;
     const actionCell  = archived
-      ? (amAdmin ? `<button class="btn-unarchive" onclick="handleUnarchive('${u.username}')">↩ Restore</button>
-                    <button class="btn-delete" onclick="handleDelete('${u.username}')">🗑 Delete permanently</button>` : "")
-      : `<button class="btn-edit" onclick="openEditPopup('${u.username}')">✏️ Edit</button>` +
-        (amAdmin ? `<button class="btn-archive-user" onclick="handleArchive('${u.username}')" title="Archive (can be restored or deleted later)">📦 Archive</button>` : "");
+      ? (amAdmin ? `<button class="btn-unarchive" onclick="handleUnarchive('${u.username}')" title="Bring this user back — you choose active or inactive">↩ Restore</button>
+                    <button class="btn-delete" onclick="handleDelete('${u.username}')" title="Remove for good — cannot be undone (history stays in the audit log)">🗑 Delete permanently</button>` : "")
+      : `<button class="btn-edit" onclick="openEditPopup('${u.username}')" title="Edit details, schools, permissions or password">✏️ Edit</button>` +
+        (amAdmin ? `<button class="btn-archive-user" onclick="handleArchive('${u.username}')" title="Archive: can't log in, moved to the Archived tab. You can restore or delete it later.">📦 Archive</button>` : "");
 
     return `
       <tr class="${archived ? "row-archived" : ""}">
         <td>${idx + 1}</td>
         <td><b>${u.username}</b>${u.password_weak ? `<span class="weak-badge" title="${String(u.password_weak).replace(/"/g, "&quot;")}">⚠ Weak password</span>` : ""}</td>
         <td><span class="badge ${badgeClass}">${role}</span>${userVendor(u) !== "1" && vendorById(userVendor(u))
-              ? `<span class="vendor-chip">🤝 ${String(vendorById(userVendor(u)).name).replace(/</g, "&lt;")}</span>` : ""}</td>
+              ? `<span class="vendor-chip" title="Belongs to this vendor">🤝 ${String(vendorById(userVendor(u)).name).replace(/</g, "&lt;")}</span>` : ""}</td>
         <td style="max-width:160px;">${schoolDisplay}</td>
         <td style="max-width:200px;">${permChips || "-"}</td>
         <td>${statusCell}</td>
@@ -825,6 +852,9 @@ function showNewPassword(username, password) {
 
 /* ── TOGGLE ── */
 async function handleToggle(username) {
+  const u = allUsers.find(x => x.username === username);
+  if (u && String(u.active).toLowerCase() === "yes" &&
+      !confirm(`Deactivate "${username}"?\n\nThey are logged out now and can't log in until someone activates them again.`)) return;
   const res = await toggleUser(username);
   if (res && res.error) { if (!isSessionError(res)) alert(res.error); return; }
   await loadUsers();
@@ -839,12 +869,40 @@ async function handleArchive(username) {
 }
 
 async function handleUnarchive(username) {
-  let res = await unarchiveUser(username, false);
-  if (res && res.limit_reached && confirm(res.error + "\n\nRestore anyway?")) res = await unarchiveUser(username, true);
+  const mode = await askRestoreMode(username);          // "active" | "inactive" | null
+  if (!mode) return;
+  const activate = mode === "active";
+  let res = await unarchiveUser(username, false, activate);
+  if (res && res.limit_reached && confirm(res.error + "\n\nRestore anyway?")) res = await unarchiveUser(username, true, activate);
   if (res && res.error) { if (!isSessionError(res) && !res.limit_reached) alert(res.error); return; }
-  alert(`"${username}" is restored as Inactive. Switch them on with the ❌ Inactive button when ready.`);
   userTab = "all";
   await loadUsers();
+}
+
+// Small choice box: restore and activate / restore as inactive / cancel
+function askRestoreMode(username) {
+  return new Promise(resolve => {
+    const wrap = document.createElement("div");
+    wrap.innerHTML = `
+      <div style="position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:2000;display:flex;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:14px;padding:22px;width:360px;max-width:92%;box-shadow:0 10px 40px rgba(0,0,0,.2);font-family:inherit;">
+          <h3 style="margin:0 0 6px;color:#1d4ed8;">↩ Restore user</h3>
+          <p style="font-size:13px;color:#374151;margin:0 0 14px;">How should <b id="rmName"></b> come back?</p>
+          <button type="button" id="rmActive" title="They can log in straight away"
+            style="width:100%;padding:10px;border:none;border-radius:8px;background:#16a34a;color:#fff;font-size:14px;cursor:pointer;margin-bottom:8px;">▶ Restore and activate</button>
+          <button type="button" id="rmInactive" title="Back in the list but can't log in until you activate them"
+            style="width:100%;padding:10px;border:1.5px solid #dc2626;border-radius:8px;background:#fff;color:#991b1b;font-size:14px;cursor:pointer;margin-bottom:8px;">⏸ Restore as inactive</button>
+          <button type="button" id="rmCancel"
+            style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px;background:#fff;color:#374151;font-size:13px;cursor:pointer;">Cancel</button>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+    wrap.querySelector("#rmName").textContent = username;
+    const done = v => { wrap.remove(); resolve(v); };
+    wrap.querySelector("#rmActive").onclick   = () => done("active");
+    wrap.querySelector("#rmInactive").onclick = () => done("inactive");
+    wrap.querySelector("#rmCancel").onclick   = () => done(null);
+  });
 }
 
 async function handleDelete(username) {
