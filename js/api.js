@@ -555,6 +555,29 @@ async function deleteUser(username) {
   }
 }
 
+// Admin only: archive a user (can't log in, moved to Archived) / restore an archived user (as inactive)
+async function archiveUser(username) {
+  try {
+    const params = new URLSearchParams({ action: "archiveUser", target_username: username });
+    const res = await fetch(`${API_URL}?${params.toString()}`);
+    return await res.json();
+  } catch (err) {
+    console.error("archiveUser error:", err);
+    return { error: "Failed to archive user" };
+  }
+}
+
+async function unarchiveUser(username, overrideLimit) {
+  try {
+    const params = new URLSearchParams({ action: "unarchiveUser", target_username: username, override_limit: overrideLimit ? "1" : "" });
+    const res = await fetch(`${API_URL}?${params.toString()}`);
+    return await res.json();
+  } catch (err) {
+    console.error("unarchiveUser error:", err);
+    return { error: "Failed to restore user" };
+  }
+}
+
 // password blank = the server generates one. The new password comes back ONCE in the answer.
 async function resetUserPassword(username, password) {
   try {
