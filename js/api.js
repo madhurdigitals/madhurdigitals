@@ -14,6 +14,8 @@ let schoolsData = [];
     try {
       const url = (typeof input === "string") ? input : (input && input.url);
       isApi = !!(url && url.indexOf(API_URL) === 0);
+      // This tab is still borrowing the login from another tab (it reloads in a moment) - send nothing.
+      if (isApi && window.__mdSessionPending) return new Promise(() => {});
       if (isApi && url.indexOf("token=") === -1) {
         const token = sessionStorage.getItem("token");
         if (token) {
@@ -231,6 +233,7 @@ async function getStudents(school) {
 
 function getSchools(forceRefresh = false) {
   return new Promise((resolve, reject) => {
+    if (window.__mdSessionPending) return;   // this tab reloads in a moment with the borrowed login
 
     const cached = sessionStorage.getItem("schoolsCache"); // 🔥 renamed
 
