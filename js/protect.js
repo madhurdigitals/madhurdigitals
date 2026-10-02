@@ -111,8 +111,9 @@
       return;
     }
 
-    // Logged in in another tab of this browser? Then skip the login page.
-    if (globalLogin && channel) {
+    // Login page only: logged in in another tab of this browser? Then skip the login form.
+    // (The homepage stays visible - opening it should not jump to the dashboard.)
+    if (currentPage === "login.html" && globalLogin && channel) {
       askOtherTabs(data => { storeBorrowed(data); window.location.replace("dashboard.html"); }, () => {});
     }
 
