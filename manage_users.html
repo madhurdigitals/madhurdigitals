@@ -514,7 +514,11 @@ async function loadUsers() {
       `<span class="perm-chip">${PERM_LABELS[p] || p}</span>`
     ).join("");
 
-    const schoolDisplay = schoolStr === "*"
+    // Vendor logins see their vendor's schools; vendor staff with "*" see all of THEIR vendor's schools (not all schools)
+    const vendorScoped = role === "vendor" || (role === "employee" && userVendor(u) !== "1");
+    const schoolDisplay = vendorScoped && (role === "vendor" || schoolStr === "*")
+      ? '<span class="perm-chip" style="background:#eef2ff;color:#4338ca;">🤝 All of the vendor’s schools</span>'
+      : schoolStr === "*"
       ? '<span class="perm-chip" style="background:#f3e8ff;color:#7c3aed;">⭐ All</span>'
       : schoolStr.split(",").map(s =>
           `<span class="perm-chip" style="background:#fef9c3;color:#854d0e;">${s.trim()}</span>`
