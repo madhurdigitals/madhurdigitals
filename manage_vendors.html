@@ -89,6 +89,12 @@
       max-width: none; min-width: 230px; overflow: visible; white-space: normal; text-overflow: clip;
     }
     td.actions-cell button { margin: 2px 2px; }
+    /* A button whose action is running: locked, neutral grey, "waiting" cursor */
+    .btn-busy, .btn-busy:hover {
+      background: #f3f4f6 !important; color: #374151 !important; border-color: #9ca3af !important;
+      cursor: wait !important; opacity: .9; filter: none !important;
+    }
+    tr button:disabled:not(.btn-busy) { opacity: .45; cursor: not-allowed; }
 
     .empty-row td { color: #6b7280; padding: 24px; }
 
@@ -481,8 +487,8 @@ function renderVendors() {
       badge   = `<span class="badge badge-${status === "suspended" ? "suspended" : "active"}">${status === "suspended" ? "Suspended" : "Active"}</span>`;
       actions = `<button class="btn-edit" onclick="openEditPopup('${esc(id)}')">✏️ Edit</button>` +
         (status === "suspended"
-          ? `<button class="btn-activate" onclick="changeStatus('${esc(id)}', 'active')">Activate</button>`
-          : `<button class="btn-suspend"  onclick="changeStatus('${esc(id)}', 'suspended')">Suspend</button>`) +
+          ? `<button class="btn-activate" onclick="changeStatus('${esc(id)}', 'active', this)">Activate</button>`
+          : `<button class="btn-suspend"  onclick="changeStatus('${esc(id)}', 'suspended', this)">Suspend</button>`) +
         `<button class="btn-logins" onclick="openLogins('${esc(id)}')">👤 Logins</button>` +
         `<button class="btn-archive" onclick="openArchive('${esc(id)}')">Archive</button>`;
     }
@@ -636,7 +642,20 @@ async function saveVendor() {
 }
 
 /* ── SUSPEND / ACTIVATE ── */
-async function changeStatus(id, status) {
+
+// Locks a row while its action runs: the clicked button shows what is happening, the row's other
+// buttons are disabled. Returns a function that puts everything back (used if the action fails).
+function startBusy(btn, label) {
+  if (!btn) return () => {};
+  const scope = btn.closest("tr") || btn.parentElement;
+  const saved = [...scope.querySelectorAll("button")].map(b => [b, b.innerHTML, b.disabled, b.className]);
+  saved.forEach(([b]) => { b.disabled = true; });
+  btn.className = btn.className + " btn-busy";
+  btn.innerHTML = label;
+  return () => saved.forEach(([b, html, dis, cls]) => { b.innerHTML = html; b.disabled = dis; b.className = cls; });
+}
+
+async function changeStatus(id, status, btn) {
   const v = allVendors.find(x => String(x.vendor_id) === String(id));
   if (!v) return;
 
@@ -645,8 +664,9 @@ async function changeStatus(id, status) {
     : `Activate "${v.name}" again?`;
   if (!confirm(question)) return;
 
+  const undo = startBusy(btn, status === "suspended" ? "⏳ Suspending…" : "⏳ Activating…");
   const res = await setVendorStatus(id, status);
-  if (handleError(res, "Failed to change status")) return;
+  if (handleError(res, "Failed to change status")) { undo(); return; }
 
   showToast(status === "suspended" ? "Vendor suspended" : "Vendor activated");
   await loadVendors();

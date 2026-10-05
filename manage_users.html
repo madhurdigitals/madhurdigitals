@@ -58,6 +58,12 @@
     .btn-inactive { background: #fee2e2; color: #991b1b; border-color: #dc2626; }
     .btn-inactive:hover { background: #dcfce7; color: #166534; border-color: #16a34a; }
     #usersTable button { cursor: pointer; }
+    /* A button whose action is running: locked, neutral grey, "waiting" cursor */
+    .btn-busy, .btn-busy:hover {
+      background: #f3f4f6 !important; color: #374151 !important; border-color: #9ca3af !important;
+      cursor: wait !important; opacity: .9; filter: none !important;
+    }
+    tr button:disabled:not(.btn-busy) { opacity: .45; cursor: not-allowed; }
     #usersTable .btn-edit, #usersTable .btn-archive-user, #usersTable .btn-unarchive, #usersTable .btn-delete {
       padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; margin: 2px;
     }
@@ -610,17 +616,17 @@ function renderUsers() {
     const statusCell  = archived
       ? `<span class="badge badge-archived" title="Deleted: can't log in. Restore it, or delete it permanently.">🗑 Deleted</span>`
       : active === "yes"
-        ? `<button class="btn-toggle btn-active" onclick="handleToggle('${u.username}')"
+        ? `<button class="btn-toggle btn-active" onclick="handleToggle('${u.username}', this)"
              title="Active — can log in. Click to deactivate (they are logged out and can't log in until reactivated).">
              <span class="state">✅ Active</span><span class="act">⏸ Deactivate</span></button>`
-        : `<button class="btn-toggle btn-inactive" onclick="handleToggle('${u.username}')"
+        : `<button class="btn-toggle btn-inactive" onclick="handleToggle('${u.username}', this)"
              title="Inactive — can't log in. Click to activate.">
              <span class="state">❌ Inactive</span><span class="act">▶ Activate</span></button>`;
     const actionCell  = archived
-      ? (amAdmin ? `<button class="btn-unarchive" onclick="handleUnarchive('${u.username}')" title="Bring this user back — you choose active or inactive">↩ Restore</button>
-                    <button class="btn-delete" onclick="handleDelete('${u.username}')" title="Remove for good — cannot be undone (history stays in the audit log)">🗑 Delete permanently</button>` : "")
+      ? (amAdmin ? `<button class="btn-unarchive" onclick="handleUnarchive('${u.username}', this)" title="Bring this user back — you choose active or inactive">↩ Restore</button>
+                    <button class="btn-delete" onclick="handleDelete('${u.username}', this)" title="Remove for good — cannot be undone (history stays in the audit log)">🗑 Delete permanently</button>` : "")
       : `<button class="btn-edit" onclick="openEditPopup('${u.username}')" title="Edit details, schools, permissions or password">✏️ Edit</button>` +
-        (amAdmin ? `<button class="btn-archive-user" onclick="handleArchive('${u.username}')" title="Delete: can't log in and moves to the Deleted tab. You can restore it from there, or delete it permanently.">🗑 Delete</button>` : "");
+        (amAdmin ? `<button class="btn-archive-user" onclick="handleArchive('${u.username}', this)" title="Delete: can't log in and moves to the Deleted tab. You can restore it from there, or delete it permanently.">🗑 Delete</button>` : "");
 
     return `
       <tr class="${archived ? "row-archived" : ""}">
@@ -796,7 +802,10 @@ function openEditPopup(username) {
 }
 
 /* ── SAVE USER ── */
+let savingUser = false;   // blocks a second click while saving
+
 async function saveUser() {
+  if (savingUser) return;
   const username = document.getElementById("pu_username").value.trim().toLowerCase();
   const password = document.getElementById("pu_password").value.trim();
   const role     = document.getElementById("pu_role").value;
@@ -828,8 +837,18 @@ async function saveUser() {
     : addUser(Object.assign({ username, password, role, school, permissions: perms,
                               generate_password: !password, override_limit: override }, vendorPart));
 
-  let res = await send(false);
-  if (res && res.limit_reached && confirm(res.error + "\n\nGo ahead anyway?")) res = await send(true);
+  savingUser = true;
+  const saveBtn = document.querySelector("#userPopup .btn-save");
+  const saveTxt = saveBtn.innerHTML;
+  saveBtn.disabled = true; saveBtn.innerHTML = "⏳ Saving…";
+  let res;
+  try {
+    res = await send(false);
+    if (res && res.limit_reached && confirm(res.error + "\n\nGo ahead anyway?")) res = await send(true);
+  } finally {
+    savingUser = false;
+    saveBtn.disabled = false; saveBtn.innerHTML = saveTxt;
+  }
 
   if (res && res.error) {
     if (!isSessionError(res) && !res.limit_reached) alert(res.error);
@@ -855,30 +874,46 @@ function showNewPassword(username, password) {
 }
 
 /* ── TOGGLE ── */
-async function handleToggle(username) {
+
+// Locks a row while its action runs: the clicked button shows what is happening, the row's other
+// buttons are disabled. Returns a function that puts everything back (used if the action fails).
+function startBusy(btn, label) {
+  if (!btn) return () => {};
+  const scope = btn.closest("tr") || btn.parentElement;
+  const saved = [...scope.querySelectorAll("button")].map(b => [b, b.innerHTML, b.disabled, b.className]);
+  saved.forEach(([b]) => { b.disabled = true; });
+  btn.className = btn.className + " btn-busy";
+  btn.innerHTML = label;
+  return () => saved.forEach(([b, html, dis, cls]) => { b.innerHTML = html; b.disabled = dis; b.className = cls; });
+}
+
+async function handleToggle(username, btn) {
   const u = allUsers.find(x => x.username === username);
-  if (u && String(u.active).toLowerCase() === "yes" &&
-      !confirm(`Deactivate "${username}"?\n\nThey are logged out now and can't log in until someone activates them again.`)) return;
+  const isActive = u && String(u.active).toLowerCase() === "yes";
+  if (isActive && !confirm(`Deactivate "${username}"?\n\nThey are logged out now and can't log in until someone activates them again.`)) return;
+  const undo = startBusy(btn, isActive ? "⏳ Deactivating…" : "⏳ Activating…");
   const res = await toggleUser(username);
-  if (res && res.error) { if (!isSessionError(res)) alert(res.error); return; }
+  if (res && res.error) { undo(); if (!isSessionError(res)) alert(res.error); return; }
   await loadUsers();
 }
 
 /* ── DELETE ── */
-async function handleArchive(username) {
+async function handleArchive(username, btn) {
   if (!confirm(`Delete "${username}"?\n\nThey can no longer log in and move to the Deleted tab, where you can restore them or delete them permanently.`)) return;
+  const undo = startBusy(btn, "⏳ Deleting…");
   const res = await archiveUser(username);
-  if (res && res.error) { if (!isSessionError(res)) alert(res.error); return; }
+  if (res && res.error) { undo(); if (!isSessionError(res)) alert(res.error); return; }
   await loadUsers();
 }
 
-async function handleUnarchive(username) {
+async function handleUnarchive(username, btn) {
   const mode = await askRestoreMode(username);          // "active" | "inactive" | null
   if (!mode) return;
   const activate = mode === "active";
+  const undo = startBusy(btn, "⏳ Restoring…");
   let res = await unarchiveUser(username, false, activate);
   if (res && res.limit_reached && confirm(res.error + "\n\nRestore anyway?")) res = await unarchiveUser(username, true, activate);
-  if (res && res.error) { if (!isSessionError(res) && !res.limit_reached) alert(res.error); return; }
+  if (res && res.error) { undo(); if (!isSessionError(res) && !res.limit_reached) alert(res.error); return; }
   userTab = "all";
   await loadUsers();
 }
@@ -909,10 +944,11 @@ function askRestoreMode(username) {
   });
 }
 
-async function handleDelete(username) {
+async function handleDelete(username, btn) {
   if (!confirm(`Delete "${username}" PERMANENTLY?\n\nThis cannot be undone. Their history stays in the audit log.`)) return;
+  const undo = startBusy(btn, "⏳ Deleting…");
   const res = await deleteUser(username);
-  if (res && res.error) { if (!isSessionError(res)) alert(res.error); return; }
+  if (res && res.error) { undo(); if (!isSessionError(res)) alert(res.error); return; }
   await loadUsers();
 }
 
