@@ -694,7 +694,9 @@ function renderUsers() {
         ? `<button class="btn-toggle btn-inactive btn-locked" disabled style="cursor:not-allowed;opacity:.7;"
              title="Deactivated by Madhur Digitals — please contact them to reactivate."><span class="state">🔒 Inactive</span></button>`
         : `<button class="btn-toggle btn-inactive" onclick="handleToggle('${u.username}', this)"
-             title="Inactive — can't log in. Click to activate.">
+             title="${String(u.deactivated_by || "").toLowerCase() === "suspension"
+               ? "Inactive because its vendor is suspended. Activating the vendor switches it back on - or click to activate just this user now."
+               : "Inactive — can't log in. Click to activate."}">
              <span class="state">❌ Inactive</span><span class="act">▶ Activate</span></button>`;
     const actionCell  = archived
       ? (amAdmin ? `<button class="btn-unarchive" onclick="handleUnarchive('${u.username}', this)" title="Bring this user back — you choose active or inactive">↩ Restore</button>

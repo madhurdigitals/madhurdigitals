@@ -655,20 +655,44 @@ function startBusy(btn, label) {
   return () => saved.forEach(([b, html, dis, cls]) => { b.innerHTML = html; b.disabled = dis; b.className = cls; });
 }
 
+// Who a suspension would switch off: active vendor logins + staff, and active logins of its schools
+function suspendQuestion(v) {
+  const id = String(v.vendor_id);
+  const codes = allSchools.filter(s => s.vendor_id === id).map(s => String(s.school).toLowerCase());
+  const users = allUsers || [];
+  const isActive = u => String(u.active || "").toLowerCase() === "yes";
+  const people = users.filter(u => isActive(u) && userVendor(u) === id &&
+    ["vendor", "employee"].includes(String(u.role).toLowerCase())).length;
+  const schoolLogins = users.filter(u => isActive(u) && String(u.role).toLowerCase() === "school" &&
+    String(u.school || "").split(",").map(x => x.trim().replace(/\(\d+\)$/, "").toLowerCase()).every(c => c && codes.includes(c))).length;
+  return `Suspend "${v.name}"?\n\n` +
+    `This deactivates and logs out ${people} vendor login(s) and staff, and ${schoolLogins} school login(s) of its ${codes.length} school(s).\n` +
+    `Their schools and students are kept.\n\n` +
+    `Activating the vendor later switches exactly these users back on. You can also activate a single user meanwhile on Manage Users.`;
+}
+
+function activateQuestion(v) {
+  let n = 0;
+  try { n = (JSON.parse(v.suspend_note || "{}").users || []).length; } catch (e) { n = 0; }
+  return `Activate "${v.name}" again?\n\n${n} user(s) deactivated by the suspension will be switched back on.\n` +
+         `Users deactivated or deleted separately stay as they are.`;
+}
+
 async function changeStatus(id, status, btn) {
   const v = allVendors.find(x => String(x.vendor_id) === String(id));
   if (!v) return;
 
-  const question = status === "suspended"
-    ? `Suspend "${v.name}"?\n\nThis blocks the vendor's own logins. Their ${schoolCounts[String(id)] || 0} school(s) keep working.`
-    : `Activate "${v.name}" again?`;
+  const question = status === "suspended" ? suspendQuestion(v) : activateQuestion(v);
   if (!confirm(question)) return;
 
   const undo = startBusy(btn, status === "suspended" ? "⏳ Suspending…" : "⏳ Activating…");
   const res = await setVendorStatus(id, status);
   if (handleError(res, "Failed to change status")) { undo(); return; }
 
-  showToast(status === "suspended" ? "Vendor suspended" : "Vendor activated");
+  showToast(status === "suspended"
+    ? `Vendor suspended — ${res.deactivated || 0} user(s) deactivated`
+    : `Vendor activated — ${res.reactivated || 0} user(s) switched back on`);
+  await loadUsers();
   await loadVendors();
   renderVendors();
 }
