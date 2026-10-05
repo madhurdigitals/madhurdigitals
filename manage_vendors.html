@@ -72,6 +72,10 @@
     .btn-logins { background: #eef2ff; color: #4338ca; border: 1px solid #818cf8;
                   padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; margin-left: 4px; }
     .seat { font-weight: 600; }
+    .wl-chip { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 10px; background: #fef3c7;
+               color: #92400e; font-size: 10px; font-weight: 700; vertical-align: middle; }
+    .wl-row { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 12px; font-size: 13px; cursor: pointer; }
+    .wl-row input { width: auto; margin: 2px 0 0; accent-color: #0d6efd; }
     .seat.full { color: #b45309; }
     .seat.over { color: #b91c1c; }
     .login-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 4px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
@@ -276,6 +280,10 @@
     <label class="field-label">Max users</label>
     <input id="pv_max_users" type="number" min="1" max="999" value="2">
     <div class="hint">Vendor logins + their staff, active or not. School logins are not counted.</div>
+    <label class="wl-row" title="Paid option: this vendor's people see only the vendor's brand">
+      <input type="checkbox" id="pv_white_label">
+      <span><b>🏷 White-label</b><br><span style="color:#6b7280;font-size:12px;">Hide “Powered by Madhur Digitals” for this vendor's people (paid option).</span></span>
+    </label>
   </div>
 
   <div class="popup-actions">
@@ -498,7 +506,7 @@ function renderVendors() {
       <tr class="${isArchived(v) ? "row-archived" : ""}">
         <td>${esc(id)}</td>
         <td class="vendor-name">
-          ${logo ? `<img class="logo-thumb" src="${esc(logo)}" alt="" onerror="this.style.display='none'">` : ""}${esc(v.name)}
+          ${logo ? `<img class="logo-thumb" src="${esc(logo)}" alt="" onerror="this.style.display='none'">` : ""}${esc(v.name)}${String(v.white_label || "").toLowerCase() === "yes" ? `<span class="wl-chip" title="White-label: this vendor's people don't see Powered by Madhur Digitals">🏷 White-label</span>` : ""}
         </td>
         <td>${esc(v.contact) || "-"}</td>
         <td>${esc(v.phone) || "-"}</td>
@@ -529,6 +537,7 @@ function fillPopup(v) {
   // Max users: only for normal vendors (not Madhur Digitals or Unassigned Schools)
   const special = v && (isPlatform(v) || isHolding(v));
   document.getElementById("maxUsersRow").style.display = special ? "none" : "";
+  document.getElementById("pv_white_label").checked = !!(v && String(v.white_label || "").toLowerCase() === "yes");
   document.getElementById("pv_max_users").value = v && String(v.max_users || "") !== "" ? v.max_users : 2;
   updateSlugHint();
 }
@@ -600,6 +609,7 @@ async function saveVendor() {
   };
   if (document.getElementById("maxUsersRow").style.display !== "none") {
     data.max_users = document.getElementById("pv_max_users").value.trim();
+    data.white_label = document.getElementById("pv_white_label").checked ? "yes" : "no";
     if (!/^\d+$/.test(data.max_users) || Number(data.max_users) < 1 || Number(data.max_users) > 999) {
       alert("Max users must be a whole number from 1 to 999"); return;
     }
