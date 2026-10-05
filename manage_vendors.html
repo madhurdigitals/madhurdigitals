@@ -490,6 +490,7 @@ function renderVendors() {
           ? `<button class="btn-activate" onclick="changeStatus('${esc(id)}', 'active', this)">Activate</button>`
           : `<button class="btn-suspend"  onclick="changeStatus('${esc(id)}', 'suspended', this)">Suspend</button>`) +
         `<button class="btn-logins" onclick="openLogins('${esc(id)}')">👤 Logins</button>` +
+        `<button class="btn-logins" onclick="copyVendorLink('${esc(v.slug)}', this)" title="Copy this vendor's branded login link (shows its name, logo and colour)">🔗 Link</button>` +
         `<button class="btn-archive" onclick="openArchive('${esc(id)}')">Archive</button>`;
     }
 
@@ -695,6 +696,21 @@ async function changeStatus(id, status, btn) {
   await loadUsers();
   await loadVendors();
   renderVendors();
+}
+
+/* ── BRANDED LOGIN LINK ── */
+async function copyVendorLink(slug, btn) {
+  const link = new URL("login.html?v=" + encodeURIComponent(slug), window.location.href).href;
+  let copied = false;
+  try { await navigator.clipboard.writeText(link); copied = true; } catch (err) { copied = false; }
+  if (!copied) {
+    const tmp = document.createElement("textarea");
+    tmp.value = link; document.body.appendChild(tmp); tmp.select();
+    try { copied = document.execCommand("copy"); } catch (err) { copied = false; }
+    tmp.remove();
+  }
+  showToast(copied ? "Login link copied: " + link : "Copy this link: " + link);
+  if (btn) { const old = btn.innerHTML; btn.innerHTML = copied ? "✅ Copied" : "🔗 Link"; setTimeout(() => { btn.innerHTML = old; }, 1500); }
 }
 
 /* ── LOGINS (vendor logins of one vendor) ── */
