@@ -53,6 +53,7 @@
     .btn-toggle .act { visibility: hidden; }
     .btn-toggle:hover .state { visibility: hidden; }
     .btn-toggle:hover .act { visibility: visible; }
+    .btn-toggle.btn-locked:hover .state { visibility: visible; }   /* nothing to swap on a locked button */
     .btn-active   { background: #dcfce7; color: #166534; border-color: #16a34a; }
     .btn-active:hover   { background: #fee2e2; color: #991b1b; border-color: #dc2626; }
     .btn-inactive { background: #fee2e2; color: #991b1b; border-color: #dc2626; }
@@ -368,6 +369,15 @@
       <input type="checkbox" value="users">
       <span>👥 Manage Users</span>
     </label>
+    <!-- Vendor logins only (optional, unticked by default): the vendor manages its OWN schools / people -->
+    <label class="perm-item own-perm" style="display:none;" title="Edit its own schools' details, fields, logo, colour and school-login permissions. Can't add, delete or move schools.">
+      <input type="checkbox" value="own_schools">
+      <span>🏫 Edit own schools</span>
+    </label>
+    <label class="perm-item own-perm" style="display:none;" title="Add staff (within Max users), edit them and their schools' logins, reset passwords, activate/deactivate. Can't delete.">
+      <input type="checkbox" value="own_users">
+      <span>👥 Manage own users</span>
+    </label>
     <!-- Only shown when Role = Admin. Only an admin who has it can tick/untick it. -->
     <label class="perm-item" id="vendorsPermItem" style="display:none;">
       <input type="checkbox" value="vendors" id="vendorsPermBox">
@@ -430,7 +440,7 @@ const PERM_LABELS = {
   add:"➕ Add", manage:"🧾 Manage", print:"🖨 Print",
   export:"💾 Export", bulk:"📤 Bulk", form:"📄 Forms",
   schools:"🏫 Schools", restore:"♻️ Restore", users:"👥 Users",
-  vendors:"🤝 Vendors"
+  vendors:"🤝 Vendors", own_schools:"🏫 Own schools", own_users:"👥 Own users"
 };
 
 // The logged-in person may give / take Manage Vendors (the server checks this too).
@@ -468,7 +478,11 @@ function passwordInfoText(u) {
 
 /* ── VENDORS (Phase 2) ── */
 let allVendorsList = [];
-const VENDOR_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form"];
+const VENDOR_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "restore", "own_schools", "own_users"];
+const SCHOOL_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "restore"];
+
+// The logged-in person is a vendor login managing its OWN people (Manage own users)
+function iAmVendor() { return getRole() === "vendor"; }
 const VENDOR_STAFF_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form"];
 const VENDOR_LOGIN_DEFAULTS = ["add", "manage", "print", "export", "bulk", "form"];
 const VENDOR_STAFF_DEFAULTS = ["add", "manage", "bulk", "form"];   // Print + Export unticked for staff
@@ -482,6 +496,7 @@ function isNormalVendor(v) {
 }
 
 async function loadVendorsList() {
+  if (getRole() === "vendor") { allVendorsList = []; return; }   // a vendor may not list vendors - and doesn't need to
   const res = await getVendors();
   allVendorsList = (res && !res.error && Array.isArray(res.vendors)) ? res.vendors : [];
 }
@@ -520,6 +535,10 @@ async function init() {
   await Promise.all([loadSchoolList(), loadVendorsList()]);
   const vOpt = document.getElementById("roleVendorOpt");
   vOpt.disabled = !iCanManageVendors();     // only an admin with Manage Vendors makes vendor logins
+  if (iAmVendor()) {
+    // A vendor adds staff only; school logins come with schools, vendor logins are made by Madhur Digitals
+    [...document.getElementById("pu_role").options].forEach(o => { o.disabled = o.value !== "employee"; });
+  }
   await loadUsers();
 }
 
@@ -613,12 +632,16 @@ function renderUsers() {
     const toggleLabel = active === "yes" ? "✅ Active" : "❌ Inactive";
     const archived    = active === "archived";
     const amAdmin     = getRole() === "admin";
+    const lockedForVendor = iAmVendor() && active === "no" && String(u.deactivated_by || "").toLowerCase() !== "vendor";
     const statusCell  = archived
       ? `<span class="badge badge-archived" title="Deleted: can't log in. Restore it, or delete it permanently.">🗑 Deleted</span>`
       : active === "yes"
         ? `<button class="btn-toggle btn-active" onclick="handleToggle('${u.username}', this)"
              title="Active — can log in. Click to deactivate (they are logged out and can't log in until reactivated).">
              <span class="state">✅ Active</span><span class="act">⏸ Deactivate</span></button>`
+        : lockedForVendor
+        ? `<button class="btn-toggle btn-inactive btn-locked" disabled style="cursor:not-allowed;opacity:.7;"
+             title="Deactivated by Madhur Digitals — please contact them to reactivate."><span class="state">🔒 Inactive</span></button>`
         : `<button class="btn-toggle btn-inactive" onclick="handleToggle('${u.username}', this)"
              title="Inactive — can't log in. Click to activate.">
              <span class="state">❌ Inactive</span><span class="act">▶ Activate</span></button>`;
@@ -688,7 +711,8 @@ function handleRoleChange(userChanged) {
   const wasVendor  = vRow.style.display !== "none" ? document.getElementById("pu_vendor").value : undefined;
   if (showVendor) fillVendorSelect(role, wasVendor);
   vRow.style.display = showVendor ? "" : "none";
-  const vendorPerson = role === "vendor" || isVendorStaffNow();
+  // On a vendor's own screen, every employee it manages is its staff
+  const vendorPerson = role === "vendor" || isVendorStaffNow() || (iAmVendor() && role === "employee");
 
   // Admin always gets * and a vendor login sees its vendor's schools automatically — no school selector
   if (role === "admin" || role === "vendor") {
@@ -704,15 +728,27 @@ function handleRoleChange(userChanged) {
     toggleAllSchools(document.getElementById("allSchoolsCheck"));
   }
 
-  // Vendor people can only hold student-work permissions
-  const allowed = role === "vendor" ? VENDOR_LOGIN_UI_PERMS : VENDOR_STAFF_UI_PERMS;
+  // Vendor people can only hold student-work permissions; school logins never hold global ones;
+  // the optional "own" permissions exist only for vendor logins. A vendor (Manage own users) can only
+  // give permissions it holds itself.
+  const allowed = role === "vendor" ? VENDOR_LOGIN_UI_PERMS
+                : role === "school" ? SCHOOL_LOGIN_UI_PERMS
+                : vendorPerson ? VENDOR_STAFF_UI_PERMS : null;
+  const mine = getPermissions();
   document.querySelectorAll("#permGrid label.perm-item").forEach(item => {
     const cb = item.querySelector("input");
     if (!cb || cb.id === "vendorsPermBox") return;
-    const show = !vendorPerson || allowed.includes(cb.value);
+    const isOwn = cb.value === "own_schools" || cb.value === "own_users";
+    let show = isOwn ? role === "vendor" : (!allowed || allowed.includes(cb.value));
+    if (iAmVendor() && !mine.includes(cb.value)) show = false;
     item.style.display = show ? "" : "none";
     if (!show) cb.checked = false;
   });
+  if (iAmVendor()) {
+    // a school login stays on its school; the vendor's staff choose among the vendor's own schools
+    if (role === "school") section.style.display = "none";
+    document.getElementById("allSchoolsLabel").innerText = "⭐ All my schools";
+  }
   if (!editingUsername && userChanged && vendorPerson) {
     const defaults = role === "vendor" ? VENDOR_LOGIN_DEFAULTS : VENDOR_STAFF_DEFAULTS;
     document.querySelectorAll("#permGrid input").forEach(cb => {
