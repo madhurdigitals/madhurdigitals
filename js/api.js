@@ -638,7 +638,8 @@ async function addVendor(data) {
       slug:        data.slug        || "",
       logo:        data.logo        || "",
       brand_color: data.brand_color || "",
-      max_users:   data.max_users   || ""
+      max_users:   data.max_users   || "",
+      white_label: data.white_label || ""
     });
     const res = await fetch(`${API_URL}?${params.toString()}`);
     return await res.json();
@@ -652,7 +653,7 @@ async function addVendor(data) {
 async function updateVendor(data) {
   try {
     const params = new URLSearchParams({ action: "updateVendor", vendor_id: data.vendor_id });
-    ["name", "contact", "phone", "email", "slug", "logo", "brand_color", "max_users"].forEach(k => {
+    ["name", "contact", "phone", "email", "slug", "logo", "brand_color", "max_users", "white_label"].forEach(k => {
       if (data[k] !== undefined) params.append(k, data[k]);
     });
     const res = await fetch(`${API_URL}?${params.toString()}`);
@@ -733,7 +734,8 @@ function applyBrand(brand) {
     .login-btn { background: ${color} !important; }
     .md-powered { position: fixed; right: 10px; bottom: 8px; z-index: 50; font-size: 11px; color: #6b7280;
                   background: rgba(255,255,255,.92); padding: 3px 9px; border-radius: 10px;
-                  box-shadow: 0 1px 3px rgba(0,0,0,.1); pointer-events: none; }`;
+                  box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    .md-powered a { color: inherit; text-decoration: none; }`;
   document.head.appendChild(style);
 
   // the name, wherever the page shows "Madhur Digitals" as its title
@@ -753,18 +755,21 @@ function applyBrand(brand) {
     });
   }
 
-  // footer: the vendor's name, powered by Madhur Digitals (then no corner label is needed)
+  // footer: "© year Vendor | Powered by Madhur Digitals" (linked) - or only the vendor for white-label
+  const whiteLabel = brand.white_label === true;
   let footerDone = false;
   document.querySelectorAll("footer").forEach(f => {
     if (f.textContent.includes("Madhur Digitals")) {
-      f.textContent = "© " + new Date().getFullYear() + " " + brand.name + " | Powered by Madhur Digitals";
+      f.textContent = "© " + new Date().getFullYear() + " " + brand.name;
+      if (!whiteLabel) { f.appendChild(document.createTextNode(" | ")); f.appendChild(poweredByLink()); }
+      appendLegalLinks(f);
       footerDone = true;
     }
   });
-  if (!footerDone) {
+  if (!footerDone && !whiteLabel) {
     const powered = document.createElement("div");
     powered.className = "md-powered";
-    powered.textContent = "Powered by Madhur Digitals";
+    powered.appendChild(poweredByLink());
     document.body.appendChild(powered);
   }
 
@@ -779,6 +784,31 @@ function applyBrand(brand) {
   });
 
   revealBrandedPage();
+}
+
+// "Powered by Madhur Digitals" - attribution linking to the Madhur Digitals website (new tab)
+const POWERED_BY_URL = "https://madhurdigitals.com/";
+function poweredByLink() {
+  const span = document.createElement("span");
+  span.appendChild(document.createTextNode("Powered by "));
+  const a = document.createElement("a");
+  a.href = POWERED_BY_URL; a.target = "_blank"; a.rel = "noopener";
+  a.textContent = "Madhur Digitals";
+  a.style.color = "inherit"; a.style.fontWeight = "600";
+  span.appendChild(a);
+  return span;
+}
+
+// Privacy / Terms: add the pages here when they exist - they show even for white-label vendors,
+// so schools always know who processes their data. e.g. [["Privacy", "https://madhurdigitals.com/privacy.html"]]
+const LEGAL_LINKS = [];
+function appendLegalLinks(el) {
+  LEGAL_LINKS.forEach(([label, url]) => {
+    el.appendChild(document.createTextNode(" · "));
+    const a = document.createElement("a");
+    a.href = url; a.target = "_blank"; a.rel = "noopener"; a.textContent = label; a.style.color = "inherit";
+    el.appendChild(a);
+  });
 }
 
 // Login link (?v=...): keep the card hidden until we know whose page it is - no "Madhur Digitals" flash
