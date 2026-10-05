@@ -27,7 +27,7 @@
      The login stays in this tab's temporary storage (wiped when the browser closes). A new tab
      asks the other open tabs of the same browser for it, so it doesn't need a second login and
      doesn't count as another session. When every tab is closed, the next visit asks for the password. */
-  const SHARED_KEYS  = ["token", "username", "role", "schoolRaw", "userSchools", "permissions", "isLoggedIn"];
+  const SHARED_KEYS  = ["token", "username", "role", "schoolRaw", "userSchools", "permissions", "isLoggedIn", "brand"];
   const STARTER_KEYS = ["school", "school_id", "school_name"];   // copied only if this tab has none yet
   let channel = null;
   try { channel = new BroadcastChannel("md-session"); } catch (err) { channel = null; }

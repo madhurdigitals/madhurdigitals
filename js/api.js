@@ -704,3 +704,80 @@ async function restoreVendor(vendorId, schoolIds, usernames) {
     return { error: "Failed to restore vendor" };
   }
 }
+
+
+/* ========================= */
+/* VENDOR BRANDING           */
+/* ========================= */
+// Level A (after login): a vendor's people see the vendor's name, logo and colour instead of
+// Madhur Digitals, with "Powered by Madhur Digitals" in the corner.
+// Level B (before login): login.html?v=<web name> shows the same on the login page.
+
+function brandSafeLogo(u) {
+  const s = String(u || "").trim();
+  return /^https:\/\/[^\s"'<>]+$/i.test(s) ? s : "";      // only plain https image links
+}
+function brandSafeColor(c) {
+  return /^#[0-9a-fA-F]{6}$/.test(String(c || "")) ? String(c) : "#0d6efd";
+}
+
+function applyBrand(brand) {
+  if (!brand || !brand.name || document.getElementById("brandStyle")) return;
+  const color = brandSafeColor(brand.color);
+
+  const style = document.createElement("style");
+  style.id = "brandStyle";
+  style.textContent = `
+    nav { border-top: 4px solid ${color} !important; }
+    .title-text, .nav-title-main, .login-card h2, nav .logo { color: ${color} !important; }
+    .login-btn { background: ${color} !important; }
+    .md-powered { position: fixed; right: 10px; bottom: 8px; z-index: 50; font-size: 11px; color: #6b7280;
+                  background: rgba(255,255,255,.92); padding: 3px 9px; border-radius: 10px;
+                  box-shadow: 0 1px 3px rgba(0,0,0,.1); pointer-events: none; }`;
+  document.head.appendChild(style);
+
+  // the name, wherever the page shows "Madhur Digitals" as its title
+  document.querySelectorAll(".title-text, .nav-title-main, .login-card h2, nav .logo").forEach(el => {
+    if (el.children.length === 0 && el.textContent.trim() === "Madhur Digitals") el.textContent = brand.name;
+  });
+  document.title = document.title.replace("Madhur Digitals", brand.name);
+
+  // the logo (only if the vendor has one; otherwise the usual icon stays)
+  const logo = brandSafeLogo(brand.logo);
+  if (logo) {
+    document.querySelectorAll(".logo img, .nav-logo img").forEach(img => {
+      const original = img.src;
+      img.onerror = () => { img.onerror = null; img.src = original; };   // broken link -> usual icon
+      img.src = logo;
+      img.alt = brand.name;
+    });
+  }
+
+  const powered = document.createElement("div");
+  powered.className = "md-powered";
+  powered.textContent = "Powered by Madhur Digitals";
+  document.body.appendChild(powered);
+}
+
+async function initBranding() {
+  // Level A: logged in as one of a vendor's people
+  try {
+    const saved = JSON.parse(sessionStorage.getItem("brand") || "null");
+    if (saved && saved.name) { applyBrand(saved); return; }
+  } catch (err) { /* no brand */ }
+
+  // Level B: the login page opened with ?v=<web name>
+  const page = (location.pathname.split("/").pop() || "").toLowerCase();
+  const slug = new URLSearchParams(location.search).get("v");
+  if (page !== "login.html" || !slug) return;
+  try {
+    const res  = await fetch(`${API_URL}?action=getBranding&v=${encodeURIComponent(slug)}`);
+    const data = await res.json();
+    if (data && data.status === "success" && data.brand) applyBrand(data.brand);
+  } catch (err) { /* unknown link or offline: the normal login page */ }
+}
+
+if (typeof document !== "undefined" && document.addEventListener) {
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initBranding);
+  else initBranding();
+}

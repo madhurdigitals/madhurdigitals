@@ -31,6 +31,9 @@ async function login(username, password, force) {
     sessionStorage.setItem("userSchools", JSON.stringify(data.schools));
     sessionStorage.setItem("permissions", JSON.stringify(data.permissions));
     sessionStorage.setItem("isLoggedIn", "true");
+    // Vendor's people see the vendor's name / logo / colour (Level A); everyone else: the normal look
+    if (data.brand && data.brand.name) sessionStorage.setItem("brand", JSON.stringify(data.brand));
+    else sessionStorage.removeItem("brand");
     localStorage.setItem("isLoggedIn", "true");
 
     // Backward compat for single school
@@ -43,7 +46,7 @@ async function login(username, password, force) {
     // Tell the other tabs of this browser: they switch to this login (one login per browser)
     try {
       const shared = {};
-      ["token", "username", "role", "schoolRaw", "userSchools", "permissions", "isLoggedIn"]
+      ["token", "username", "role", "schoolRaw", "userSchools", "permissions", "isLoggedIn", "brand"]
         .forEach(k => { shared[k] = sessionStorage.getItem(k); });
       const ch = new BroadcastChannel("md-session");
       ch.postMessage({ type: "session-update", data: shared });
@@ -61,6 +64,12 @@ async function login(username, password, force) {
 }
 
 async function logout() {
+  // A vendor's people go back to THEIR vendor's login page; everyone else to the homepage
+  let backTo = "index.html";
+  try {
+    const b = JSON.parse(sessionStorage.getItem("brand") || "null");
+    if (b && b.slug) backTo = "login.html?v=" + encodeURIComponent(b.slug);
+  } catch (err) { /* normal homepage */ }
   // Log out every tab of this browser, not just this one
   try { const ch = new BroadcastChannel("md-session"); ch.postMessage({ type: "logout" }); ch.close(); } catch (err) {}
   const token = sessionStorage.getItem("token");
@@ -73,7 +82,7 @@ async function logout() {
   }
   localStorage.clear();
   sessionStorage.clear();
-  window.location.href = "index.html";
+  window.location.href = backTo;
 }
 
 // "Chrome on Windows", "Chrome on Android"... shown when someone has to choose which devices to log out.
