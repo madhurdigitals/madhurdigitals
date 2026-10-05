@@ -121,6 +121,9 @@
     .vendor-chip.platform { background: #dbeafe; color: #1d4ed8; }
     .popup select:disabled { color: #6b7280; cursor: not-allowed; }
     .vendor-hint { font-size: 11px; color: #6b7280; margin: -6px 0 12px; }
+
+    /* A vendor editing its own schools (Edit own schools): no adding/deleting, no vendor column */
+    body.vendor-mode .admin-only { display: none !important; }
   </style>
 </head>
 
@@ -129,7 +132,7 @@
 <nav>
   <div class="nav-left">🏫 School Management</div>
   <div>
-    <button onclick="location.href='add_school.html'">➕ Add School</button>
+    <button class="admin-only" onclick="location.href='add_school.html'">➕ Add School</button>
     <button onclick="loadSchools()">🔄 Refresh</button>
     <button onclick="location.href='dashboard.html'">Dashboard</button>
     <button onclick="logout()">Logout</button>
@@ -138,7 +141,7 @@
 
 <div class="top-bar">
   <b>Total Schools: <span id="totalSchools">0</span></b>
-  <label class="vendor-filter">
+  <label class="vendor-filter admin-only">
     Vendor:
     <select id="vendorFilter" onchange="renderSchools()">
       <option value="">All vendors</option>
@@ -153,7 +156,7 @@
       <tr>
         <th>ID</th>
         <th>Code</th>
-        <th>Vendor</th>
+        <th class="admin-only">Vendor</th>
         <th>School Name</th>
         <th>Address</th>
         <th>Contact</th>
@@ -182,9 +185,11 @@
   <label class="field-label">School Code</label>
   <input id="edit_school" disabled>
 
-  <label class="field-label">Vendor (owner)</label>
-  <select id="edit_vendor"></select>
-  <div class="vendor-hint" id="editVendorHint"></div>
+  <div class="admin-only">
+    <label class="field-label">Vendor (owner)</label>
+    <select id="edit_vendor"></select>
+    <div class="vendor-hint" id="editVendorHint"></div>
+  </div>
 
   <label class="field-label">School Name</label>
   <input id="edit_school_name" placeholder="School Name">
@@ -288,6 +293,7 @@ function iCanManageVendors() {
 }
 
 async function loadVendorsForSchools() {
+  if (getRole() === "vendor") { vendorsData = []; return; }   // a vendor may not list vendors - and doesn't need to
   const res = await getVendors();
   vendorsData = (res && !res.error && Array.isArray(res.vendors)) ? res.vendors : [];
 }
@@ -338,7 +344,7 @@ function renderSchools() {
     <tr>
       <td>${s.school_id}</td>
       <td><b>${s.school}</b></td>
-      <td>${vendorChip(schoolVendorId(s))}</td>
+      <td class="admin-only">${vendorChip(schoolVendorId(s))}</td>
       <td>${s.school_name}</td>
       <td>${s.address || "-"}</td>
       <td>${s.contact || "-"}</td>
@@ -351,7 +357,7 @@ function renderSchools() {
       <td style="font-size:12px;">${s.created_at || "-"}</td>
       <td>
         <button onclick="editSchool('${s.school_id}')">✏️ Edit</button>
-        <button onclick="deleteSchoolData('${s.school_id}')"
+        <button class="admin-only" onclick="deleteSchoolData('${s.school_id}')"
           style="border-color:#dc3545;color:#dc3545;">🗑 Delete</button>
       </td>
     </tr>
@@ -406,6 +412,11 @@ function editSchool(id) {
 
   // 🔥 Set permission checkboxes
   const currentPerms = (s.permissions || "").split(",").map(p => p.trim());
+  // A vendor can only give the school login permissions it holds itself (the server checks this too)
+  document.querySelectorAll("#editPermGrid label").forEach(l => {
+    const cb = l.querySelector("input");
+    l.style.display = (getRole() === "vendor" && cb && !getPermissions().includes(cb.value)) ? "none" : "";
+  });
   document.querySelectorAll("#editPermGrid input[type='checkbox']").forEach(cb => {
     cb.checked = currentPerms.includes(cb.value);
   });
@@ -504,6 +515,9 @@ function goAddSchool() {
 }
 
 /* INIT */
+// Vendor login with "Edit own schools": only its own schools (the server sends only those)
+if (getRole() === "vendor") document.body.classList.add("vendor-mode");
+
 loadSchools();
 </script>
 

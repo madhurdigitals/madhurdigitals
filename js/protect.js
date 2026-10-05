@@ -9,10 +9,10 @@
     "export_student.html":    "export",
     "bulk_upload.html":       "bulk",
     "school_form.html":       "form",
-    "school_management.html": "schools",
+    "school_management.html": ["schools", "own_schools"],   // vendors: Edit own schools
     "add_school.html":        "schools",
     "restore_students.html":  "restore",
-    "manage_users.html":      "users",
+    "manage_users.html":      ["users", "own_users"],       // vendors: Manage own users
     "manage_photos.html":     "manage",     // NEW: was ungated
     "template_builder.html":  "schools",    // NEW: was ungated
     "manage_vendors.html":    "vendors",    // plus admin role (adminOnlyPages below)
@@ -162,7 +162,8 @@
     let permissions = [];
     try { permissions = JSON.parse(sessionStorage.getItem("permissions") || "[]"); } catch {}
 
-    if (!permissions.includes(requiredPermission)) {
+    const needed = [].concat(requiredPermission);   // one permission, or a list where ANY one is enough
+    if (!needed.some(p => permissions.includes(p))) {
       sessionStorage.setItem("accessDenied", currentPage);
       window.location.replace("dashboard.html");
       return;

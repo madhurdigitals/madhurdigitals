@@ -44,8 +44,8 @@ function renderWelcome() {
 // ── FILTER ACTION CARDS BY PERMISSION ──
 function filterActionCards() {
   document.querySelectorAll(".action-card[data-permission]").forEach(card => {
-    const perm = card.getAttribute("data-permission");
-    if (!userPermissions.includes(perm)) {
+    const perms = card.getAttribute("data-permission").split("|");   // any one is enough
+    if (!perms.some(p => userPermissions.includes(p))) {
       card.style.display = "none";
     }
   });
