@@ -46,9 +46,13 @@
       white-space: nowrap;
     }
     .btn-toggle:active { transform: scale(.96); }
-    .btn-toggle .act { display: none; }
-    .btn-toggle:hover .state { display: none; }
-    .btn-toggle:hover .act { display: inline; }
+    /* Both labels share ONE spot and the button is always as wide as the longer one,
+       so hovering only swaps which label is visible - nothing changes size, nothing flickers. */
+    .btn-toggle { display: inline-grid; justify-items: center; align-items: center; }
+    .btn-toggle .state, .btn-toggle .act { grid-area: 1 / 1; }
+    .btn-toggle .act { visibility: hidden; }
+    .btn-toggle:hover .state { visibility: hidden; }
+    .btn-toggle:hover .act { visibility: visible; }
     .btn-active   { background: #dcfce7; color: #166534; border-color: #16a34a; }
     .btn-active:hover   { background: #fee2e2; color: #991b1b; border-color: #dc2626; }
     .btn-inactive { background: #fee2e2; color: #991b1b; border-color: #dc2626; }
@@ -551,11 +555,11 @@ function setUserTab(tab) { userTab = tab; renderUsers(); }
 function renderUsers() {
   const counts = { all: 0, admin: 0, employee: 0, vendor: 0, school: 0, archived: 0 };
   allUsers.forEach(u => { const t = userTabOf(u); counts[t]++; if (t !== "archived") counts.all++; });
-  const tabs = [["all", "All"], ["admin", "Admins"], ["employee", "Employees"], ["vendor", "Vendor logins"], ["school", "Schools"], ["archived", "📦 Archived"]];
+  const tabs = [["all", "All"], ["admin", "Admins"], ["employee", "Employees"], ["vendor", "Vendor logins"], ["school", "Schools"], ["archived", "🗑 Deleted"]];
   document.getElementById("roleTabs").innerHTML = tabs
     .filter(([key]) => key === "all" || key === "archived" || counts[key] > 0 || key === userTab)
     .map(([key, label]) => `<button type="button" class="role-tab ${userTab === key ? "active" : ""}" onclick="setUserTab('${key}')"
-        title="${key === "archived" ? "Users who can't log in anymore - restore or delete them here" : "Show " + label.toLowerCase()}">${label}<span class="n">(${counts[key]})</span></button>`)
+        title="${key === "archived" ? "Deleted users - restore them, or delete them permanently" : "Show " + label.toLowerCase()}">${label}<span class="n">(${counts[key]})</span></button>`)
     .join("");
   document.getElementById("totalUsers").innerText = counts.all;
 
@@ -568,7 +572,7 @@ function renderUsers() {
 
   const tbody = document.getElementById("usersTable");
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="color:#6b7280;padding:20px;">${userTab === "archived" ? "No archived users." : "No users match."}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="color:#6b7280;padding:20px;">${userTab === "archived" ? "No deleted users." : "No users match."}</td></tr>`;
     return;
   }
 
@@ -604,7 +608,7 @@ function renderUsers() {
     const archived    = active === "archived";
     const amAdmin     = getRole() === "admin";
     const statusCell  = archived
-      ? `<span class="badge badge-archived" title="Archived: can't log in. Restore or delete it from here.">📦 Archived</span>`
+      ? `<span class="badge badge-archived" title="Deleted: can't log in. Restore it, or delete it permanently.">🗑 Deleted</span>`
       : active === "yes"
         ? `<button class="btn-toggle btn-active" onclick="handleToggle('${u.username}')"
              title="Active — can log in. Click to deactivate (they are logged out and can't log in until reactivated).">
@@ -616,7 +620,7 @@ function renderUsers() {
       ? (amAdmin ? `<button class="btn-unarchive" onclick="handleUnarchive('${u.username}')" title="Bring this user back — you choose active or inactive">↩ Restore</button>
                     <button class="btn-delete" onclick="handleDelete('${u.username}')" title="Remove for good — cannot be undone (history stays in the audit log)">🗑 Delete permanently</button>` : "")
       : `<button class="btn-edit" onclick="openEditPopup('${u.username}')" title="Edit details, schools, permissions or password">✏️ Edit</button>` +
-        (amAdmin ? `<button class="btn-archive-user" onclick="handleArchive('${u.username}')" title="Archive: can't log in, moved to the Archived tab. You can restore or delete it later.">📦 Archive</button>` : "");
+        (amAdmin ? `<button class="btn-archive-user" onclick="handleArchive('${u.username}')" title="Delete: can't log in and moves to the Deleted tab. You can restore it from there, or delete it permanently.">🗑 Delete</button>` : "");
 
     return `
       <tr class="${archived ? "row-archived" : ""}">
@@ -862,7 +866,7 @@ async function handleToggle(username) {
 
 /* ── DELETE ── */
 async function handleArchive(username) {
-  if (!confirm(`Archive "${username}"?\n\nThey can no longer log in and are moved to the Archived list. You can restore or delete them from there.`)) return;
+  if (!confirm(`Delete "${username}"?\n\nThey can no longer log in and move to the Deleted tab, where you can restore them or delete them permanently.`)) return;
   const res = await archiveUser(username);
   if (res && res.error) { if (!isSessionError(res)) alert(res.error); return; }
   await loadUsers();
@@ -887,7 +891,7 @@ function askRestoreMode(username) {
       <div style="position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:2000;display:flex;align-items:center;justify-content:center;">
         <div style="background:#fff;border-radius:14px;padding:22px;width:360px;max-width:92%;box-shadow:0 10px 40px rgba(0,0,0,.2);font-family:inherit;">
           <h3 style="margin:0 0 6px;color:#1d4ed8;">↩ Restore user</h3>
-          <p style="font-size:13px;color:#374151;margin:0 0 14px;">How should <b id="rmName"></b> come back?</p>
+          <p style="font-size:13px;color:#374151;margin:0 0 14px;">How should <b id="rmName"></b> come back from Deleted?</p>
           <button type="button" id="rmActive" title="They can log in straight away"
             style="width:100%;padding:10px;border:none;border-radius:8px;background:#16a34a;color:#fff;font-size:14px;cursor:pointer;margin-bottom:8px;">▶ Restore and activate</button>
           <button type="button" id="rmInactive" title="Back in the list but can't log in until you activate them"
