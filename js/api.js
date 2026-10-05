@@ -753,10 +753,38 @@ function applyBrand(brand) {
     });
   }
 
-  const powered = document.createElement("div");
-  powered.className = "md-powered";
-  powered.textContent = "Powered by Madhur Digitals";
-  document.body.appendChild(powered);
+  // footer: the vendor's name, powered by Madhur Digitals (then no corner label is needed)
+  let footerDone = false;
+  document.querySelectorAll("footer").forEach(f => {
+    if (f.textContent.includes("Madhur Digitals")) {
+      f.textContent = "© " + new Date().getFullYear() + " " + brand.name + " | Powered by Madhur Digitals";
+      footerDone = true;
+    }
+  });
+  if (!footerDone) {
+    const powered = document.createElement("div");
+    powered.className = "md-powered";
+    powered.textContent = "Powered by Madhur Digitals";
+    document.body.appendChild(powered);
+  }
+
+  // no way back to Madhur Digitals' own homepage from a vendor's pages
+  const loggedIn = !!sessionStorage.getItem("token");
+  document.querySelectorAll(".nav-brand, nav .logo").forEach(el => {
+    el.onclick = loggedIn ? () => { location.href = "dashboard.html"; } : null;
+    el.style.cursor = loggedIn ? "pointer" : "default";
+  });
+  document.querySelectorAll("nav .nav-btn").forEach(b => {
+    if (b.textContent.trim() === "Home") b.style.display = "none";
+  });
+
+  revealBrandedPage();
+}
+
+// Login link (?v=...): keep the card hidden until we know whose page it is - no "Madhur Digitals" flash
+function revealBrandedPage() {
+  const st = document.getElementById("brandPending");
+  if (st) st.remove();
 }
 
 async function initBranding() {
@@ -769,13 +797,39 @@ async function initBranding() {
   // Level B: the login page opened with ?v=<web name>
   const page = (location.pathname.split("/").pop() || "").toLowerCase();
   const slug = new URLSearchParams(location.search).get("v");
-  if (page !== "login.html" || !slug) return;
+  if (page !== "login.html" || !slug) { revealBrandedPage(); return; }
+
+  const cacheKey = "brandCache_" + slug.toLowerCase();
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(cacheKey) || "null"); } catch (err) { cached = null; }
+  if (cached && cached.name) applyBrand(cached);              // repeat visit: instant
+
   try {
     const res  = await fetch(`${API_URL}?action=getBranding&v=${encodeURIComponent(slug)}`);
     const data = await res.json();
-    if (data && data.status === "success" && data.brand) applyBrand(data.brand);
-  } catch (err) { /* unknown link or offline: the normal login page */ }
+    if (data && data.status === "success" && data.brand) {
+      try { localStorage.setItem(cacheKey, JSON.stringify(data.brand)); } catch (err) {}
+      if (!cached) applyBrand(data.brand);                    // a change shows on the next visit
+    } else {
+      try { localStorage.removeItem(cacheKey); } catch (err) {}
+    }
+  } catch (err) { /* offline: whatever we have */ }
+  revealBrandedPage();                                        // no brand -> the normal page
 }
+
+// While a ?v= login page works out its brand, hide the parts that would say "Madhur Digitals".
+(function hideUntilBranded() {
+  try {
+    if (typeof document === "undefined" || !document.head) return;
+    const page = (location.pathname.split("/").pop() || "").toLowerCase();
+    if (page !== "login.html" || !new URLSearchParams(location.search).get("v")) return;
+    const st = document.createElement("style");
+    st.id = "brandPending";
+    st.textContent = ".login-card, nav .logo, nav .nav-btn, footer { visibility: hidden !important; }";
+    document.head.appendChild(st);
+    setTimeout(revealBrandedPage, 4000);                      // never leave the page hidden
+  } catch (err) { /* show the page as it is */ }
+})();
 
 if (typeof document !== "undefined" && document.addEventListener) {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initBranding);
