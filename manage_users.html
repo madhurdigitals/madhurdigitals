@@ -244,8 +244,10 @@
   <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
     <div>
       <b>Total Users: <span id="totalUsers">0</span></b>
+      <span id="limitInfo" style="display:none;margin-left:14px;font-size:13px;font-weight:600;"
+            title="Your staff + vendor logins, active or not. School logins are not counted."></span>
     </div>
-    <button class="submit-btn" onclick="openAddPopup()"
+    <button class="submit-btn" id="addUserBtn" onclick="handleAddUserClick(this)"
       style="width:auto;padding:10px 20px;">
       ➕ Add User
     </button>
@@ -561,7 +563,56 @@ async function loadUsers() {
   if (res.error) { if (!isSessionError(res)) alert(res.error); return; }
 
   allUsers = res.users || [];
+  myLimit  = res.limit || null;          // vendors only: { used, max }
+  showLimitInfo();
   renderUsers();
+}
+
+/* ── VENDOR: user limit (checked BEFORE the Add User box opens) ── */
+let myLimit = null;
+
+function limitReached() {
+  return !!(myLimit && myLimit.max !== null && myLimit.max !== undefined && myLimit.used >= myLimit.max);
+}
+
+function showLimitInfo() {
+  const el = document.getElementById("limitInfo");
+  if (!myLimit || myLimit.max === null || myLimit.max === undefined) { el.style.display = "none"; return; }
+  el.style.display = "";
+  el.style.color   = limitReached() ? "#b91c1c" : "#4338ca";
+  el.textContent   = `· Your users: ${myLimit.used} of ${myLimit.max}${limitReached() ? " (limit reached)" : ""}`;
+}
+
+async function handleAddUserClick(btn) {
+  if (!iAmVendor()) { openAddPopup(); return; }          // admins: as before (server asks to confirm if over)
+  if (btn.disabled) return;
+  const label = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = "⏳ Checking…";
+  try {
+    await loadUsers();                                    // fresh numbers - someone may have changed them meanwhile
+  } finally {
+    btn.disabled = false; btn.innerHTML = label;
+  }
+  if (limitReached()) { showLimitMessage(); return; }
+  openAddPopup();
+}
+
+function showLimitMessage() {
+  const wrap = document.createElement("div");
+  wrap.id = "limitBox";
+  wrap.innerHTML = `
+    <div style="position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:2000;display:flex;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:14px;padding:24px;width:380px;max-width:92%;box-shadow:0 10px 40px rgba(0,0,0,.2);">
+        <h3 style="margin:0 0 8px;color:#b91c1c;">🚫 User limit reached</h3>
+        <p style="font-size:14px;color:#374151;line-height:1.55;margin:0 0 16px;">
+          You've used all <b>${myLimit.used} of ${myLimit.max}</b> users allowed for your account.<br>
+          To add more users, please contact your admin at <b>Madhur Digitals</b>.
+        </p>
+        <button type="button" id="limitOk" style="width:100%;padding:10px;border:none;border-radius:8px;background:#0d6efd;color:#fff;font-size:14px;cursor:pointer;">OK</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  wrap.querySelector("#limitOk").onclick = () => wrap.remove();
 }
 
 /* ── LIST: tabs, search, sort ── */
