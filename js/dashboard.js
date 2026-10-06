@@ -458,6 +458,10 @@ async function loadSchoolsForPopup(selectedMode) {
     dropdown.innerHTML += `<option value="__other__">Other School (Generate form for new school)</option>`;
   }
 
+  if (selectedMode === "templates") {
+    dropdown.innerHTML += `<option value="__none__">🎨 No specific school (library / all my schools)</option>`;
+  }  
+
   dropdown.innerHTML += schools.map(s =>
     `<option value="${s.school}" data-id="${s.school_id}">${s.school_name}</option>`
   ).join("");
@@ -480,6 +484,13 @@ function continueAction() {
 
   if (selectedValue === "__other__") { showCustomSchoolPopup(); return; }
   if (!selectedValue) { alert("Please select a school"); return; }
+  
+  if (mode === "templates") {
+    window.location.href = selectedValue === "__none__"
+      ? "template_builder.html"
+      : "template_builder.html?school=" + encodeURIComponent(selectedValue);
+    return;
+  }  
 
   sessionStorage.setItem("school",      selectedValue);
   sessionStorage.setItem("school_id",   selectedOption.getAttribute("data-id"));
