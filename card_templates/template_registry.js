@@ -58,8 +58,11 @@ function populateTemplateDropdown(selectEl, selectedValue, requireSelection) {
 }
 
 /* Populates a dropdown with BOTH built-in templates AND custom templates,
-   plus a "Build New Template" option. Requires api.js to be loaded (for API_URL). */
-async function populateTemplateDropdownWithCustom(selectEl, selectedValue, requireSelection) {
+   plus a "Build New Template" option. Requires api.js to be loaded (for API_URL).
+   forSchool (optional): { school: "code", vendorId: "3" } - then only the custom templates that
+   school may use are offered: the library (everyone), its vendor's private ones and its own private
+   ones. The currently selected template is always kept. Without forSchool: every template (as before). */
+async function populateTemplateDropdownWithCustom(selectEl, selectedValue, requireSelection, forSchool) {
   let customTemplates = [];
 
   try {
@@ -90,12 +93,33 @@ async function populateTemplateDropdownWithCustom(selectEl, selectedValue, requi
   ).join("");
   optionsHtml += `</optgroup>`;
 
-  if (customTemplates.length > 0) {
-    optionsHtml += `<optgroup label="Custom Templates">`;
-    optionsHtml += customTemplates.map(t =>
-      `<option value="${t.template_id}" ${t.template_id === selectedValue ? "selected" : ""}>${t.template_name}</option>`
-    ).join("");
-    optionsHtml += `</optgroup>`;
+  const esc  = v => String(v === undefined || v === null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  const vis  = t => { const v = String(t.visibility || "").toLowerCase(); return (v === "vendor" || v === "school") ? v : "everyone"; };
+  const amAdmin   = (typeof getRole === "function") && getRole() === "admin";
+  const isPremium = t => String(t.premium || "").toLowerCase() === "yes";
+  const opt  = t => {
+    const locked = isPremium(t) && !amAdmin && t.template_id !== selectedValue;
+    const label  = (isPremium(t) ? "⭐ " : "") + t.template_name + (locked ? "  (Premium — contact Madhur Digitals)" : "");
+    return `<option value="${esc(t.template_id)}" ${t.template_id === selectedValue ? "selected" : ""} ${locked ? "disabled" : ""}>${esc(label)}</option>`;
+  };
+  const fits = t => {
+    if (!forSchool) return true;
+    if (vis(t) === "everyone") return true;
+    if (vis(t) === "vendor") return String(t.vendor_id || "").trim() === String(forSchool.vendorId || "1");
+    return String(t.owner_school || "").trim().toLowerCase() === String(forSchool.school || "").trim().toLowerCase();
+  };
+  const groups = [
+    [forSchool ? "📚 Template Library"        : "📚 Template Library",     customTemplates.filter(t => vis(t) === "everyone" && fits(t))],
+    [forSchool ? "🤝 This vendor's templates" : "🤝 Private to a vendor",  customTemplates.filter(t => vis(t) === "vendor"   && fits(t))],
+    [forSchool ? "🏫 This school's templates" : "🏫 Private to a school",  customTemplates.filter(t => vis(t) === "school"   && fits(t))]
+  ];
+  groups.forEach(([label, list]) => {
+    if (list.length) optionsHtml += `<optgroup label="${label}">` + list.map(opt).join("") + `</optgroup>`;
+  });
+  // The school keeps its current template even if it would not normally be offered
+  const current = customTemplates.find(t => t.template_id === selectedValue);
+  if (current && !fits(current)) {
+    optionsHtml += `<optgroup label="Current template">` + opt(current) + `</optgroup>`;
   }
 
   optionsHtml += `<option value="__build_new__">➕ Build New Template...</option>`;

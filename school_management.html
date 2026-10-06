@@ -389,7 +389,8 @@ function editSchool(id) {
   document.getElementById("edit_fields").value      = s.fields;
   const isCustomTemplate = String(s.template || "").indexOf("custom_") === 0;
   const resolvedTemplate = isCustomTemplate ? s.template : resolveTemplateId(s.template);
-  populateTemplateDropdownWithCustom(document.getElementById("edit_template"), resolvedTemplate, false);
+  populateTemplateDropdownWithCustom(document.getElementById("edit_template"), resolvedTemplate, false,
+    { school: s.school, vendorId: schoolVendorId(s) });
   document.getElementById("edit_logo").value        = s.logo;
   document.getElementById("edit_color").value       = s.card_color || "#FF5733";
 
@@ -515,6 +516,13 @@ function goAddSchool() {
 }
 
 /* INIT */
+// Moving the school to another vendor: offer the templates that vendor's schools may use
+document.getElementById("edit_vendor").addEventListener("change", () => {
+  const sel = document.getElementById("edit_template");
+  populateTemplateDropdownWithCustom(sel, sel.value, false,
+    { school: document.getElementById("edit_school").value, vendorId: document.getElementById("edit_vendor").value });
+});
+
 // Vendor login with "Edit own schools": only its own schools (the server sends only those)
 if (getRole() === "vendor") document.body.classList.add("vendor-mode");
 

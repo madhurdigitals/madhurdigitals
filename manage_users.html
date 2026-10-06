@@ -371,6 +371,11 @@
       <input type="checkbox" value="users">
       <span>👥 Manage Users</span>
     </label>
+    <!-- Template Builder: only an admin gives/removes it (a vendor may give it to its own staff). Never schools. -->
+    <label class="perm-item" id="templatesPermItem" title="Design ID card templates in the Template Builder">
+      <input type="checkbox" value="templates" id="templatesPermBox">
+      <span>🎨 Template Builder</span>
+    </label>
     <!-- Vendor logins only (optional, unticked by default): the vendor manages its OWN schools / people -->
     <label class="perm-item own-perm" style="display:none;" title="Edit its own schools' details, fields, logo, colour and school-login permissions. Can't add, delete or move schools.">
       <input type="checkbox" value="own_schools">
@@ -442,7 +447,7 @@ const PERM_LABELS = {
   add:"➕ Add", manage:"🧾 Manage", print:"🖨 Print",
   export:"💾 Export", bulk:"📤 Bulk", form:"📄 Forms",
   schools:"🏫 Schools", restore:"♻️ Restore", users:"👥 Users",
-  vendors:"🤝 Vendors", own_schools:"🏫 Own schools", own_users:"👥 Own users"
+  vendors:"🤝 Vendors", own_schools:"🏫 Own schools", own_users:"👥 Own users", templates:"🎨 Templates"
 };
 
 // The logged-in person may give / take Manage Vendors (the server checks this too).
@@ -480,13 +485,13 @@ function passwordInfoText(u) {
 
 /* ── VENDORS (Phase 2) ── */
 let allVendorsList = [];
-const VENDOR_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "restore", "own_schools", "own_users"];
+const VENDOR_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "restore", "own_schools", "own_users", "templates"];
 const SCHOOL_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "restore"];
 
 // The logged-in person is a vendor login managing its OWN people (Manage own users)
 function iAmVendor() { return getRole() === "vendor"; }
-const VENDOR_STAFF_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form"];
-const VENDOR_LOGIN_DEFAULTS = ["add", "manage", "print", "export", "bulk", "form"];
+const VENDOR_STAFF_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "templates"];
+const VENDOR_LOGIN_DEFAULTS = ["add", "manage", "print", "bulk", "form", "templates", "restore", "own_schools", "own_users"];
 const VENDOR_STAFF_DEFAULTS = ["add", "manage", "bulk", "form"];   // Print + Export unticked for staff
 
 function userVendor(u) { return String(u && u.vendor_id !== undefined && u.vendor_id !== "" ? u.vendor_id : "1"); }
@@ -797,6 +802,15 @@ function handleRoleChange(userChanged) {
     item.style.display = show ? "" : "none";
     if (!show) cb.checked = false;
   });
+  // Template Builder: admins give/remove it; a vendor only for its own staff (and only if it has it itself)
+  const tplBox  = document.getElementById("templatesPermBox");
+  const tplItem = document.getElementById("templatesPermItem");
+  const mayTpl  = getRole() === "admin" || (iAmVendor() && role === "employee");
+  tplBox.disabled = !mayTpl;
+  tplItem.style.opacity = mayTpl ? "" : ".55";
+  tplItem.title = mayTpl ? "Design ID card templates in the Template Builder"
+                         : "Only an admin can give or remove Template Builder";
+
   if (iAmVendor()) {
     // a school login stays on its school; the vendor's staff choose among the vendor's own schools
     if (role === "school") section.style.display = "none";
