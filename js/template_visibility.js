@@ -65,7 +65,7 @@
     panel.id = "tvPanel";
     panel.className = "card";
     panel.style.cssText = "padding:12px 16px; margin-bottom:12px;";
-    panel.innerHTML = `<h3 id="tvPanelTitle" style="margin:0 0 8px;">📂 Templates</h3><div id="tvPanelBody" style="font-size:13px; color:#6b7280;">Loading…</div>`;
+    panel.innerHTML = `<h3 id="tvPanelTitle" style="margin:0 0 10px;">🪪 Card designs</h3><div id="tvPanelBody" style="font-size:13px; color:#6b7280;">Loading…</div>`;
     container.insertBefore(panel, bar.nextSibling);
   }
 
@@ -78,7 +78,7 @@
     const info = document.getElementById("tvCtxInfo");
     if (ctxSchool) {
       const cur = ctxSchool.template || "";
-      info.textContent = "Currently using: " + templateLabel(cur);
+      info.textContent = "";
     } else {
       info.textContent = "Designs made here can be used by several schools.";
     }
@@ -100,83 +100,237 @@
     return false;
   }
 
+  /* ── TEMPLATE GALLERY (current design on top, gallery behind "Change design") ── */
+  const GALLERY_CSS = `
+    #tvPanel .tv-current { display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+    #tvPanel .tv-current .tv-thumb { width:120px; height:100px; }
+    #tvPanel .tv-current-text { flex:1; min-width:180px; }
+    #tvPanel .tv-current-text .k { font-size:12px; color:#6b7280; }
+    #tvPanel .tv-current-text .v { font-size:16px; font-weight:700; color:#111827; margin-top:2px; }
+    #tvPanel .tv-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    #tvPanel .tv-btn { padding:8px 14px; border-radius:8px; border:1px solid #d1d5db; background:#fff; font-size:13px; font-weight:600; cursor:pointer; color:#374151; }
+    #tvPanel .tv-btn:hover { background:#f3f4f6; }
+    #tvPanel .tv-btn.primary { background:#0d6efd; border-color:#0d6efd; color:#fff; }
+    #tvPanel .tv-btn.primary:hover { background:#0b5ed7; }
+    #tvPanel .tv-btn:disabled { opacity:.55; cursor:not-allowed; }
+    #tvPanel .tv-undo { margin-top:10px; padding:8px 12px; background:#f0fdf4; border:1px solid #86efac; border-radius:8px; font-size:13px; color:#166534; display:none; }
+    #tvPanel .tv-undo a { color:#166534; font-weight:700; margin-left:8px; cursor:pointer; text-decoration:underline; }
+    #tvPanel .tv-gallery { margin-top:14px; border-top:1px solid #f1f5f9; padding-top:12px; }
+    #tvPanel .tv-chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+    #tvPanel .tv-chip { padding:5px 12px; border-radius:16px; border:1px solid #d1d5db; background:#fff; font-size:12px; font-weight:600; cursor:pointer; color:#374151; }
+    #tvPanel .tv-chip.on { background:#0d6efd; border-color:#0d6efd; color:#fff; }
+    #tvPanel .tv-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px; }
+    #tvPanel .tv-card { border:1px solid #e5e7eb; border-radius:10px; padding:8px; background:#fff; position:relative; display:flex; flex-direction:column; gap:6px; }
+    #tvPanel .tv-card.cur { border:2px solid #16a34a; }
+    #tvPanel .tv-ribbon { position:absolute; top:6px; left:6px; background:#16a34a; color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:8px; z-index:2; }
+    #tvPanel .tv-thumb { height:110px; border-radius:6px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
+    #tvPanel .tv-thumb img { max-width:100%; max-height:100%; object-fit:contain; }
+    #tvPanel .tv-thumb .ph { font-size:28px; color:#94a3b8; }
+    #tvPanel .tv-mini { position:absolute; top:50%; left:50%; transform-origin:center center; pointer-events:none; }
+    #tvPanel .tv-name { font-size:13px; font-weight:600; color:#111827; line-height:1.3; word-break:break-word; }
+    #tvPanel .tv-tags { font-size:11px; color:#6b7280; }
+    #tvPanel .tv-card-actions { display:flex; gap:6px; margin-top:auto; }
+    #tvPanel .tv-card-actions .tv-btn { padding:6px 10px; font-size:12px; flex:1; }
+    #tvPanel .tv-more { flex:0 0 auto !important; }
+    #tvPanel .tv-menu { position:absolute; right:8px; bottom:42px; background:#fff; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,.12); z-index:5; display:none; min-width:150px; }
+    #tvPanel .tv-menu.open { display:block; }
+    #tvPanel .tv-menu button { display:block; width:100%; text-align:left; padding:9px 12px; border:none; background:#fff; font-size:13px; cursor:pointer; }
+    #tvPanel .tv-menu button:hover { background:#f3f4f6; }
+    #tvPanel .tv-empty { color:#9ca3af; font-size:13px; padding:10px 0; }`;
+
+  let galleryOpen = false;
+  let galleryFilter = "all";
+  let lastUndo = null;          // { from, to } after "Use this design"
+
+  function scopeOf(t) {
+    if (!t.custom) return "builtin";
+    const vis = visOf(t.row);          // the visibility lives on the template's row
+    if (vis === "everyone") return "library";
+    if (vis === "school") return "school";
+    return "vendor";
+  }
+
+  // Every design this school (or this person) could pick, built-in + custom, as one list
+  function galleryItems() {
+    const reg = typeof TEMPLATE_REGISTRY !== "undefined" ? TEMPLATE_REGISTRY : [];
+    const vid = ctxVendor();
+    const customs = cache().filter(t => {
+      const vis = visOf(t);
+      if (!ctxSchool) return vendorMode ? (vis === "everyone" || editableByMe(t)) : true;
+      if (vis === "everyone") return true;
+      if (vis === "school") return String(t.owner_school || "").toLowerCase() === ctxSchool.school.toLowerCase();
+      return String(t.vendor_id) === vid;
+    }).map(t => ({ id: t.template_id, name: t.template_name, custom: true, row: t, premium: isPrem(t), editable: editableByMe(t) }));
+    const builtins = reg.map(t => ({ id: t.id, name: t.name, custom: false, premium: !!(builtinFlags[t.id] && builtinFlags[t.id].premium) }));
+    return customs.concat(builtins).map(x => Object.assign(x, { scope: scopeOf(x) }));
+  }
+
+  const SCOPE_LABEL = { school: "🏫 This school", vendor: vendorMode ? "🤝 My schools" : "🤝 Vendor's schools", library: "📚 Library", builtin: "🧩 Built-in" };
+  const SCOPE_TAG   = { school: "🏫 Only this school", vendor: vendorMode ? "🤝 All my schools" : "🤝 Vendor's schools", library: "📚 Library", builtin: "🧩 Built-in · all schools" };
+
+  function thumbHtml(item) {
+    if (item.custom) {
+      const bg = String(item.row.front_bg_link || "").split("|")[0];
+      return bg && typeof getPhotoUrl === "function"
+        ? `<img src="${esc(getPhotoUrl(bg, "w_400"))}" alt="" loading="lazy">`
+        : `<span class="ph">🖼️</span>`;
+    }
+    return `<span class="ph" data-mini="${esc(item.id)}">🪪</span>`;
+  }
+
+  // Built-in designs: a live mini card with this school's data (falls back to an icon)
+  const loadedBuiltins = {};
+  async function renderBuiltinMinis(root) {
+    if (typeof getTemplatePaths !== "function") return;
+    const sample = (typeof getPreviewStudent === "function") ? getPreviewStudent() : { Name: "Student Name", Class: "5", Section: "A" };
+    const school = ctxSchool || { school_name: "Your School", address: "School Address", contact: "9999999999" };
+    for (const el of root.querySelectorAll("[data-mini]")) {
+      const id = el.getAttribute("data-mini");
+      try {
+        if (!loadedBuiltins[id]) {
+          loadedBuiltins[id] = new Promise(resolve => {
+            const p = getTemplatePaths(id);
+            const css = document.createElement("link"); css.rel = "stylesheet"; css.href = p.css; document.head.appendChild(css);
+            const js = document.createElement("script"); js.src = p.js; js.onload = resolve; js.onerror = resolve; document.head.appendChild(js);
+          });
+        }
+        await loadedBuiltins[id];
+        const tpl = window.CARD_TEMPLATES && window.CARD_TEMPLATES[id];
+        if (!tpl || typeof tpl.renderFront !== "function") continue;
+        const holder = el.parentElement;
+        const mini = document.createElement("div");
+        mini.className = `tv-mini card-size-${id} t2-card-${id}`;
+        mini.innerHTML = tpl.renderFront(sample, school, { schoolCode: school.school || "" });
+        el.replaceWith(mini);
+        const w = mini.offsetWidth || 204, h = mini.offsetHeight || 325;
+        const scale = Math.min((holder.clientWidth || 130) / w, (holder.clientHeight || 110) / h) * 0.95;
+        mini.style.transform = `translate(-50%, -50%) scale(${scale})`;
+      } catch (err) { /* keep the icon */ }
+    }
+  }
+
   function renderPanel() {
     const body = document.getElementById("tvPanelBody");
     if (!body) return;
-    const title = document.getElementById("tvPanelTitle");
-    title.textContent = ctxSchool ? `📂 Templates for ${ctxSchool.school_name || ctxSchool.school}` : "📂 Templates";
-    const list = cache();
-    const cur = ctxSchool ? String(ctxSchool.template || "") : "";
-    const vid = ctxVendor();
-
-    const sections = [];
-    if (ctxSchool) {
-      sections.push(["🏫 This school's templates", list.filter(t => visOf(t) === "school" && String(t.owner_school || "").toLowerCase() === ctxSchool.school.toLowerCase())]);
-      if (vid !== "1") sections.push([`🤝 For all ${vendorMode ? "my" : esc(vendorName(vid)) + "'s"} schools`, list.filter(t => visOf(t) === "vendor" && String(t.vendor_id) === vid)]);
-    } else if (vendorMode) {
-      sections.push(["🤝 My templates", list.filter(t => visOf(t) !== "everyone" && editableByMe(t))]);
-    } else {
-      sections.push(["🔒 Private templates", list.filter(t => visOf(t) !== "everyone")]);
+    if (!document.getElementById("tvGalleryCss")) {
+      const st = document.createElement("style"); st.id = "tvGalleryCss"; st.textContent = GALLERY_CSS; document.head.appendChild(st);
     }
-    sections.push(["📚 Library", list.filter(t => visOf(t) === "everyone")]);
+    const title = document.getElementById("tvPanelTitle");
+    title.textContent = ctxSchool ? `🪪 Card design for ${ctxSchool.school_name || ctxSchool.school}` : "🪪 Card designs";
 
-    const row = (id, name, opts) => {
-      const isCur = cur && id === cur;
-      const premLocked = opts.premium && !amAdmin;
-      const btns = [];
-      if (opts.custom && opts.editable) btns.push(`<button type="button" data-act="open" data-id="${esc(id)}" title="Open it in the editor below">✏️ Open</button>`);
-      if (opts.custom) btns.push(`<button type="button" data-act="dup" data-id="${esc(id)}" title="Make an independent copy - for this school, a vendor's schools or the library">⧉ Duplicate</button>`);
-      if (ctxSchool && canSetSchoolTemplate && !isCur) {
-        btns.push(premLocked
-          ? `<button type="button" disabled title="Premium - please contact Madhur Digitals">⭐ Premium</button>`
-          : `<button type="button" data-act="use" data-id="${esc(id)}" title="Make this the template ${esc(ctxSchool.school_name || ctxSchool.school)} prints with">✓ Use for this school</button>`);
-      }
-      return `<div class="tv-item" style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 8px; border-bottom:1px solid #f1f5f9; ${isCur ? "background:#f0fdf4;" : ""}">
-        <span style="color:#111827;">${opts.premium ? "⭐ " : ""}${esc(name)}${isCur ? ` <b style="color:#16a34a;">✓ in use</b>` : ""}${opts.tag ? ` <span style="color:#9ca3af;font-size:11px;">${esc(opts.tag)}</span>` : ""}</span>
-        <span class="tv-btns" style="display:flex; gap:4px; flex-wrap:wrap;">${btns.join("")}</span></div>`;
-    };
+    const items = galleryItems();
+    const cur = ctxSchool ? String(ctxSchool.template || "") : "";
+    const curItem = items.find(x => x.id === cur);
+    if (!ctxSchool) galleryOpen = true;
 
     let html = "";
-    sections.forEach(([label, items]) => {
-      html += `<div style="margin:8px 0 2px; font-weight:700; color:#374151;">${label}</div>`;
-      html += items.length ? items.map(t => row(t.template_id, t.template_name, {
-        custom: true, editable: editableByMe(t), premium: isPrem(t),
-        tag: visOf(t) === "school" && !ctxSchool ? "· " + schoolName(t.owner_school) : (visOf(t) === "vendor" && !ctxSchool && !vendorMode ? "· " + vendorName(t.vendor_id) : "")
-      })).join("") : `<div style="padding:4px 8px; color:#9ca3af;">None yet</div>`;
-    });
-    const reg = typeof TEMPLATE_REGISTRY !== "undefined" ? TEMPLATE_REGISTRY : [];
-    html += `<div style="margin:8px 0 2px; font-weight:700; color:#374151;" title="Fully dynamic code templates - choose them for a school; they can't be opened in the editor">🧩 Built-in templates (all schools)</div>`;
-    html += reg.map(t => row(t.id, t.name, { custom: false, premium: !!(builtinFlags[t.id] && builtinFlags[t.id].premium) })).join("");
+    // 1. What the school prints with now
+    if (ctxSchool) {
+      const canEditCur = curItem && curItem.custom && curItem.editable;
+      html += `<div class="tv-current">
+        <div class="tv-thumb">${curItem ? thumbHtml(curItem) : `<span class="ph">🪪</span>`}</div>
+        <div class="tv-current-text">
+          <div class="k">${esc(ctxSchool.school_name || ctxSchool.school)} prints its ID cards with</div>
+          <div class="v">${curItem ? (curItem.premium ? "⭐ " : "") + esc(curItem.name) : esc(templateLabel(cur))}</div>
+        </div>
+        <div class="tv-actions">
+          ${canEditCur ? `<button type="button" class="tv-btn" data-act="open" data-id="${esc(cur)}" title="Change this design in the editor below">✏️ Edit design</button>` : ""}
+          <button type="button" class="tv-btn primary" data-act="toggle" title="See other designs this school can use">${galleryOpen ? "Hide designs ▴" : "🔄 Change design ▾"}</button>
+        </div>
+      </div>
+      <div class="tv-undo" id="tvUndo"></div>`;
+    }
+
+    // 2. The gallery (behind "Change design" when designing for a school)
+    if (galleryOpen) {
+      const counts = { all: items.length };
+      ["school", "vendor", "library", "builtin"].forEach(k => { counts[k] = items.filter(x => x.scope === k).length; });
+      if (!counts[galleryFilter]) galleryFilter = "all";
+      const chip = (k, label) => counts[k] ? `<button type="button" class="tv-chip ${galleryFilter === k ? "on" : ""}" data-act="filter" data-id="${k}">${label} (${counts[k]})</button>` : "";
+      const shown = items.filter(x => galleryFilter === "all" || x.scope === galleryFilter)
+        .sort((a, b) => (a.id === cur ? -1 : b.id === cur ? 1 : 0));
+      html += `<div class="tv-gallery">
+        <div class="tv-chips">${chip("all", "All")}${chip("school", SCOPE_LABEL.school)}${chip("vendor", SCOPE_LABEL.vendor)}${chip("library", SCOPE_LABEL.library)}${chip("builtin", SCOPE_LABEL.builtin)}</div>
+        <div class="tv-grid">${shown.length ? shown.map(x => cardHtml(x, cur)).join("") : `<div class="tv-empty">No designs here yet.</div>`}</div>
+      </div>`;
+    }
     body.innerHTML = html;
-    body.querySelectorAll(".tv-btns button").forEach(b => {
-      b.style.cssText = "padding:4px 9px; border-radius:6px; border:1px solid #d1d5db; background:#fff; font-size:12px; cursor:pointer;";
-      if (b.disabled) b.style.cursor = "not-allowed";
-    });
     body.onclick = onPanelClick;
+    if (lastUndo && ctxSchool) showUndo();
+    renderBuiltinMinis(body);
+  }
+
+  function cardHtml(x, cur) {
+    const isCur = x.id === cur;
+    const premLocked = x.premium && !amAdmin;
+    let primary = "";
+    if (ctxSchool && canSetSchoolTemplate) {
+      primary = isCur ? `<button type="button" class="tv-btn" disabled>✓ In use</button>`
+        : premLocked ? `<button type="button" class="tv-btn" disabled title="Premium - please contact Madhur Digitals">⭐ Premium</button>`
+        : `<button type="button" class="tv-btn primary" data-act="use" data-id="${esc(x.id)}" title="${esc(ctxSchool.school_name || ctxSchool.school)} will print with this design">Use this design</button>`;
+    } else if (x.custom) {
+      primary = x.editable ? `<button type="button" class="tv-btn primary" data-act="open" data-id="${esc(x.id)}">✏️ Edit design</button>`
+                           : `<button type="button" class="tv-btn primary" data-act="dup" data-id="${esc(x.id)}">⧉ Make a copy</button>`;
+    }
+    const menu = [];
+    if (x.custom && x.editable && (ctxSchool && canSetSchoolTemplate)) menu.push(`<button type="button" data-act="open" data-id="${esc(x.id)}">✏️ Edit design</button>`);
+    if (x.custom) menu.push(`<button type="button" data-act="dup" data-id="${esc(x.id)}">⧉ Make a copy</button>`);
+    if (!x.custom) menu.push(`<button type="button" disabled title="Built-in designs are made in code and can't be edited here">🧩 Built-in — can't be edited</button>`);
+    return `<div class="tv-card ${isCur ? "cur" : ""}">
+      ${isCur ? `<span class="tv-ribbon">✓ In use</span>` : ""}
+      <div class="tv-thumb">${thumbHtml(x)}</div>
+      <div class="tv-name">${x.premium ? "⭐ " : ""}${esc(x.name)}</div>
+      <div class="tv-tags">${SCOPE_TAG[x.scope]}${x.premium ? " · ⭐ Premium" : ""}</div>
+      <div class="tv-card-actions">${primary}
+        <button type="button" class="tv-btn tv-more" data-act="menu" title="More">⋯</button>
+      </div>
+      <div class="tv-menu">${menu.join("")}</div>
+    </div>`;
+  }
+
+  function showUndo() {
+    const el = document.getElementById("tvUndo");
+    if (!el || !lastUndo) return;
+    el.style.display = "block";
+    el.innerHTML = `✓ Changed to <b>${esc(templateLabel(lastUndo.to))}</b> — new cards will print with it.<a data-act="undo">Undo</a>`;
   }
 
   async function onPanelClick(e) {
-    const b = e.target.closest("button[data-act]");
+    const b = e.target.closest("[data-act]");
     if (!b || b.disabled) return;
-    const id = b.getAttribute("data-id");
-    if (b.getAttribute("data-act") === "open") {
+    const act = b.getAttribute("data-act"), id = b.getAttribute("data-id");
+    document.querySelectorAll("#tvPanel .tv-menu.open").forEach(m => { if (act !== "menu" || m !== b.closest(".tv-card").querySelector(".tv-menu")) m.classList.remove("open"); });
+    if (act === "toggle") { galleryOpen = !galleryOpen; renderPanel(); return; }
+    if (act === "filter") { galleryFilter = id; renderPanel(); return; }
+    if (act === "menu")   { b.closest(".tv-card").querySelector(".tv-menu").classList.toggle("open"); return; }
+    if (act === "open") {
       document.getElementById("tbLoadSelect").value = id;
       window.handleLoadSelect();
       document.getElementById("tbName").scrollIntoView({ behavior: "smooth", block: "center" });
-    } else if (b.getAttribute("data-act") === "dup") {
-      openDuplicateDialog(id);
-    } else if (b.getAttribute("data-act") === "use") {
+      return;
+    }
+    if (act === "dup")  { openDuplicateDialog(id); return; }
+    if (act === "undo") {
+      const back = lastUndo && lastUndo.from;
+      lastUndo = null;
+      if (back) await useForSchool(back, true);
+      return;
+    }
+    if (act === "use") {
       const old = b.textContent; b.disabled = true; b.textContent = "⏳ Saving…";
-      const res = await useForSchool(id);
-      if (!res) { b.disabled = false; b.textContent = old; }
+      const ok = await useForSchool(id);
+      if (!ok) { b.disabled = false; b.textContent = old; }
     }
   }
 
-  async function useForSchool(id) {
+  async function useForSchool(id, isUndo) {
+    const from = String(ctxSchool.template || "");
     const res = await api({ action: "setSchoolTemplate", school: ctxSchool.school, template_id: id });
     if (res && res.error) { toast(res.error, "error"); return false; }
     ctxSchool.template = id;
-    toast(`${ctxSchool.school_name || ctxSchool.school} now uses "${templateLabel(id)}" ✓`, "success");
+    lastUndo = isUndo ? null : { from: from, to: id };
+    galleryOpen = false;
+    if (isUndo) toast(`Back to "${templateLabel(id)}"`, "success");
     fillContextSelect(); renderPanel();
     return true;
   }
