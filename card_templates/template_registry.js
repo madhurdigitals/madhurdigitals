@@ -81,16 +81,28 @@ async function populateTemplateDropdownWithCustom(selectEl, selectedValue, requi
     console.warn("Could not load custom templates:", err);
   }
 
+  // Which built-in templates are Premium (marked by an admin)
+  let builtinFlags = {};
+  try {
+    const fr = await fetch(`${API_URL}?${new URLSearchParams({ action: "getTemplateFlags" }).toString()}`);
+    const fj = await fr.json();
+    if (fj && fj.flags) builtinFlags = fj.flags;
+  } catch (err) { /* no flags: nothing premium */ }
+  const amAdminB = (typeof getRole === "function") && getRole() === "admin";
+
   let optionsHtml = "";
 
   if (requireSelection) {
     optionsHtml += `<option value="" disabled ${!selectedValue ? "selected" : ""}>— Select Template —</option>`;
   }
 
-  optionsHtml += `<optgroup label="Built-in Templates">`;
-  optionsHtml += TEMPLATE_REGISTRY.map(t =>
-    `<option value="${t.id}" ${t.id === selectedValue ? "selected" : ""}>${t.name}</option>`
-  ).join("");
+  optionsHtml += `<optgroup label="Built-in Templates (all schools)">`;
+  optionsHtml += TEMPLATE_REGISTRY.map(t => {
+    const prem   = !!(builtinFlags[t.id] && builtinFlags[t.id].premium);
+    const locked = prem && !amAdminB && t.id !== selectedValue;
+    const label  = (prem ? "⭐ " : "") + t.name + (locked ? "  (Premium — contact Madhur Digitals)" : "");
+    return `<option value="${t.id}" ${t.id === selectedValue ? "selected" : ""} ${locked ? "disabled" : ""}>${label}</option>`;
+  }).join("");
   optionsHtml += `</optgroup>`;
 
   const esc  = v => String(v === undefined || v === null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
