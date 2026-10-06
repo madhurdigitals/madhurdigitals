@@ -199,8 +199,56 @@
     });
   }
 
+  /* ── admins: ⭐ Premium for the built-in (JS/CSS) templates ── */
+  async function buildBuiltinPanel() {
+    if (!amAdmin || document.getElementById("tvBuiltinPanel")) return;
+    if (typeof TEMPLATE_REGISTRY === "undefined") {            // the builder doesn't load the registry itself
+      await new Promise(resolve => {
+        const sc = document.createElement("script");
+        sc.src = "card_templates/template_registry.js";
+        sc.onload = resolve; sc.onerror = resolve;
+        document.head.appendChild(sc);
+      });
+    }
+    if (typeof TEMPLATE_REGISTRY === "undefined") return;
+    let flags = {};
+    try {
+      const res = await fetch(`${API_URL}?action=getTemplateFlags`).then(r => r.json());
+      flags = (res && res.flags) || {};
+    } catch (err) { flags = {}; }
+    const anchor = document.getElementById("tvWrap");
+    if (!anchor) return;
+    const panel = document.createElement("div");
+    panel.id = "tvBuiltinPanel";
+    panel.style.cssText = "width:100%; margin-top:6px; padding:8px 10px; border:1px dashed #f59e0b; border-radius:8px; background:#fffbeb; font-size:12px;";
+    panel.innerHTML = `<b title="Built-in templates are fully dynamic and offered for every school. Premium ones can only be given to a school by an admin.">⭐ Premium built-in templates</b>
+      <span style="color:#92400e;"> — offered for every school; only an admin can give a Premium one to a school.</span>
+      <div id="tvBuiltinList" style="display:flex; gap:12px; flex-wrap:wrap; margin-top:6px;"></div>`;
+    anchor.parentNode.parentNode.insertBefore(panel, anchor.parentNode.nextSibling);
+    const list = document.getElementById("tvBuiltinList");
+    TEMPLATE_REGISTRY.forEach(t => {
+      const lab = document.createElement("label");
+      lab.style.cssText = "display:flex; gap:4px; align-items:center; cursor:pointer;";
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.value = t.id; cb.checked = !!(flags[t.id] && flags[t.id].premium);
+      cb.addEventListener("change", async () => {
+        cb.disabled = true;
+        try {
+          const params = new URLSearchParams({ action: "setTemplatePremium", template_id: t.id, premium: cb.checked ? "yes" : "no" });
+          const res = await fetch(`${API_URL}?${params.toString()}`).then(r => r.json());
+          if (res && res.error) { cb.checked = !cb.checked; showToast(res.error, "error"); }
+          else showToast(`${t.name}: ${cb.checked ? "⭐ Premium" : "not Premium"}`, "success");
+        } finally { cb.disabled = false; }
+      });
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode(t.name));
+      list.appendChild(lab);
+    });
+  }
+
   /* ── start ── */
   buildControls();
+  buildBuiltinPanel();
   loadVendors();
   showOwnerPicker();
   // the builder already started loading its template list - label it once it's there
