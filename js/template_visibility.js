@@ -174,25 +174,35 @@
   };
 
   /* ── follow the builder: loading, new template, template list labels ── */
-  const originalLoad = window.handleLoadSelect;
-  window.handleLoadSelect = function () {
-    originalLoad.apply(this, arguments);
-    const id = document.getElementById("tbLoadSelect").value;
-    const row = (typeof tbTemplatesCache !== "undefined" ? tbTemplatesCache : []).find(r => r.template_id === id);
-    setControls(row || null);
-  };
-
-  const originalReset = window.resetBuilder;
-  window.resetBuilder = function () {
-    originalReset.apply(this, arguments);
-    setControls(null);
-  };
-
-  const originalList = window.loadTemplateList;
-  window.loadTemplateList = async function () {
-    await originalList.apply(this, arguments);
-    labelTemplateList();
-  };
+  // (hooked in start(), once the builder's own script has defined these functions)
+  function hookBuilder() {
+    if (typeof window.handleLoadSelect === "function" && !window.handleLoadSelect.__tv) {
+      const originalLoad = window.handleLoadSelect;
+      window.handleLoadSelect = function () {
+        originalLoad.apply(this, arguments);
+        const id = document.getElementById("tbLoadSelect").value;
+        const row = (typeof tbTemplatesCache !== "undefined" ? tbTemplatesCache : []).find(r => r.template_id === id);
+        setControls(row || null);
+      };
+      window.handleLoadSelect.__tv = true;
+    }
+    if (typeof window.resetBuilder === "function" && !window.resetBuilder.__tv) {
+      const originalReset = window.resetBuilder;
+      window.resetBuilder = function () {
+        originalReset.apply(this, arguments);
+        setControls(null);
+      };
+      window.resetBuilder.__tv = true;
+    }
+    if (typeof window.loadTemplateList === "function" && !window.loadTemplateList.__tv) {
+      const originalList = window.loadTemplateList;
+      window.loadTemplateList = async function () {
+        await originalList.apply(this, arguments);
+        labelTemplateList();
+      };
+      window.loadTemplateList.__tv = true;
+    }
+  }
 
   function labelTemplateList() {
     const list = typeof tbTemplatesCache !== "undefined" ? tbTemplatesCache : [];
@@ -253,12 +263,18 @@
     });
   }
 
-  /* ── start ── */
-  buildControls();
-  buildBuiltinPanel();
-  loadVendors();
-  showOwnerPicker();
-  // the builder already started loading its template list - label it once it's there
-  setTimeout(labelTemplateList, 1500);
-  setTimeout(() => fillSchools(), 1500);
+  /* ── start: wait until the page (and the builder's own script) is fully loaded ── */
+  function start() {
+    if (!document.getElementById("tbName")) { console.warn("template_visibility.js: Template Builder fields not found"); return; }
+    hookBuilder();
+    buildControls();
+    buildBuiltinPanel();
+    loadVendors();
+    showOwnerPicker();
+    // the builder already started loading its template list - label it once it's there
+    setTimeout(labelTemplateList, 1500);
+    setTimeout(() => fillSchools(), 1500);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
 })();
