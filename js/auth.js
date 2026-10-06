@@ -32,6 +32,7 @@ async function login(username, password, force) {
     sessionStorage.setItem("permissions", JSON.stringify(data.permissions));
     sessionStorage.setItem("isLoggedIn", "true");
     // Vendor's people see the vendor's name / logo / colour (Level A); everyone else: the normal look
+    sessionStorage.setItem("vendorId", String(data.vendor_id || "1"));
     if (data.brand && data.brand.name) sessionStorage.setItem("brand", JSON.stringify(data.brand));
     else sessionStorage.removeItem("brand");
     localStorage.setItem("isLoggedIn", "true");
@@ -46,7 +47,7 @@ async function login(username, password, force) {
     // Tell the other tabs of this browser: they switch to this login (one login per browser)
     try {
       const shared = {};
-      ["token", "username", "role", "schoolRaw", "userSchools", "permissions", "isLoggedIn", "brand"]
+      ["token", "username", "role", "schoolRaw", "userSchools", "permissions", "isLoggedIn", "brand", "vendorId"]
         .forEach(k => { shared[k] = sessionStorage.getItem(k); });
       const ch = new BroadcastChannel("md-session");
       ch.postMessage({ type: "session-update", data: shared });

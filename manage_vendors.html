@@ -314,9 +314,13 @@
       <label><input type="checkbox" value="add" checked> ➕ Add</label>
       <label><input type="checkbox" value="manage" checked> 🧾 Manage</label>
       <label><input type="checkbox" value="print" checked> 🖨 Print</label>
-      <label><input type="checkbox" value="export" checked> 💾 Export</label>
+      <label><input type="checkbox" value="export"> 💾 Export</label>
       <label><input type="checkbox" value="bulk" checked> 📤 Bulk Upload</label>
       <label><input type="checkbox" value="form" checked> 📄 Forms</label>
+      <label title="Design ID card templates (their templates stay private to them)"><input type="checkbox" value="templates" checked> 🎨 Template Builder</label>
+      <label title="Restore deleted students of their own schools"><input type="checkbox" value="restore" checked> ♻️ Restore</label>
+      <label title="Edit their own schools (no adding, deleting or moving)"><input type="checkbox" value="own_schools" checked> 🏫 Edit own schools</label>
+      <label title="Manage their staff and schools' logins (no deleting)"><input type="checkbox" value="own_users" checked> 👥 Manage own users</label>
     </div>
     <div class="hint" style="margin-top:-6px;">A strong password is generated and shown once. Staff are added on Manage Users (Role: Employee, Vendor: this vendor).</div>
   </div>
@@ -757,7 +761,7 @@ function openLogins(id) {
   document.getElementById("loginsTitle").innerText = `Logins — ${v.name}`;
   renderLogins();
   document.getElementById("nl_username").value = "";
-  document.querySelectorAll("#nlPerms input").forEach(cb => { cb.checked = true; });
+  document.querySelectorAll("#nlPerms input").forEach(cb => { cb.checked = cb.defaultChecked; });
   document.getElementById("newLoginForm").style.display   = "";
   document.getElementById("newLoginResult").style.display = "none";
   document.getElementById("nlCreateBtn").style.display    = "";

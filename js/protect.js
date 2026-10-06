@@ -14,7 +14,7 @@
     "restore_students.html":  "restore",
     "manage_users.html":      ["users", "own_users"],       // vendors: Manage own users
     "manage_photos.html":     "manage",     // NEW: was ungated
-    "template_builder.html":  "schools",    // NEW: was ungated
+    "template_builder.html":  "templates",  // 🎨 Template Builder permission (admins always have it)
     "manage_vendors.html":    "vendors",    // plus admin role (adminOnlyPages below)
     "dashboard.html":         null
   };
@@ -27,7 +27,7 @@
      The login stays in this tab's temporary storage (wiped when the browser closes). A new tab
      asks the other open tabs of the same browser for it, so it doesn't need a second login and
      doesn't count as another session. When every tab is closed, the next visit asks for the password. */
-  const SHARED_KEYS  = ["token", "username", "role", "schoolRaw", "userSchools", "permissions", "isLoggedIn", "brand"];
+  const SHARED_KEYS  = ["token", "username", "role", "schoolRaw", "userSchools", "permissions", "isLoggedIn", "brand", "vendorId"];
   const STARTER_KEYS = ["school", "school_id", "school_name"];   // copied only if this tab has none yet
   let channel = null;
   try { channel = new BroadcastChannel("md-session"); } catch (err) { channel = null; }

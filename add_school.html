@@ -280,7 +280,16 @@ async function loadVendorOptions() {
 }
 
 /* ── TEMPLATE DROPDOWN ── */
-populateTemplateDropdownWithCustom(document.getElementById("template"), "", true);
+// Offers the template library + templates private to the chosen vendor (a new school has no own templates yet)
+function refreshTemplateChoices(keep) {
+  const vendorShown = document.getElementById("vendorRow").style.display !== "none";
+  const vendorId = vendorShown ? (document.getElementById("vendor_id").value || "1") : "1";
+  return populateTemplateDropdownWithCustom(document.getElementById("template"), keep, true, { school: "", vendorId: vendorId });
+}
+document.getElementById("vendor_id").addEventListener("change", () => {
+  refreshTemplateChoices(document.getElementById("template").value);
+});
+refreshTemplateChoices("");
 
 document.getElementById("template").addEventListener("change", function() {
   if (this.value === "__build_new__") {
@@ -342,7 +351,7 @@ function clearForm() {
   document.getElementById("address").value     = "";
   document.getElementById("contact").value     = "";
   resetFieldChips();
-  populateTemplateDropdownWithCustom(document.getElementById("template"), "", true);
+  refreshTemplateChoices("");
   document.getElementById("logo").value        = "";
   document.getElementById("card_color").value  = "#FF5733";
   updateColorPreview();
