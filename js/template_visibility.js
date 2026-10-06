@@ -9,12 +9,19 @@
      <script src="js/template_visibility.js"></script>
    ============================================= */
 (function () {
+  // Read the login straight from this tab's session - no dependency on auth.js being loaded on the page
+  const myRole  = String(sessionStorage.getItem("role") || "");
+  let   myPerms = [];
+  try { myPerms = JSON.parse(sessionStorage.getItem("permissions") || "[]") || []; } catch (err) { myPerms = []; }
+
   const VIS_LABELS = { everyone: "📚 Library", vendor: "🤝 Vendor", school: "🏫 School" };
   const myVendorId = String(sessionStorage.getItem("vendorId") || "1");
-  const vendorMode = myVendorId !== "1" && getRole() !== "admin";        // a vendor's own people
-  const amAdmin    = getRole() === "admin";
+  const vendorMode = myVendorId !== "1" && myRole !== "admin";        // a vendor's own people
+  const amAdmin    = myRole === "admin";
   let tvVendors = [];
   let loadedRow = null;
+
+  const toast = (msg, type) => { if (typeof showToast === "function") showToast(msg, type); else alert(msg); };
 
   /* ── controls ── */
   function buildControls() {
@@ -70,7 +77,7 @@
     const sel = document.getElementById("tvVendor");
     sel.innerHTML = tvVendors.map(v => `<option value="${v.vendor_id}">${String(v.name).replace(/</g, "&lt;")}</option>`).join("");
     // Only someone with Manage Vendors can make a template private to a vendor
-    const canVendor = amAdmin && getPermissions().includes("vendors") && tvVendors.length > 0;
+    const canVendor = amAdmin && myPerms.includes("vendors") && tvVendors.length > 0;
     document.querySelector('#tvVisibility option[value="vendor"]').disabled = !canVendor;
   }
 
@@ -141,8 +148,8 @@
     try {
       const params = new URLSearchParams({ action: "copyTemplateToLibrary", template_id: loadedRow.template_id, template_name: name });
       const res = await fetch(`${API_URL}?${params.toString()}`).then(r => r.json());
-      if (res && res.error) { showToast(res.error, "error"); return; }
-      showToast("Copied to the library ✓", "success");
+      if (res && res.error) { toast(res.error, "error"); return; }
+      toast("Copied to the library ✓", "success");
       await window.loadTemplateList();
     } finally {
       btn.disabled = false; btn.textContent = "📚 Copy to library";
@@ -236,8 +243,8 @@
         try {
           const params = new URLSearchParams({ action: "setTemplatePremium", template_id: t.id, premium: cb.checked ? "yes" : "no" });
           const res = await fetch(`${API_URL}?${params.toString()}`).then(r => r.json());
-          if (res && res.error) { cb.checked = !cb.checked; showToast(res.error, "error"); }
-          else showToast(`${t.name}: ${cb.checked ? "⭐ Premium" : "not Premium"}`, "success");
+          if (res && res.error) { cb.checked = !cb.checked; toast(res.error, "error"); }
+          else toast(`${t.name}: ${cb.checked ? "⭐ Premium" : "not Premium"}`, "success");
         } finally { cb.disabled = false; }
       });
       lab.appendChild(cb);
