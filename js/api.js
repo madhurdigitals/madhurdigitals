@@ -639,7 +639,7 @@ async function addVendor(data) {
       logo:        data.logo        || "",
       brand_color: data.brand_color || "",
       max_users:   data.max_users   || "",
-      white_label: data.white_label || ""
+      branding:    data.branding    || ""
     });
     const res = await fetch(`${API_URL}?${params.toString()}`);
     return await res.json();
@@ -653,7 +653,7 @@ async function addVendor(data) {
 async function updateVendor(data) {
   try {
     const params = new URLSearchParams({ action: "updateVendor", vendor_id: data.vendor_id });
-    ["name", "contact", "phone", "email", "slug", "logo", "brand_color", "max_users", "white_label"].forEach(k => {
+    ["name", "contact", "phone", "email", "slug", "logo", "brand_color", "max_users", "branding"].forEach(k => {
       if (data[k] !== undefined) params.append(k, data[k]);
     });
     const res = await fetch(`${API_URL}?${params.toString()}`);

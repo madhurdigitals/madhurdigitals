@@ -74,6 +74,8 @@
     .seat { font-weight: 600; }
     .wl-chip { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 10px; background: #fef3c7;
                color: #92400e; font-size: 10px; font-weight: 700; vertical-align: middle; }
+    .brand-chip { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 10px; background: #e0e7ff;
+                  color: #3730a3; font-size: 10px; font-weight: 700; vertical-align: middle; }
     .wl-row { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 12px; font-size: 13px; cursor: pointer; }
     .wl-row input { width: auto; margin: 2px 0 0; accent-color: #0d6efd; }
     .seat.full { color: #b45309; }
@@ -280,10 +282,14 @@
     <label class="field-label">Max users</label>
     <input id="pv_max_users" type="number" min="1" max="999" value="2">
     <div class="hint">Vendor logins + their staff, active or not. School logins are not counted.</div>
-    <label class="wl-row" title="Paid option: this vendor's people see only the vendor's brand">
-      <input type="checkbox" id="pv_white_label">
-      <span><b>🏷 White-label</b><br><span style="color:#6b7280;font-size:12px;">Hide “Powered by Madhur Digitals” for this vendor's people (paid option).</span></span>
-    </label>
+    <label class="field-label">Branding</label>
+    <select id="pv_branding" onchange="updateBrandingHint()"
+            title="How this vendor's people and schools see the portal">
+      <option value="madhur" title="The normal Madhur Digitals portal. The login link shows the Madhur Digitals login.">Madhur Digitals (Default)</option>
+      <option value="branded" title="Vendor's name, logo and colour, with 'Powered by Madhur Digitals'. The login link shows the vendor's branded login page.">Vendor branded</option>
+      <option value="white_label" title="Vendor's name, logo and colour only - Madhur Digitals is completely invisible (premium).">White-label</option>
+    </select>
+    <div class="hint" id="brandingHint"></div>
   </div>
 
   <div class="popup-actions">
@@ -498,7 +504,8 @@ function renderVendors() {
           ? `<button class="btn-activate" onclick="changeStatus('${esc(id)}', 'active', this)">Activate</button>`
           : `<button class="btn-suspend"  onclick="changeStatus('${esc(id)}', 'suspended', this)">Suspend</button>`) +
         `<button class="btn-logins" onclick="openLogins('${esc(id)}')">👤 Logins</button>` +
-        `<button class="btn-logins" onclick="copyVendorLink('${esc(v.slug)}', this)" title="Copy this vendor's branded login link (shows its name, logo and colour)">🔗 Link</button>` +
+        (["branded", "white_label"].includes(String(v.branding || "").toLowerCase())
+          ? `<button class="btn-logins" onclick="copyVendorLink('${esc(v.slug)}', this)" title="Copy this vendor's branded login link (shows its name, logo and colour)">🔗 Link</button>` : "") +
         `<button class="btn-archive" onclick="openArchive('${esc(id)}')">Archive</button>`;
     }
 
@@ -506,7 +513,10 @@ function renderVendors() {
       <tr class="${isArchived(v) ? "row-archived" : ""}">
         <td>${esc(id)}</td>
         <td class="vendor-name">
-          ${logo ? `<img class="logo-thumb" src="${esc(logo)}" alt="" onerror="this.style.display='none'">` : ""}${esc(v.name)}${String(v.white_label || "").toLowerCase() === "yes" ? `<span class="wl-chip" title="White-label: this vendor's people don't see Powered by Madhur Digitals">🏷 White-label</span>` : ""}
+          ${logo ? `<img class="logo-thumb" src="${esc(logo)}" alt="" onerror="this.style.display='none'">` : ""}${esc(v.name)}${String(v.branding || "").toLowerCase() === "white_label"
+            ? `<span class="wl-chip" title="White-label: this vendor's people see only the vendor's brand - Madhur Digitals is invisible">🏷 White-label</span>`
+            : String(v.branding || "").toLowerCase() === "branded"
+            ? `<span class="brand-chip" title="Vendor branded: the vendor's look with 'Powered by Madhur Digitals'">🎨 Branded</span>` : ""}
         </td>
         <td>${esc(v.contact) || "-"}</td>
         <td>${esc(v.phone) || "-"}</td>
@@ -537,7 +547,9 @@ function fillPopup(v) {
   // Max users: only for normal vendors (not Madhur Digitals or Unassigned Schools)
   const special = v && (isPlatform(v) || isHolding(v));
   document.getElementById("maxUsersRow").style.display = special ? "none" : "";
-  document.getElementById("pv_white_label").checked = !!(v && String(v.white_label || "").toLowerCase() === "yes");
+  const lvl = v ? String(v.branding || "").toLowerCase() : "";
+  document.getElementById("pv_branding").value = ["branded", "white_label"].includes(lvl) ? lvl : "madhur";
+  updateBrandingHint();
   document.getElementById("pv_max_users").value = v && String(v.max_users || "") !== "" ? v.max_users : 2;
   updateSlugHint();
 }
@@ -609,7 +621,7 @@ async function saveVendor() {
   };
   if (document.getElementById("maxUsersRow").style.display !== "none") {
     data.max_users = document.getElementById("pv_max_users").value.trim();
-    data.white_label = document.getElementById("pv_white_label").checked ? "yes" : "no";
+    data.branding = document.getElementById("pv_branding").value;
     if (!/^\d+$/.test(data.max_users) || Number(data.max_users) < 1 || Number(data.max_users) > 999) {
       alert("Max users must be a whole number from 1 to 999"); return;
     }
@@ -706,6 +718,17 @@ async function changeStatus(id, status, btn) {
   await loadUsers();
   await loadVendors();
   renderVendors();
+}
+
+/* ── BRANDING LEVEL ── */
+const BRANDING_HINTS = {
+  madhur:      "This vendor's people and schools see the normal Madhur Digitals portal.",
+  branded:     "They see the vendor's name, logo and colour, with \"Powered by Madhur Digitals\". The login link shows the vendor's branded page.",
+  white_label: "They see only the vendor's name, logo and colour — Madhur Digitals is completely invisible (premium)."
+};
+function updateBrandingHint() {
+  const sel = document.getElementById("pv_branding");
+  document.getElementById("brandingHint").innerText = BRANDING_HINTS[sel.value] || "";
 }
 
 /* ── BRANDED LOGIN LINK ── */
