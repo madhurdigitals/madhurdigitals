@@ -94,6 +94,15 @@ async function loadCustomTemplateAssets(templateId) {
   const row = rows.find(r => r.template_id === templateId);
   if (!row) throw new Error(`Custom template "${templateId}" not found`);
 
+  // A school design based on a built-in (code) template: print it with that built-in template
+  if (row.base_template) {
+    await loadTemplateAssets(row.base_template);
+    const base = window.CARD_TEMPLATES && window.CARD_TEMPLATES[row.base_template];
+    if (!base) throw new Error(`Built-in template "${row.base_template}" not found`);
+    window.CARD_TEMPLATES[templateId] = Object.assign({}, base, { __isCustom: true, __base: row.base_template });
+    return;
+  }
+
   let layout;
   try {
     layout = JSON.parse(row.layout_json || "{}");
@@ -406,8 +415,13 @@ async function loadSchoolInfo() {
          String(s.school).toLowerCase() === school.toLowerCase()
   ) || {};
 
-    // 🔥 UPDATED — branch: custom (drag-and-drop) templates vs. built-in coded templates
-  const rawTemplateValue = schoolInfo.template || "";
+  // The school's ★ Default design first; other designs of this school can be chosen on the page
+  await activateTemplate(schoolInfo.template || "");
+  await setupDesignChoice();
+}
+
+// Loads one design / template and makes it the one cards are printed with
+async function activateTemplate(rawTemplateValue) {
 
   if (rawTemplateValue.indexOf("custom_") === 0) {
     currentTemplateId = rawTemplateValue;
@@ -602,7 +616,7 @@ function renderCardPage() {
 
   const template = window.CARD_TEMPLATES[currentTemplateId];
 
-  const cardClass = currentTemplateId.indexOf("custom_") === 0 ? "custom-card" : `t2-card-${currentTemplateId}`;
+  const cardClass = cardClassFor(currentTemplateId);
 
   container.innerHTML = `
     <div class="page ${currentOrientation === 'portrait' ? 'page-portrait' : ''}">
@@ -647,7 +661,7 @@ function renderAllCardPages() {
   const container = document.getElementById("cardContainer");
   const template = window.CARD_TEMPLATES[currentTemplateId];
 
-  const cardClass = currentTemplateId.indexOf("custom_") === 0 ? "custom-card" : `t2-card-${currentTemplateId}`;
+  const cardClass = cardClassFor(currentTemplateId);
 
   container.innerHTML = cardPages.map(page => `
     <div class="page ${currentOrientation === 'portrait' ? 'page-portrait' : ''}">
@@ -688,7 +702,7 @@ async function printBackSheet() {
     return;
   }
 
-  const cardClass = currentTemplateId.indexOf("custom_") === 0 ? "custom-card" : `t2-card-${currentTemplateId}`;
+  const cardClass = cardClassFor(currentTemplateId);
   const backCardHtml = `<div class="id-card ${cardClass}">${template.renderBack(schoolInfo)}</div>`;
   const container = document.getElementById("cardContainer");
 
@@ -717,7 +731,7 @@ async function downloadBackSheetPDF() {
   overlay.style.display = "flex";
   loadingText.innerText = "Rendering back sheet...";
 
-  const cardClass = currentTemplateId.indexOf("custom_") === 0 ? "custom-card" : `t2-card-${currentTemplateId}`;
+  const cardClass = cardClassFor(currentTemplateId);
   const backCardHtml = `<div class="id-card ${cardClass}">${template.renderBack(schoolInfo)}</div>`;
   const container = document.getElementById("cardContainer");
   container.innerHTML = `<div class="page ${currentOrientation === 'portrait' ? 'page-portrait' : ''}">${Array(10).fill(backCardHtml).join("")}</div>`;
@@ -803,4 +817,53 @@ function setPrintPageOrientation(orientation) {
   styleEl.innerHTML = orientation === "portrait"
     ? "@page { size: A4 landscape; margin: 0; }"
     : "@page { size: A4; margin: 0; }";
+}
+
+
+// The CSS class a card needs: custom designs, designs based on a built-in template, built-in templates
+function cardClassFor(templateId) {
+  const t = window.CARD_TEMPLATES && window.CARD_TEMPLATES[templateId];
+  if (t && t.__base) return `t2-card-${t.__base}`;
+  return String(templateId).indexOf("custom_") === 0 ? "custom-card" : `t2-card-${templateId}`;
+}
+
+// ── CARD DESIGN CHOICE: a school can have several designs (★ Default first) ──
+async function setupDesignChoice() {
+  const wrap = document.getElementById("designChoiceWrap");
+  const sel  = document.getElementById("designSelect");
+  if (!wrap || !sel) return;
+  let rows = [];
+  try {
+    const raw = await fetch(`${API_URL}?action=getCustomTemplates`).then(r => r.json());
+    if (raw && raw.length > 1) {
+      const h = raw[0];
+      rows = raw.slice(1).map(r => { const o = {}; h.forEach((k, i) => o[k] = r[i]); return o; });
+    }
+  } catch (err) { rows = []; }
+  const code = String(school || "").toLowerCase();
+  const designs = rows.filter(r => String(r.visibility || "").toLowerCase() === "school" &&
+                                   String(r.owner_school || "").toLowerCase() === code);
+  const def = String(schoolInfo.template || "");
+  const nameOf = id => {
+    const c = rows.find(r => r.template_id === id);
+    if (c) return c.template_name;
+    const b = (typeof TEMPLATE_REGISTRY !== "undefined" ? TEMPLATE_REGISTRY : []).find(t => t.id === id);
+    return b ? b.name : id;
+  };
+  const options = [{ id: def, name: nameOf(def) }].concat(designs.filter(d => d.template_id !== def).map(d => ({ id: d.template_id, name: d.template_name })));
+  if (options.length <= 1) { wrap.style.display = "none"; return; }
+  sel.innerHTML = options.map((o, i) => `<option value="${o.id}">${i === 0 ? "★ " : ""}${String(o.name).replace(/</g, "&lt;")}${i === 0 ? " (default)" : ""}</option>`).join("");
+  sel.value = currentTemplateId === def ? def : sel.value;
+  wrap.style.display = "";
+}
+
+async function switchDesign(templateId) {
+  const sel = document.getElementById("designSelect");
+  if (sel) sel.disabled = true;
+  try {
+    await activateTemplate(templateId);
+    if (cardPages.length) { renderCardPage(); renderCardPagination(); }
+  } finally {
+    if (sel) sel.disabled = false;
+  }
 }
