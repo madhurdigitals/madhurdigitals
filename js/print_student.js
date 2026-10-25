@@ -17,24 +17,117 @@ function isTemplateReady() {
 
 const school = sessionStorage.getItem("school");
 
+/* ── WHICH CARDS? 🎓 Students · 👩‍🏫 Staff · 🏛 Management (S4b) ──
+   Each type prints with its own ★ Default design. Staff cards need a Staff design (no fallback to the
+   Student design); Management cards use the Staff design until a Management design exists. */
+const P_TYPES = {
+  student:    { icon: "🎓", label: "Students",   one: "student",      many: "students",      col: "template" },
+  staff:      { icon: "👩‍🏫", label: "Staff",      one: "staff member", many: "staff members", col: "staff_template" },
+  management: { icon: "🏛", label: "Management", one: "person",       many: "people",        col: "management_template" }
+};
+let printType = "student";
+let pIdKey = "Student_ID";
+let printDefault = "";          // the ★ Default design used for this type
+let noDesign = false;           // staff/management: no design to print with yet
+const idOf = s => String(s[pIdKey] === undefined || s[pIdKey] === null ? "" : s[pIdKey]);
+function groupOf(s) {
+  if (printType === "student") return s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`;
+  return String(s.Designation || "");
+}
+function pCanStaff() {
+  let perms = [];
+  try { perms = JSON.parse(sessionStorage.getItem("permissions") || "[]") || []; } catch (err) { perms = []; }
+  return sessionStorage.getItem("role") === "admin" || perms.includes("staff");
+}
+
+function setupPrintTypes() {
+  const staffOn = String(schoolInfo.staff_enabled || "").toLowerCase() === "yes" && pCanStaff();
+  const want = sessionStorage.getItem("printType");
+  printType = staffOn && P_TYPES[want] ? want : "student";
+  pIdKey = printType === "student" ? "Student_ID" : "Staff_ID";
+  const bar = document.getElementById("printTypeTabs");
+  if (bar) {
+    bar.style.display = staffOn ? "flex" : "none";
+    bar.innerHTML = Object.keys(P_TYPES).map(k => `<button type="button" data-type="${k}" class="${k === printType ? "on" : ""}"
+        title="Print ${P_TYPES[k].label.toLowerCase()} cards">${P_TYPES[k].icon} ${P_TYPES[k].label}</button>`).join("");
+    bar.onclick = e => {
+      const b = e.target.closest("button[data-type]");
+      if (!b || b.disabled || pLoading || b.dataset.type === printType) return;
+      sessionStorage.setItem("printType", b.dataset.type);
+      resetPrintPage();
+      loadStudents();
+    };
+  }
+  const t = P_TYPES[printType];
+  const h = document.getElementById("printHeading"); if (h) h.textContent = `${t.icon} Print ${t.label}`;
+  const g = document.getElementById("groupBtn"); if (g) g.textContent = printType === "student" ? "Select Class-Section" : "Select Designation";
+}
+
+function resetPrintPage() {
+  students = []; filtered = []; selectedStudentIds = new Set(); cardPages = []; currentPage = 1;
+  document.getElementById("cardSection").style.display = "none";
+  const cl = document.getElementById("checklistSection"); if (cl) cl.style.display = "none";
+  document.getElementById("searchName").value = "";
+}
+
+/* ── LOADING: tabs locked, a clear message in the table, buttons wait (no silent waiting, no double clicks) ── */
+let pLoading = false;
+function setPrintLoading(on, what) {
+  pLoading = on;
+  document.querySelectorAll("#printTypeTabs button").forEach(b => {
+    b.disabled = on;
+    b.style.cursor = on ? "wait" : "";
+    b.style.opacity = on && !b.classList.contains("on") ? ".6" : "";
+    const base = b.textContent.replace(/^⏳\s*/, "");
+    b.textContent = on && b.classList.contains("on") ? "⏳ " + base : base;
+  });
+  ["generateBtn", "checklistBtn"].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = on || (id === "generateBtn" && noDesign); });
+  if (on) {
+    const tb = document.getElementById("studentTable");
+    if (tb) tb.innerHTML = `<tr><td colspan="20" style="padding:24px; text-align:center; color:#6b7280; font-weight:600;">⏳ Loading ${what || "the list"}… please wait</td></tr>`;
+    const head = document.querySelector("thead"); if (head) head.innerHTML = "";
+  }
+}
+
 // LOAD DATA
 async function loadStudents() {
-  const raw = await getStudents(school);
+  if (pLoading) return;
+  setPrintLoading(true, "");
+  try { await loadStudentsNow(); } finally { setPrintLoading(false); }
+}
+
+async function loadStudentsNow() {
+  const rawSchools = await getSchools(true);
+  const sh = rawSchools[0] || [];
+  const allSchools = rawSchools.slice(1).map(row => { const o = {}; sh.forEach((h, i) => o[h] = row[i]); return o; });
+  schoolInfo = allSchools.find(s => s.school !== "" && s.school !== undefined && school &&
+                                    String(s.school).toLowerCase() === String(school).toLowerCase()) || {};
+  setupPrintTypes();
+  setPrintLoading(true, P_TYPES[printType].label.toLowerCase());
+
+  const raw = printType === "student" ? await getStudents(school) : await getStaff(school);
+  if (!Array.isArray(raw) || !raw.length) {
+    students = []; filtered = []; headersGlobal = [];
+    renderSmartTable(); renderPagination();
+    alert((raw && raw.error) || "Could not load the list");
+    return;
+  }
 
   const headers = raw[0];
-
-  headersGlobal = headers.filter(h => h !== "Timestamp");
+  const hidden = ["timestamp", "status", "deleted_at", "deleted_by", "restored_at", "restored_by"];
+  headersGlobal = headers.filter(h => !hidden.includes(String(h).toLowerCase()));
 
   students = raw.slice(1).map(r => {
     let obj = {};
     headers.forEach((h, i) => obj[h] = r[i]);
     return obj;
   });
+  if (printType !== "student") {           // Staff cards: Category Staff; Management cards: Category Management
+    students = students.filter(s => (String(s.Category || "").toLowerCase() === "management") === (printType === "management"));
+  }
 
   filtered = [...students];
-  students.forEach(s => {
-    selectedStudentIds.add(Number(s.Student_ID));
-  });
+  selectedStudentIds = new Set(students.map(idOf));
   renderSmartTable();
   renderPagination();
   generateClassSectionOptions();
@@ -150,7 +243,7 @@ function renderTable(data, headers) {
   tbody.innerHTML = data.map(s => `
     <tr>
       <td>
-        <input type="checkbox" class="rowCheck" value="${s.Student_ID}" checked>
+        <input type="checkbox" class="rowCheck" value="${idOf(s)}" checked>
       </td>
       ${visibleHeaders.map(h => `<td>${s[h] || ""}</td>`).join("")}
     </tr>
@@ -270,7 +363,7 @@ function attachCheckboxEvents() {
 
       document.querySelectorAll(".rowCheck").forEach(cb => {
 
-        const id = Number(cb.value);
+        const id = cb.value;
 
         cb.checked = checked;
 
@@ -289,7 +382,7 @@ function attachCheckboxEvents() {
 
   document.querySelectorAll(".rowCheck").forEach(cb => {
 
-    const id = Number(cb.value);
+    const id = cb.value;
 
     // restore state when rendering
     cb.checked = selectedStudentIds.has(id);
@@ -324,10 +417,10 @@ function applyFilter() {
 
   filtered = students.filter(s => {
 
-    const cs = s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`;
+    const cs = groupOf(s);
 
     return (
-      (s.Name || "").toLowerCase().includes(name) &&
+      (String(s.Name || "").toLowerCase().includes(name) || idOf(s).toLowerCase().includes(name)) &&
       (selectedCS.length === 0 || selectedCS.includes(cs))
     );
   });
@@ -370,9 +463,10 @@ document.addEventListener("click", function (e) {
 
 // GENERATE CARDS
 function generateCards() {
+  if (noDesign) { alert(`No ${P_TYPES[printType].label} design yet — create one in Template Builder first.`); return; }
 
   const selected = filtered.filter(s =>
-    selectedStudentIds.has(Number(s.Student_ID))
+    selectedStudentIds.has(idOf(s))
   );
 
   if (selected.length === 0) {
@@ -411,13 +505,39 @@ async function loadSchoolInfo() {
   });
 
   schoolInfo = schools.find(
-    s => s.school && school &&
-         String(s.school).toLowerCase() === school.toLowerCase()
+    s => s.school !== "" && s.school !== undefined && school &&
+         String(s.school).toLowerCase() === String(school).toLowerCase()
   ) || {};
 
-  // The school's ★ Default design first; other designs of this school can be chosen on the page
-  await activateTemplate(schoolInfo.template || "");
-  await setupDesignChoice();
+  // The school's ★ Default design for THIS card type; other designs of this type can be chosen on the page
+  let tpl = String(schoolInfo[P_TYPES[printType].col] || "");
+  let note = "";
+  if (printType === "management" && !tpl) {
+    tpl = String(schoolInfo.staff_template || "");
+    if (tpl) note = "No Management design yet — printing with the ★ Staff design.";
+  }
+  showDesignMessage(printType !== "student" && !tpl, note);
+  if (printType !== "student" && !tpl) return;          // nothing to print with
+  printDefault = tpl;
+  await activateTemplate(tpl);              // always the ★ Default of this card type (chosen in Template Builder)
+}
+
+// Staff / Management without a design: say so clearly, with a way to make one
+function showDesignMessage(missing, note) {
+  noDesign = !!missing;
+  const box = document.getElementById("noDesignBox");
+  if (box) {
+    box.style.display = (missing || note) ? "block" : "none";
+    box.style.background = missing ? "#fef2f2" : "#eff6ff";
+    box.style.borderColor = missing ? "#fca5a5" : "#bfdbfe";
+    box.innerHTML = missing
+      ? `⚠ <b>No ${printType === "management" ? "Staff or Management" : "Staff"} design yet</b> — these cards can't be printed until one exists.
+         <a href="template_builder.html?school=${encodeURIComponent(school)}" style="margin-left:8px; font-weight:700;">🎨 Create one in Template Builder</a>`
+      : `ℹ ${note}`;
+  }
+  const gen = document.getElementById("generateBtn");
+  if (gen) gen.disabled = !!missing;
+
 }
 
 // Loads one design / template and makes it the one cards are printed with
@@ -458,13 +578,14 @@ async function activateTemplate(rawTemplateValue) {
 function attachGlobalSelect() {
 
   const global = document.getElementById("globalSelect");
-  if (!global) return;
+  if (!global || global.dataset.bound) return;      // once - the list can reload (Students / Staff / Management)
+  global.dataset.bound = "1";
 
   global.addEventListener("change", function () {
 
     if (this.checked) {
       students.forEach(s => {
-        selectedStudentIds.add(Number(s.Student_ID));
+        selectedStudentIds.add(idOf(s));
       });
     } else {
       selectedStudentIds.clear();
@@ -519,9 +640,8 @@ function truncate(text) {
 
 function generateClassSectionOptions() {
 
-  const unique = [...new Set(
-    students.map(s => s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`)
-  )].sort((a, b) => {
+  const unique = [...new Set(students.map(groupOf).filter(Boolean))].sort((a, b) => {
+    if (printType !== "student") return a.localeCompare(b);
 
     const [c1, s1] = a.split("-");
     const [c2, s2] = b.split("-");
@@ -756,7 +876,7 @@ function updateSelectionUI() {
   const btn = document.getElementById("generateBtn");
 
   if (label) {
-    label.innerText = `Selected: ${count} student${count !== 1 ? "s" : ""}`;
+    label.innerText = `Selected: ${count} ${count === 1 ? P_TYPES[printType].one : P_TYPES[printType].many}`;
   }
 
   if (btn) {
@@ -841,9 +961,11 @@ async function setupDesignChoice() {
     }
   } catch (err) { rows = []; }
   const code = String(school || "").toLowerCase();
+  const typeOf = r => { const v = String(r.card_type || "").toLowerCase(); return P_TYPES[v] ? v : "student"; };
+  const wantType = printType === "management" && !schoolInfo.management_template ? "staff" : printType;
   const designs = rows.filter(r => String(r.visibility || "").toLowerCase() === "school" &&
-                                   String(r.owner_school || "").toLowerCase() === code);
-  const def = String(schoolInfo.template || "");
+                                   String(r.owner_school || "").toLowerCase() === code && typeOf(r) === wantType);
+  const def = printDefault;
   const nameOf = id => {
     const c = rows.find(r => r.template_id === id);
     if (c) return c.template_name;
@@ -865,5 +987,135 @@ async function switchDesign(templateId) {
     if (cardPages.length) { renderCardPage(); renderCardPagination(); }
   } finally {
     if (sel) sel.disabled = false;
+  }
+}
+
+
+/* =============================================
+   📋 VERIFICATION CHECKLIST (S4b) - plain black & white, for the school to check the data before printing
+   Grouped by class-section (students) or designation (staff). Header: school, title, date, page X of Y.
+   Footer: Checked by / Signature & stamp. Small greyscale photo per person.
+   ============================================= */
+const CL_ROWS_PER_PAGE = 12;
+const clEsc = v => String(v === undefined || v === null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+function clPick(s, re) {
+  const k = Object.keys(s).find(k => re.test(String(k).toLowerCase().replace(/[^a-z0-9]/g, "_")));
+  return k ? String(s[k] === undefined || s[k] === null ? "" : s[k]).replace(/^'/, "") : "";
+}
+function clDate(v) {
+  if (v instanceof Date) return `${String(v.getDate()).padStart(2, "0")}/${String(v.getMonth() + 1).padStart(2, "0")}/${v.getFullYear()}`;
+  const iso = /^(\d{4})-(\d{2})-(\d{2})T/.exec(String(v || ""));
+  if (iso) { const d = new Date(v); if (!isNaN(d)) return clDate(d); }
+  return String(v || "").replace(/^'/, "");
+}
+function checklistColumns() {
+  if (printType === "student") return [
+    ["Father's Name", s => clPick(s, /father/)],
+    ["Class-Section", s => groupOf(s).replace(/-$/, "")],
+    ["DOB",          s => clDate(clPick(s, /^dob$|birth/))],
+    ["Phone",        s => clPick(s, /phone|mobile|contact/)]];
+  return [
+    ["Designation",             s => s.Designation || ""],
+    ["Father's/Husband's Name", s => clPick(s, /father|husband/)],
+    ["DOB",                     s => clDate(clPick(s, /^dob$|birth/))],
+    ["Phone",                   s => clPick(s, /phone|mobile|contact/)]];
+}
+
+function buildChecklistPages() {
+  const people = filtered.filter(s => selectedStudentIds.has(idOf(s)))
+    .sort((a, b) => groupOf(a).localeCompare(groupOf(b), undefined, { numeric: true }) || String(a.Name || "").localeCompare(String(b.Name || "")));
+  const cols = checklistColumns();
+  // rows: group headings + people, cut into pages
+  const rows = [];
+  let lastGroup = null, n = 0;
+  people.forEach(s => {
+    const g = groupOf(s) || "—";
+    if (g !== lastGroup) { rows.push({ group: g }); lastGroup = g; }
+    rows.push({ s, n: ++n });
+  });
+  const pages = [];
+  for (let i = 0; i < rows.length; i += CL_ROWS_PER_PAGE) pages.push(rows.slice(i, i + CL_ROWS_PER_PAGE));
+  const today = clDate(new Date());
+  const title = printType === "student" ? "Data verification checklist" : `Data verification checklist — ${P_TYPES[printType].label}`;
+  const head = `<tr><th style="width:8mm;">No.</th><th style="width:14mm;">Photo</th><th>ID</th><th>Name</th>${cols.map(c => `<th>${clEsc(c[0])}</th>`).join("")}<th style="width:28mm;">✓ / Correction</th></tr>`;
+  return pages.map((rowsOnPage, p) => `
+    <div class="cl-page">
+      <div class="cl-head">
+        <div class="cl-school">${clEsc(schoolInfo.school_name || school)}</div>
+        <div class="cl-title">${clEsc(title)}</div>
+        <div class="cl-meta"><span>Date: ${today}</span><span>Page ${p + 1} of ${pages.length}</span></div>
+      </div>
+      <table class="cl-table"><thead>${head}</thead><tbody>
+        ${rowsOnPage.map(r => r.group !== undefined
+          ? `<tr class="cl-group"><td colspan="${cols.length + 5}">${printType === "student" ? "Class-Section" : "Designation"}: ${clEsc(r.group)}</td></tr>`
+          : `<tr><td>${r.n}</td>
+               <td>${r.s.Photo_Link && typeof getPhotoUrl === "function" ? `<img src="${getPhotoUrl(r.s.Photo_Link, "w_90,h_110,c_fill,e_grayscale")}" crossorigin="anonymous">` : `<div class="cl-nophoto">No photo</div>`}</td>
+               <td>${clEsc(idOf(r.s))}</td><td><b>${clEsc(r.s.Name)}</b></td>
+               ${cols.map(c => `<td>${clEsc(c[1](r.s))}</td>`).join("")}<td></td></tr>`).join("")}
+      </tbody></table>
+      <div class="cl-foot"><span>Checked by: ____________________</span><span>Signature &amp; stamp: ____________________</span></div>
+    </div>`);
+}
+
+const CL_CSS = `
+  .cl-page { width:210mm; min-height:297mm; padding:10mm; box-sizing:border-box; background:#fff; color:#000;
+             font-family:Arial, sans-serif; font-size:9.5pt; display:flex; flex-direction:column; page-break-after:always; margin:0 auto 6mm; }
+  .cl-head { text-align:center; border-bottom:1.5px solid #000; padding-bottom:3mm; margin-bottom:3mm; }
+  .cl-school { font-size:15pt; font-weight:700; }
+  .cl-title { font-size:11pt; margin-top:1mm; }
+  .cl-meta { display:flex; justify-content:space-between; font-size:9pt; margin-top:2mm; }
+  .cl-table { width:100%; border-collapse:collapse; }
+  .cl-table th, .cl-table td { border:1px solid #000; padding:1.2mm 1.5mm; text-align:left; vertical-align:middle; }
+  .cl-table th { background:#fff; font-weight:700; }
+  .cl-table img { width:11mm; height:14mm; object-fit:cover; display:block; filter:grayscale(1); }
+  .cl-nophoto { width:11mm; height:14mm; border:1px dashed #000; font-size:6pt; display:flex; align-items:center; justify-content:center; text-align:center; }
+  .cl-group td { font-weight:700; background:#fff; border-top:2px solid #000; }
+  .cl-foot { margin-top:auto; padding-top:8mm; display:flex; justify-content:space-between; font-size:10pt; }
+  @media print { .cl-page { margin:0; } }`;
+
+function showChecklist() {
+  if (!filtered.some(s => selectedStudentIds.has(idOf(s)))) { alert(`Select at least one ${P_TYPES[printType].one}`); return; }
+  const sec = document.getElementById("checklistSection"), box = document.getElementById("checklistContainer");
+  if (!sec || !box) return;
+  if (!document.getElementById("clCss")) { const st = document.createElement("style"); st.id = "clCss"; st.textContent = CL_CSS; document.head.appendChild(st); }
+  box.innerHTML = buildChecklistPages().join("");
+  sec.style.display = "block";
+  if (sec.scrollIntoView) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// Print in its own window, so only the checklist is printed (black & white, A4)
+function printChecklist() {
+  const pages = buildChecklistPages();
+  const w = window.open("", "_blank");
+  if (!w) { alert("Please allow pop-ups for this site to print the checklist."); return; }
+  w.document.write(`<!DOCTYPE html><html><head><title>Data verification checklist</title><style>${CL_CSS} @page { size:A4; margin:0; } body { margin:0; }</style></head>
+    <body>${pages.join("")}</body></html>`);
+  w.document.close();
+  w.onload = () => { w.focus(); w.print(); };
+}
+
+async function downloadChecklistPDF() {
+  const box = document.getElementById("checklistContainer");
+  if (!box || !box.querySelector(".cl-page")) showChecklist();
+  const pages = document.querySelectorAll("#checklistContainer .cl-page");
+  if (!pages.length) return;
+  const overlay = document.getElementById("pdfLoadingOverlay"), text = document.getElementById("pdfLoadingText");
+  if (overlay) overlay.style.display = "flex";
+  try {
+    await Promise.all([...box.querySelectorAll("img")].map(img => img.complete ? null : new Promise(r => { img.onload = r; img.onerror = r; })));
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("p", "mm", "a4");
+    for (let i = 0; i < pages.length; i++) {
+      if (text) text.innerText = `Creating page ${i + 1} of ${pages.length}...`;
+      const canvas = await html2canvas(pages[i], { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      if (i) pdf.addPage();
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, 210, 297);
+    }
+    pdf.save(`${schoolInfo.school_name || school}_${printType}_checklist.pdf`);
+  } catch (err) {
+    console.error(err);
+    alert("The checklist PDF could not be created — please try again.");
+  } finally {
+    if (overlay) overlay.style.display = "none";
   }
 }

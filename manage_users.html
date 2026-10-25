@@ -347,9 +347,9 @@
       <input type="checkbox" value="print">
       <span>🖨 Print Students</span>
     </label>
-    <label class="perm-item">
-      <input type="checkbox" value="export">
-      <span>💾 Export Students</span>
+    <label class="perm-item" id="exportPermItem">
+      <input type="checkbox" value="export" id="exportPermBox">
+      <span>💾 Export</span>
     </label>
     <label class="perm-item">
       <input type="checkbox" value="bulk">
@@ -366,6 +366,10 @@
     <label class="perm-item">
       <input type="checkbox" value="restore">
       <span>♻️ Restore Students</span>
+    </label>
+    <label class="perm-item" title="See, add and edit staff records (teachers, drivers, management) - together with Add / Manage">
+      <input type="checkbox" value="staff">
+      <span>👩‍🏫 Staff data</span>
     </label>
     <label class="perm-item">
       <input type="checkbox" value="users">
@@ -447,7 +451,7 @@ const PERM_LABELS = {
   add:"➕ Add", manage:"🧾 Manage", print:"🖨 Print",
   export:"💾 Export", bulk:"📤 Bulk", form:"📄 Forms",
   schools:"🏫 Schools", restore:"♻️ Restore", users:"👥 Users",
-  vendors:"🤝 Vendors", own_schools:"🏫 Own schools", own_users:"👥 Own users", templates:"🎨 Templates"
+  vendors:"🤝 Vendors", own_schools:"🏫 Own schools", own_users:"👥 Own users", templates:"🎨 Templates", staff:"👩‍🏫 Staff"
 };
 
 // The logged-in person may give / take Manage Vendors (the server checks this too).
@@ -485,13 +489,13 @@ function passwordInfoText(u) {
 
 /* ── VENDORS (Phase 2) ── */
 let allVendorsList = [];
-const VENDOR_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "restore", "own_schools", "own_users", "templates"];
-const SCHOOL_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "restore"];
+const VENDOR_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "restore", "own_schools", "own_users", "templates", "staff"];
+const SCHOOL_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "restore", "staff"];
 
 // The logged-in person is a vendor login managing its OWN people (Manage own users)
 function iAmVendor() { return getRole() === "vendor"; }
-const VENDOR_STAFF_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "templates"];
-const VENDOR_LOGIN_DEFAULTS = ["add", "manage", "print", "bulk", "form", "templates", "restore", "own_schools", "own_users"];
+const VENDOR_STAFF_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "templates", "staff"];
+const VENDOR_LOGIN_DEFAULTS = ["add", "manage", "print", "bulk", "form", "templates", "restore", "own_schools", "own_users", "staff"];
 const VENDOR_STAFF_DEFAULTS = ["add", "manage", "bulk", "form"];   // Print + Export unticked for staff
 
 function userVendor(u) { return String(u && u.vendor_id !== undefined && u.vendor_id !== "" ? u.vendor_id : "1"); }
@@ -810,6 +814,15 @@ function handleRoleChange(userChanged) {
   tplItem.style.opacity = mayTpl ? "" : ".55";
   tplItem.title = mayTpl ? "Design ID card templates in the Template Builder"
                          : "Only an admin can give or remove Template Builder";
+  // 💾 Export (Excel): only an admin gives or removes it - everyone else just sees it
+  const expBox  = document.getElementById("exportPermBox");
+  const expItem = document.getElementById("exportPermItem");
+  if (expBox && expItem) {
+    const mayExp = getRole() === "admin";
+    expBox.disabled = !mayExp;
+    expItem.style.opacity = mayExp ? "" : ".55";
+    expItem.title = mayExp ? "Download data as Excel (every export is recorded)" : "Only an admin can give or remove Export";
+  }
 
   if (iAmVendor()) {
     // a school login stays on its school; the vendor's staff choose among the vendor's own schools

@@ -23,9 +23,34 @@
   const ctxCode = (new URLSearchParams(location.search).get("school") || "").trim();
   let ctxSchool = null, allSchools = [], tvVendors = [], builtinFlags = {};
   let draftFrom = null;           // { id, name } when the editor holds an unsaved copy of a template
+  // Card types (S4a): every design is for 🎓 Student, 👩‍🏫 Staff or 🏛 Management cards
+  const TYPE_INFO = { student:    { icon: "🎓", label: "Student",    col: "template" },
+                      staff:      { icon: "👩‍🏫", label: "Staff",      col: "staff_template" },
+                      management: { icon: "🏛", label: "Management", col: "management_template" } };
+  let designType = "student";     // the type of the design in the editor
+  let pickerType = "student";     // the type a "➕ New design" was started for
+  const cardTypeOf = t => { const v = String((t && t.card_type) || "").toLowerCase(); return TYPE_INFO[v] ? v : "student"; };
 
   const esc   = v => String(v === undefined || v === null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-  const toast = (msg, type) => { if (typeof showToast === "function") showToast(msg, type); else alert(msg); };
+  // A clearly visible message (bottom-centre); also passed to the builder's own toast if it has one
+  function toast(msg, type) {
+    let el = document.getElementById("tvToast");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "tvToast";
+      el.style.cssText = "position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:4000; padding:12px 20px;" +
+        "border-radius:10px; font-size:14px; font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,.18); max-width:90%; text-align:center; display:none;";
+      document.body.appendChild(el);
+    }
+    const error = type === "error";
+    el.style.background = error ? "#fef2f2" : "#f0fdf4";
+    el.style.color      = error ? "#991b1b" : "#166534";
+    el.style.border     = "1px solid " + (error ? "#fca5a5" : "#86efac");
+    el.textContent = msg;
+    el.style.display = "block";
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.display = "none"; }, error ? 6000 : 3500);
+  }
   const visOf = t => { const v = String((t && t.visibility) || "").toLowerCase(); return (v === "vendor" || v === "school") ? v : "everyone"; };
   const isPrem = t => String((t && t.premium) || "").toLowerCase() === "yes";
   const cache = () => (typeof tbTemplatesCache !== "undefined" ? tbTemplatesCache : []);
@@ -166,34 +191,44 @@
   }
 
   // A school: its own designs (★ Default first) + ➕ New design
+  const schoolTypes = () => (ctxSchool && String(ctxSchool.staff_enabled || "").toLowerCase() === "yes") ? ["student", "staff", "management"] : ["student"];
+  const defaultOf = type => ctxSchool ? String(ctxSchool[TYPE_INFO[type].col] || "") : "";
+
   function schoolPanelHtml() {
-    const def = String(ctxSchool.template || "");
-    const designs = cache().filter(t => isDesignOf(t, ctxSchool.school))
-      .sort((a, b) => (a.template_id === def ? -1 : b.template_id === def ? 1 : 0));
-    const defIsOwn = designs.some(d => d.template_id === def);
+    const types = schoolTypes();
+    const def = defaultOf("student");
+    const ownStudent = cache().filter(t => isDesignOf(t, ctxSchool.school) && cardTypeOf(t) === "student");
     let html = `<h3>🪪 Card designs of ${esc(schoolLabel(ctxSchool))}</h3>
       <div class="tv-sub">Each design is this school's own. ★ Default is used for printing unless another design is chosen on the print page.</div>`;
-    if (def && !defIsOwn) {
-      html += `<div class="tv-note info">Right now ${esc(schoolLabel(ctxSchool))} prints with <b>${esc(nameOf(def))}</b>, a shared template.
+    if (def && !ownStudent.some(d => d.template_id === def)) {
+      html += `<div class="tv-note info">Right now ${esc(schoolLabel(ctxSchool))} prints student cards with <b>${esc(nameOf(def))}</b>, a shared template.
         ${canSetDefault ? `<button type="button" class="tv-btn primary" data-act="own" data-id="${esc(def)}" style="margin-left:8px;" title="Make an editable copy that belongs to this school">Make it our own design</button>` : ""}</div>`;
     }
     if (draftFrom) html += draftNoteHtml();
-    html += `<div class="tv-grid">` + designs.map(d => designCardHtml(d, def)).join("") +
-      `<div class="tv-card new" data-act="new" title="Start a new design from a template">➕<br>New design</div></div>`;
+    types.forEach(type => {
+      const info = TYPE_INFO[type], tdef = defaultOf(type);
+      const designs = cache().filter(t => isDesignOf(t, ctxSchool.school) && cardTypeOf(t) === type)
+        .sort((a, b) => (a.template_id === tdef ? -1 : b.template_id === tdef ? 1 : 0));
+      if (types.length > 1) html += `<h4 class="tv-type-head" style="margin:16px 0 8px; color:#374151;">${info.icon} ${info.label} designs</h4>`;
+      if (type === "staff" && !designs.length) html += `<div class="tv-note info" style="margin-bottom:8px;">No Staff design yet — staff cards can't be printed until you make one.</div>`;
+      if (type === "management" && !tdef) html += `<div class="tv-sub" style="margin:-4px 0 8px;">Management cards use the ★ Staff design until you make a Management design.</div>`;
+      html += `<div class="tv-grid">` + designs.map(d => designCardHtml(d, tdef, type)).join("") +
+        `<div class="tv-card new" data-act="new" data-type="${type}" title="Start a new ${info.label} design from a template">➕<br>New ${info.label} design</div></div>`;
+    });
     return html;
   }
 
   function draftNoteHtml() {
-    return `<div class="tv-note draft">📝 <b>New design, not saved yet</b>${draftFrom.name ? ` — started from “${esc(draftFrom.name)}”` : ""}.
+    return `<div class="tv-note draft">📝 <b>New ${TYPE_INFO[designType].label} design, not saved yet</b>${draftFrom.name ? ` — started from “${esc(draftFrom.name)}”` : ""}.
       Adjust it below, give it a name, then press <b>💾 Save Template</b>.</div>`;
   }
 
-  function designCardHtml(d, def) {
+  function designCardHtml(d, def, type) {
     const isDef = d.template_id === def;
     const builtinBased = !!d.base_template;
     const editable = !builtinBased && editableByMe(d);
     const menu = [];
-    if (!isDef && canSetDefault) menu.push(`<button type="button" data-act="default" data-id="${esc(d.template_id)}">★ Make default</button>`);
+    if (!isDef && canSetDefault) menu.push(`<button type="button" data-act="default" data-type="${type || "student"}" data-id="${esc(d.template_id)}">★ Make default</button>`);
     if (!builtinBased) menu.push(`<button type="button" data-act="copy" data-id="${esc(d.template_id)}">⧉ Duplicate as another design</button>`);
     if (amAdmin && !builtinBased) menu.push(`<button type="button" data-act="tolib" data-id="${esc(d.template_id)}" title="Add a copy to the library as a starting point for every school - this design stays as it is">📚 Copy to the library</button>`);
     menu.push(isDef ? `<button type="button" disabled title="Make another design the default first">🗑 Delete (it's the default)</button>`
@@ -245,8 +280,10 @@
   function pickerItems() {
     const vid = ctxVendor();
     const customs = cache().filter(t => visOf(t) === "everyone" || (visOf(t) === "vendor" && String(t.vendor_id) === vid))
-      .map(t => ({ id: t.template_id, name: t.template_name, row: t, premium: isPrem(t), scope: visOf(t) === "everyone" ? "library" : "vendor" }));
-    const builtins = registry().map(b => ({ id: b.id, name: b.name, builtin: true, premium: !!(builtinFlags[b.id] && builtinFlags[b.id].premium), scope: "builtin" }));
+      .map(t => ({ id: t.template_id, name: t.template_name, row: t, premium: isPrem(t), scope: visOf(t) === "everyone" ? "library" : "vendor", ctype: cardTypeOf(t) }))
+      .sort((a, b) => (a.ctype === pickerType ? 0 : 1) - (b.ctype === pickerType ? 0 : 1));       // this card type first
+    // built-in (code) templates are made for student cards only
+    const builtins = pickerType !== "student" ? [] : registry().map(b => ({ id: b.id, name: b.name, builtin: true, premium: !!(builtinFlags[b.id] && builtinFlags[b.id].premium), scope: "builtin", ctype: "student" }));
     return customs.concat(builtins);
   }
 
@@ -273,7 +310,7 @@
     const shown = items.filter(x => pickerFilter === "all" || x.scope === pickerFilter);
     body.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <h3 style="margin:0;">➕ New design for ${esc(schoolLabel(ctxSchool))}</h3>
+        <h3 style="margin:0;">➕ New ${TYPE_INFO[pickerType].icon} ${TYPE_INFO[pickerType].label} design for ${esc(schoolLabel(ctxSchool))}</h3>
         <button type="button" class="tv-btn" data-act="pclose">✕ Close</button>
       </div>
       <div class="tv-sub" style="font-size:13px; color:#6b7280; margin-bottom:10px;">Pick a template to start from. It opens as an unsaved copy in the editor with ${esc(schoolLabel(ctxSchool))}'s details — nothing is saved until you press 💾 Save.</div>
@@ -283,7 +320,7 @@
         ${shown.map(x => `<div class="tv-card">
           <div class="tv-thumb">${x.builtin ? thumbHtml(null, x.id) : thumbHtml(x.row)}</div>
           <div class="tv-name">${x.premium ? "⭐ " : ""}${esc(x.name)}</div>
-          <div class="tv-tags">${x.scope === "library" ? "📚 Library" : x.scope === "vendor" ? "🤝 Vendor" : "🧩 Built-in · not editable"}</div>
+          <div class="tv-tags">${x.scope === "library" ? "📚 Library" : x.scope === "vendor" ? "🤝 Vendor" : "🧩 Built-in · not editable"} · ${TYPE_INFO[x.ctype].icon} ${TYPE_INFO[x.ctype].label}</div>
           <div class="tv-card-actions">${x.premium && !amAdmin
             ? `<button type="button" class="tv-btn" disabled title="Premium - please contact Madhur Digitals">⭐ Premium</button>`
             : `<button type="button" class="tv-btn primary" data-act="pick" data-id="${esc(x.id)}">Start with this</button>`}</div>
@@ -299,12 +336,12 @@
     const act = b.getAttribute("data-act"), id = b.getAttribute("data-id");
     if (act === "pclose") return closePicker();
     if (act === "pfilter") { pickerFilter = id; return renderPicker(); }
-    if (act === "pblank") { closePicker(); startBlank(); return; }
+    if (act === "pblank") { closePicker(); startBlank(pickerType); return; }
     if (act === "pick") {
       const item = pickerItems().find(x => x.id === id);
       closePicker();
       if (item.builtin) await createBuiltinDesign(item);
-      else startFromTemplate(item.row, `${schoolLabel(ctxSchool)} – ${item.name}`);
+      else startFromTemplate(item.row, `${schoolLabel(ctxSchool)} – ${item.name}`, pickerType);
     }
   }
 
@@ -314,7 +351,8 @@
   }
 
   /* ── starting points → the editor (unsaved until 💾 Save) ── */
-  function startFromTemplate(row, suggestedName) {
+  function startFromTemplate(row, suggestedName, type) {
+    setDesignType(type || cardTypeOf(row));
     document.getElementById("tbLoadSelect").value = row.template_id;
     originalLoad.call(window);                          // the builder loads the design into the editor
     tbEditingTemplateId = null;                         // ...but as a NEW, unsaved design
@@ -327,10 +365,11 @@
     toast("Opened an unsaved copy — adjust it, then press 💾 Save", "success");
   }
 
-  function startBlank() {
+  function startBlank(type) {
     originalReset.call(window);
+    setDesignType(type || "student");
     draftFrom = { id: "", name: "" };
-    if (ctxSchool) document.getElementById("tbName").value = `${schoolLabel(ctxSchool)} – Student Card`;
+    if (ctxSchool) document.getElementById("tbName").value = `${schoolLabel(ctxSchool)} – ${TYPE_INFO[designType].label} Card`;
     setControls(null);
     renderPanel();
     scrollToEditor();
@@ -349,13 +388,42 @@
     toast("Design created ✓", "success");
   }
 
-  async function setDefault(id) {
-    const res = await api({ action: "setSchoolTemplate", school: ctxSchool.school, template_id: id });
+  async function setDefault(id, type) {
+    type = TYPE_INFO[type] ? type : "student";
+    const res = await api({ action: "setSchoolTemplate", school: ctxSchool.school, template_id: id, card_type: type });
     if (res && res.error) { toast(res.error, "error"); return false; }
-    ctxSchool.template = id;
+    ctxSchool[TYPE_INFO[type].col] = id;
     renderPanel();
-    toast(`★ “${nameOf(id)}” is now the default design`, "success");
+    toast(`★ “${nameOf(id)}” is now the default ${TYPE_INFO[type].label} design`, "success");
     return true;
+  }
+
+  /* ── the editor follows the design's card type: its data fields and the preview people ── */
+  let studentFieldsBackup = null;
+  const nk = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_");
+  function setDesignType(type) {
+    type = TYPE_INFO[type] ? type : "student";
+    const changed = type !== designType;
+    designType = type;
+    applyDataFields(type);
+    const sel = document.getElementById("tvCardType"); if (sel) sel.value = type;
+    if (changed && typeof window.loadPreviewStudents === "function") window.loadPreviewStudents();
+  }
+  function applyDataFields(type) {
+    if (typeof AVAILABLE_DATA_FIELDS === "undefined") return;
+    if (!studentFieldsBackup) studentFieldsBackup = AVAILABLE_DATA_FIELDS.slice();
+    let list = studentFieldsBackup;
+    if (type !== "student") {
+      list = [{ key: "Name", label: "Name" }, { key: "designation", label: "Designation" }, { key: "category", label: "Category" }, { key: "Staff_ID", label: "Staff ID" }];
+      const extra = ctxSchool && ctxSchool.staff_fields ? String(ctxSchool.staff_fields).split(",")
+                  : ["Father's/Husband's Name", "DOB", "Phone", "Address", "Blood Group", "Employee ID"];
+      extra.map(f => f.trim()).filter(Boolean).forEach(f => {
+        const k = nk(f);
+        if (!list.some(x => nk(x.key) === k)) list.push({ key: k, label: f });
+      });
+    }
+    AVAILABLE_DATA_FIELDS.splice(0, AVAILABLE_DATA_FIELDS.length, ...list);
+    if (typeof showPropertyPanel === "function") showPropertyPanel();
   }
 
   async function onPanelClick(e) {
@@ -364,7 +432,7 @@
     const act = b.getAttribute("data-act"), id = b.getAttribute("data-id");
     document.querySelectorAll("#tvPanel .tv-menu.open").forEach(m => { if (act !== "menu" || m !== b.closest(".tv-card").querySelector(".tv-menu")) m.classList.remove("open"); });
     if (act === "menu") { b.closest(".tv-card").querySelector(".tv-menu").classList.toggle("open"); return; }
-    if (act === "new") { openPicker(); return; }
+    if (act === "new") { pickerType = TYPE_INFO[b.getAttribute("data-type")] ? b.getAttribute("data-type") : "student"; pickerFilter = "all"; openPicker(); return; }
     if (act === "blank") { startBlank(); return; }
     if (act === "edit") {
       draftFrom = null;
@@ -376,16 +444,16 @@
     }
     if (act === "copytpl" || act === "copy") {
       const row = cache().find(t => t.template_id === id);
-      if (row) startFromTemplate(row, act === "copy" ? `${row.template_name} (2)` : `${row.template_name} (my version)`);
+      if (row) startFromTemplate(row, act === "copy" ? `${row.template_name} (2)` : `${row.template_name} (my version)`, cardTypeOf(row));
       return;
     }
     if (act === "own") {
       const row = cache().find(t => t.template_id === id);
-      if (row) { startFromTemplate(row, `${schoolLabel(ctxSchool)} – ${row.template_name}`); document.getElementById("tvUseNow").checked = true; }
+      if (row) { startFromTemplate(row, `${schoolLabel(ctxSchool)} – ${row.template_name}`, "student"); document.getElementById("tvUseNow").checked = true; }
       else { const b2 = registry().find(x => x.id === id); if (b2) await createBuiltinDesign({ id: b2.id, name: b2.name }); }
       return;
     }
-    if (act === "default") { await setDefault(id); return; }
+    if (act === "default") { await setDefault(id, b.getAttribute("data-type")); return; }
     if (act === "tolib") {
       const name = prompt("Name for the library template (remove the school's own name/logo from it afterwards if needed):", nameOf(id) + " (Library)");
       if (name === null) return;
@@ -419,6 +487,9 @@
           <option value="vendor">${vendorMode ? "🤝 All my schools" : "🤝 A vendor's schools"}</option>
           <option value="school">🏫 One school</option>
         </select>
+        <select id="tvCardType" title="Which cards this template is for" style="display:none;">
+          <option value="student">🎓 Student cards</option><option value="staff">👩‍🏫 Staff cards</option><option value="management">🏛 Management cards</option>
+        </select>
         <select id="tvVendor" style="display:none;"></select>
         <select id="tvSchool" style="display:none;"></select>
         <label id="tvPremiumWrap" style="display:none; font-size:12px; text-transform:none; color:#92400e; gap:4px; align-items:center;" title="Premium: shown with ⭐ - only an admin can start a school's design from it">
@@ -429,6 +500,7 @@
       <div id="tvNote" style="font-size:11px; color:#b45309; margin-top:3px; display:none;"></div>`;
     nameField.parentNode.insertBefore(wrap, nameField.nextSibling);
     document.getElementById("tvVisibility").addEventListener("change", showOwnerPicker);
+    document.getElementById("tvCardType").addEventListener("change", e => setDesignType(e.target.value));
     if (vendorMode) document.querySelector('#tvVisibility option[value="everyone"]').remove();
     document.getElementById("tbName").placeholder = ctxSchool ? "e.g. Student Card 2026-27" : "e.g. Sunrise Blue";
   }
@@ -437,7 +509,9 @@
     const sel = document.getElementById("tvVisibility");
     if (ctxSchool) {
       // A school's design: always this school's own - no visibility choice, only "★ default"
-      document.getElementById("tvWrapLabel").textContent = "Design of " + schoolLabel(ctxSchool);
+      document.getElementById("tvWrapLabel").textContent = `Design of ${schoolLabel(ctxSchool)} · ${TYPE_INFO[designType].icon} ${TYPE_INFO[designType].label} card`;
+      document.getElementById("tvUseNowText").textContent = `★ Make it the default ${TYPE_INFO[designType].label} design`;
+      document.getElementById("tvCardType").style.display = "none";
       sel.style.display = "none";
       document.getElementById("tvVendor").style.display = "none";
       document.getElementById("tvSchool").style.display = "none";
@@ -450,6 +524,7 @@
     document.getElementById("tvSchool").style.display = vis === "school" ? "" : "none";
     document.getElementById("tvPremiumWrap").style.display = (amAdmin && vis === "everyone") ? "flex" : "none";
     document.getElementById("tvUseNowWrap").style.display = "none";
+    document.getElementById("tvCardType").style.display = "";
     if (vis === "school") fillSchools();
   }
 
@@ -481,7 +556,7 @@
       sel.value = vendorMode ? "vendor" : "everyone";
       document.getElementById("tvPremium").checked = false;
       // a school's first own design becomes the default by default
-      document.getElementById("tvUseNow").checked = !!ctxSchool && !cache().some(t => isDesignOf(t, ctxSchool.school));
+      document.getElementById("tvUseNow").checked = !!ctxSchool && !cache().some(t => isDesignOf(t, ctxSchool.school) && cardTypeOf(t) === designType);
       note("");
       showOwnerPicker();
       return;
@@ -521,16 +596,19 @@
         const u = new URL(url);
         const c = currentChoice();
         if (m[1] === "saveCustomTemplate") { delete c.premium; if (draftFrom && draftFrom.id) c.copied_from = draftFrom.id; }
+        // the card type: a school's new design gets the type it was started for; templates get the chosen type
+        if (m[1] === "saveCustomTemplate" || !ctxSchool) c.card_type = designType;
         Object.keys(c).forEach(k => u.searchParams.set(k, c[k]));
         const makeDefault = ctxSchool && canSetDefault && document.getElementById("tvUseNow").checked;
         const editingId = u.searchParams.get("template_id");
         return originalFetch.call(this, u.toString(), init).then(async res => {
           try {
             const j = await res.clone().json();
+            lastSave = j;
             if (j && !j.error) {
               draftFrom = null;
               const id = j.template_id || editingId;
-              if (makeDefault && id && String(ctxSchool.template) !== String(id)) await setDefault(id);
+              if (makeDefault && id && defaultOf(designType) !== String(id)) await setDefault(id, designType);
             }
           } catch (err) { /* the builder shows the save result itself */ }
           return res;
@@ -540,15 +618,73 @@
     return originalFetch.apply(this, arguments);
   };
 
+  /* ── 💾 Save: show progress, block double clicks, confirm the result ── */
+  let lastSave = null, saving = false;
+  function hookSave() {
+    if (typeof window.saveTemplate !== "function" || window.saveTemplate.__tv) return;
+    const originalSave = window.saveTemplate;
+    window.saveTemplate = async function () {
+      if (saving) return;
+      const btn = document.querySelector('button[onclick="saveTemplate()"]');
+      const label = btn ? btn.innerHTML : "";
+      const name = (document.getElementById("tbName").value || "").trim();
+      saving = true; lastSave = null;
+      if (btn) { btn.disabled = true; btn.innerHTML = "⏳ Saving…"; btn.style.opacity = ".8"; btn.style.cursor = "wait"; }
+      try {
+        await originalSave.apply(this, arguments);
+        if (lastSave && !lastSave.error) toast(`✓ Saved “${name}”` + (ctxSchool ? ` for ${schoolLabel(ctxSchool)}` : ""), "success");
+        else if (lastSave && lastSave.error) toast(lastSave.error, "error");
+        // no answer at all: the builder stopped before saving (e.g. no name / no background) and said why
+      } catch (err) {
+        toast("Save failed - please try again.", "error");
+      } finally {
+        saving = false;
+        if (btn) { btn.disabled = false; btn.innerHTML = label; btn.style.opacity = ""; btn.style.cursor = ""; }
+      }
+    };
+    window.saveTemplate.__tv = true;
+  }
+
   /* ── follow the builder ── */
   let originalLoad = function () {}, originalReset = function () {};
   function hookBuilder() {
+    hookSave();
+    if (typeof window.loadPreviewStudents === "function" && !window.loadPreviewStudents.__tv) {
+      const originalPreview = window.loadPreviewStudents;
+      window.loadPreviewStudents = async function () {
+        if (designType === "student") return originalPreview.apply(this, arguments);
+        const code = document.getElementById("tbSchoolSelect") ? document.getElementById("tbSchoolSelect").value : "";
+        const srow = (window._tbAllSchools || []).find(x => String(x.school) === String(code));
+        if (srow) tbPreviewSchoolInfo = srow;
+        let list = [];
+        try {
+          const raw = await getStaff(code);
+          if (Array.isArray(raw) && raw.length > 1) {
+            const h = raw[0];
+            list = raw.slice(1).map(r => { const o = {}; h.forEach((k, i) => { o[k] = r[i]; o[nk(k)] = r[i]; }); return o; })
+              .filter(o => (String(o.Category || "").toLowerCase() === "management") === (designType === "management"));
+          }
+        } catch (err) { list = []; }
+        if (!list.length) {
+          list = [{ Name: designType === "management" ? "Sample Principal" : "Sample Teacher", name: "",
+                    Designation: designType === "management" ? "Principal" : "Teacher", Category: designType === "management" ? "Management" : "Staff",
+                    Staff_ID: "S-10001", Photo_Link: "" }].map(o => { Object.keys(o).forEach(k => { o[nk(k)] = o[k]; }); return o; });
+        }
+        tbPreviewStudents = list;
+        tbPreviewIndex = 0;
+        if (typeof updatePreviewLabel === "function") updatePreviewLabel();
+        if (typeof renderFields === "function") renderFields();
+      };
+      window.loadPreviewStudents.__tv = true;
+    }
     if (typeof window.handleLoadSelect === "function" && !window.handleLoadSelect.__tv) {
       originalLoad = window.handleLoadSelect;
       window.handleLoadSelect = function () {
         originalLoad.apply(this, arguments);
         draftFrom = null;
-        setControls(cache().find(r => r.template_id === document.getElementById("tbLoadSelect").value) || null);
+        const opened = cache().find(r => r.template_id === document.getElementById("tbLoadSelect").value) || null;
+        if (opened) setDesignType(cardTypeOf(opened));
+        setControls(opened);
         renderPanel();
       };
       window.handleLoadSelect.__tv = true;

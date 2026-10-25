@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Manage Students — Madhur Digitals</title>
+  <title>Manage Records — Madhur Digitals</title>
 
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/record_types.js"></script>
+  <script src="js/staff_entry.js"></script>
   <script src="js/manage_student.js" defer></script>
 
   <link rel="stylesheet" href="css/manage_student.css">
@@ -36,12 +38,12 @@
 <!-- HEADING + STATS -->
 <div class="heading-wrapper">
   <div class="heading-badge">
-    Manage Students: <span id="schoolName"></span>
+    <span id="recordHeadingLabel">🎓 Manage Students</span>: <span id="schoolName"></span>
   </div>
   <div class="stats-row">
     <div class="stat-pill">
       <span class="stat-num" id="statTotal">—</span>
-      <span class="stat-lbl">Total</span>
+      <span class="stat-lbl" id="statTotalLbl">Total students</span>
     </div>
     <div class="stat-pill">
       <span class="stat-num" id="statFiltered">—</span>
@@ -68,14 +70,14 @@
 
       <!-- Name -->
       <div class="filter-col">
-        <label class="filter-label">Student Name</label>
+        <label class="filter-label" id="lblName">Student Name</label>
         <input id="searchName" class="filter-input" placeholder="Search name...">
       </div>
 
       <!-- Student ID -->
       <div class="filter-col">
-        <label class="filter-label">Student ID</label>
-        <input id="searchStudentId" type="number" class="filter-input"
+        <label class="filter-label" id="lblId">Student ID</label>
+        <input id="searchStudentId" type="text" class="filter-input"
                placeholder="Enter ID..." oninput="applyFilter()">
       </div>
 
@@ -101,9 +103,9 @@
 
       <!-- Class Section -->
       <div class="filter-col">
-        <label class="filter-label">Class — Section</label>
+        <label class="filter-label" id="lblGroup">Class — Section</label>
         <div class="dropdown">
-          <button onclick="toggleDropdown('classSectionDropdown')" class="dropdown-btn">
+          <button onclick="toggleDropdown('classSectionDropdown')" class="dropdown-btn" id="groupBtn">
             Select Class-Section ▾
           </button>
           <div id="classSectionDropdown" class="dropdown-content"></div>

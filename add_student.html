@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Students Entry</title>
+  <title>Add Records</title>
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/record_types.js"></script>
+  <script src="js/staff_entry.js"></script>
 
   <link rel="stylesheet" href="css/add_student.css">
 
@@ -185,7 +187,7 @@ function clearForm() {
     const id = el.id;
 
     // Do not clear class & section
-    if (id === "class" || id === "section") return;
+    if (id === "class" || id === "section" || id === "category") return;
 
     if (el.tagName === "SELECT") {
       el.selectedIndex = 0;
@@ -217,6 +219,7 @@ function clearForm() {
 let isSubmitting = false;
 
 async function submitStudent() {
+  if (typeof isStaffMode === "function" && isStaffMode()) return submitStaff();   // 👩‍🏫 Staff tab
   const btn = document.querySelector(".submit-btn");
 
   if (isSubmitting) return;
@@ -335,6 +338,10 @@ async function submitStudent() {
   // Receipt for this entry. Retry sends the SAME receipt, so the server can tell
   // "already saved" apart from "never arrived" and never adds the student twice.
   data.entry_ref = makeEntryRef();
+  data.check_duplicate = "1";            // the server asks before saving a possible duplicate
+  const early = currentEntryForCheck();
+  if (early && rtEarlyAllowed(early.payload)) data.allow_duplicate = "1";   // already confirmed while typing
+  rtEarlyReset();
 
   const row = addToRecentTable(data);
   clearForm();
@@ -353,12 +360,17 @@ async function saveNewStudent(data, row, photoFile, schoolIdForPhoto) {
   let res = null;
   try { res = await addStudent(data); } catch (err) { res = null; }
 
+  if (res && res.status === "possible_duplicate") {
+    markRowDuplicate(row, data, photoFile, schoolIdForPhoto, res.duplicate);
+    return;
+  }
   if (!res || !res.student_id) {
     markRowFailed(row, data, photoFile, schoolIdForPhoto, (res && res.error) || "no answer from the server");
     return;
   }
 
   row.dataset.state = "saved";
+  rtTrimRecent();
   row.style.background = "";
   row.children[0].innerText = res.student_id;
   row.children[4].innerHTML = `
@@ -417,15 +429,75 @@ function markRowFailed(row, data, photoFile, schoolIdForPhoto, reason) {
     this.innerText = "Saving…";
     row.style.background = "";
     row.children[0].innerText = "";
+    rtMoveToRecent(row);
     saveNewStudent(data, row, photoFile, schoolIdForPhoto);
   };
+  rtMoveToPending(row);
   showToast("NOT saved: " + reason + " — press Retry");
 }
 
 function hasUnsavedRows() {
-  return [...document.querySelectorAll("#recentTable tr")]
-    .some(r => r.dataset.state === "failed" || r.dataset.state === "saving");
+  return rtHasUnsaved();     // anything in "Waiting for your decision", or still saving
 }
+
+// The server found a student who looks the same: nothing is saved until the person decides.
+// The row goes to "Waiting for your decision" and the comparison opens by itself (keystroke-safe).
+function markRowDuplicate(row, data, photoFile, schoolIdForPhoto, dup) {
+  row.dataset.state = "duplicate";
+  row.style.background = "#fef3c7";
+  row.style.outline = "2px solid #dc2626";
+  row.children[0].innerHTML = `<span style="color:#92400e;font-weight:600;" title="${dup.reason}">⚠ Possible duplicate of ${dup.id}</span>`;
+  row.children[4].innerHTML = `<button class="edit-btn" title="Compare with the saved student">👁 View</button>
+    <button class="edit-btn" title="A different student - save anyway">Save anyway</button>
+    <button class="delete-btn" title="Same student - do not save">Discard</button>`;
+  const [bView, bSave, bDiscard] = row.children[4].querySelectorAll("button");
+  const saveAnyway = () => {
+    if (!row.isConnected || row.dataset.state !== "duplicate") return;
+    data.allow_duplicate = "1";
+    row.style.background = ""; row.style.outline = ""; row.children[0].innerText = "";
+    row.children[4].innerHTML = "";
+    rtMoveToRecent(row);
+    saveNewStudent(data, row, photoFile, schoolIdForPhoto);
+  };
+  const discard = () => { if (!row.isConnected) return; row.remove(); rtUpdatePendingBanner(); showToast("Not saved (same as " + dup.id + ")"); };
+  const compareOpts = () => {
+    const cs = rtSchoolRow(schoolsData, data.school);
+    const fields = cs ? String(cs.fields || "").split(",").map(f => f.trim()).filter(Boolean) : ["Name"];
+    return { school: data.school, type: "students", id: dup.id, reason: dup.reason, record: dup.record,
+      entry: fields.map(f => [f, data[normalizeKey(f)] || ""]),
+      skipLabel: "Same student — don't save", allowLabel: "Different student — save anyway",
+      onSkip: discard, onAllow: saveAnyway };
+  };
+  bSave.onclick = ev => { if (ev) ev.stopPropagation(); saveAnyway(); };
+  bDiscard.onclick = ev => { if (ev) ev.stopPropagation(); discard(); };
+  bView.onclick = ev => { if (ev) ev.stopPropagation(); rtShowCompare(compareOpts()); };
+  rtMoveToPending(row);
+  rtAlertToast("⚠ Possible duplicate of " + dup.id + " (" + dup.reason + ") — NOT saved. Please decide.");
+  rtQueueCompare(compareOpts());
+}
+
+/* EARLY WARNING while typing: what is in the form right now, for the background duplicate check */
+function currentEntryForCheck() {
+  const school_ = school;
+  if (typeof isStaffMode === "function" && isStaffMode()) return currentStaffEntryForCheck();
+  const cs = rtSchoolRow(schoolsData, school_);
+  if (!cs) return null;
+  const fields = String(cs.fields || "").split(",").map(f => f.trim()).filter(Boolean);
+  const payload = {}, entry = [];
+  fields.forEach(f => {
+    const k = normalizeKey(f), el = document.getElementById(k);
+    let v = el ? String(el.value || "").trim() : "";
+    if (k === "dob" && v) v = formatDOB(v);
+    payload[k] = v; entry.push([f, v]);
+  });
+  const filled = Object.keys(payload).filter(k => k !== "name" && payload[k]).length;
+  return { type: "students", school: school_, payload, entry, ready: !!payload.name && filled >= 2 };
+}
+
+// Closing the page while entries are not saved (failed, saving, or waiting for a decision) asks first
+window.addEventListener("beforeunload", function (e) {
+  if (typeof hasUnsavedRows === "function" && hasUnsavedRows()) { e.preventDefault(); e.returnValue = ""; return ""; }
+});
 
 /* CHANGE SCHOOL */
 function changeSchool() {
@@ -467,6 +539,7 @@ function applySchoolChange() {
 
 /* LOAD */
 async function loadData() {
+  if (typeof isStaffMode === "function" && isStaffMode()) return loadStaffRecent();   // 👩‍🏫 Staff tab
   const raw = await getStudents(school);
 
   const headers = raw[0];
@@ -711,16 +784,12 @@ async function saveEdit(student_id) {
   // STEP 2.5: handle photo replacement (delete old → upload new → save link)
   if (newPhotoFile) {
     try {
-      if (oldPhotoLink) {
-        const oldPublicId = oldPhotoLink.split("|")[0];
-        await deleteCloudinaryPhoto(oldPublicId);
-      }
-      const publicId = await uploadPhotoToCloudinary(newPhotoFile, editSchoolId, student_id);
-      await savePhotoLink(school, student_id, publicId);
+      // new photo first; the old one is removed only after the new one is saved
+      await replacePhotoSafely(newPhotoFile, editSchoolId, school, student_id, oldPhotoLink, false);
       showToast("Photo updated");
     } catch (err) {
       console.error("Photo update failed:", err);
-      showToast("Details saved, but photo update failed");
+      showToast("Details saved, but the photo was NOT changed: " + (err.message || "upload failed"));
     }
   }
 
@@ -790,7 +859,8 @@ async function deleteRecent(btn) {
     return;
   }
 
-  if (!confirm("Delete this student?")) return;
+  const delName = row.children[1] ? row.children[1].innerText.trim() : "";
+  if (!confirm(`Delete student ${student_id}${delName ? " (" + delName + ")" : ""}?\n\nThey will be removed from all lists, printing and exports.`)) return;
 
   const url = `${API_URL}?action=deleteStudent&school=${encodeURIComponent(school)}&student_id=${encodeURIComponent(student_id)}`;
 
@@ -803,7 +873,7 @@ async function deleteRecent(btn) {
 
   row.remove();
 
-  showToast("Deleted successfully");
+  showToast("Deleted " + student_id);
 }
 
 /* Load Schools + Pre-select */
@@ -888,6 +958,12 @@ document.addEventListener("click", function(e) {
 });
 
 async function renderDynamicForm() {
+  rtSetupEarlyWarning(currentEntryForCheck, () => { clearForm(); rtEarlyReset(); });
+  rtEarlyReset();
+  if (typeof applyRecordTypeUI === "function") {
+    applyRecordTypeUI();                                   // 🎓 Students | 👩‍🏫 Staff tabs + labels
+    if (isStaffMode()) { renderStaffForm(); return; }
+  }
 
   const raw = schoolsData;
 
@@ -1057,14 +1133,7 @@ function addToRecentTable(data) {
   table.insertAdjacentHTML("afterbegin", row);
   const newRow = table.firstElementChild;
 
-  // Keep 3 rows, but never drop a row that is still saving or failed (it holds data for Retry)
-  let rows = [...table.querySelectorAll("tr")];
-  while (rows.length > 3) {
-    const victim = rows.slice().reverse().find(r => r.dataset.state !== "failed" && r.dataset.state !== "saving");
-    if (!victim) break;
-    victim.remove();
-    rows = [...table.querySelectorAll("tr")];
-  }
+  rtTrimRecent();        // Recent Entries: the last 3 (problem rows live in "Waiting for your decision")
   return newRow;
 }
 

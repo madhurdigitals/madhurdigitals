@@ -7,6 +7,7 @@
   <script src="js/auth.js"></script>
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/record_types.js"></script>
   <script src="js/manage_photos.js" defer></script>
 
   <link rel="stylesheet" href="css/manage_student.css">
@@ -154,7 +155,7 @@
 
   <!-- STATS -->
   <div class="photo-stats-row">
-    <div class="photo-stat-pill"><b id="statTotal">0</b> Total Students</div>
+    <div class="photo-stat-pill"><b id="statTotal">0</b> <span id="statTotalLbl">Total Students</span></div>
     <div class="photo-stat-pill"><b id="statWithPhoto">0</b> With Photo</div>
     <div class="photo-stat-pill"><b id="statMissing">0</b> Missing Photo</div>
   </div>
@@ -163,7 +164,7 @@
   <div class="card">
     <h3>Bulk Upload Photos</h3>
     <p style="color:#6b7280; font-size:13px;">
-      Select or drop photo files named exactly by Student ID (e.g. <code>80205.jpg</code>).
+      <span id="bulkHint">Select or drop photo files named exactly by Student ID (e.g. <code>80205.jpg</code>).</span>
       Nothing uploads until you review and confirm below.
     </p>
 
@@ -179,7 +180,7 @@
       <div id="stageUnmatched" class="stage-section"></div>
 
       <div class="btn-group">
-        <button class="submit-btn" id="confirmUploadBtn" onclick="confirmBulkUpload()">
+        <button class="submit-btn" id="confirmUploadBtn" onclick="confirmBulkUpload()" title="Upload the new photos and the replacements you chose">
           ✅ Confirm & Upload
         </button>
         <button class="clear-btn" onclick="cancelStaging()">Cancel</button>
@@ -199,7 +200,7 @@
   <!-- STUDENT PHOTO GRID -->
   <div class="card">
     <div class="photo-toolbar">
-      <h3 style="margin:0;">Students</h3>
+      <h3 style="margin:0;" id="gridTitle">Students</h3>
       <div style="display:flex; gap:10px; align-items:center;">
         <input id="searchPhotoName" placeholder="Search name..." style="padding:8px; border-radius:8px; border:1px solid #d1d5db;">
         <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#374151;">
@@ -225,7 +226,7 @@
     </div>
     <input type="file" id="singlePhotoFile" accept="image/*" style="width:100%; margin-bottom:12px;">
     <div class="btn-group">
-      <button class="submit-btn" onclick="uploadSinglePhoto()">Upload / Replace</button>
+      <button class="submit-btn" id="singleUploadBtn" onclick="uploadSinglePhoto()" title="Save this photo (a current photo is replaced only after the new one is saved)">Upload / Replace</button>
       <button class="clear-btn" onclick="closeSinglePhotoPopup()">Cancel</button>
     </div>
   </div>

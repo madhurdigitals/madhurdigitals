@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Export Students</title>
+  <title>Export — Madhur Digitals</title>
 
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/record_types.js"></script>
   <script src="js/export_student.js" defer></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -36,6 +38,11 @@
       background: #fff; font-size: 12px; cursor: pointer; color: #374151;
     }
     .field-quick-btn:hover { background: #f0f7ff; border-color: #0d6efd; }
+    /* result messages (export_student.css has no toast style) */
+    .toast { display:none; position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:5000;
+             padding:12px 20px; border-radius:10px; font-size:14px; font-weight:600; background:#f0fdf4; color:#166534;
+             border:1px solid #86efac; box-shadow:0 8px 24px rgba(0,0,0,.18); }
+    .toast.toast-error { background:#fef2f2; color:#991b1b; border-color:#fca5a5; }
   </style>
 </head>
 
@@ -58,7 +65,7 @@
 
 <div class="heading-wrapper">
   <div class="heading-badge">
-    Export Students: <span id="schoolName"></span>
+    <span id="exHeading">💾 Export Students</span>: <span id="schoolName"></span>
   </div>
 </div>
 
@@ -67,14 +74,14 @@
   <!-- FILTERS -->
   <div class="card">
 
-    <input id="searchName" placeholder="Search Name">
+    <input id="searchName" placeholder="Search name or ID" title="Type part of a name or ID">
 
     <div style="margin-top:15px;">
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-        <b>Select Fields for Card / Excel:</b>
+        <b>Select Fields for Excel:</b>
         <div style="display:flex; gap:8px;">
-          <button type="button" class="field-quick-btn" onclick="selectAllFields()">Select All</button>
-          <button type="button" class="field-quick-btn" onclick="clearAllFields()">Clear All</button>
+          <button type="button" class="field-quick-btn" onclick="selectAllFields()" title="Include every field">Select All</button>
+          <button type="button" class="field-quick-btn" onclick="clearAllFields()" title="Untick every field">Clear All</button>
         </div>
       </div>
       <div id="fieldSelector" class="field-selector-grid"></div>
@@ -82,7 +89,7 @@
 
     <div style="margin-top:10px;">
       <div class="dropdown">
-        <button onclick="toggleDropdown('classSectionOptions', event)">
+        <button onclick="toggleDropdown('classSectionOptions', event)" id="groupBtn" title="Export only some groups">
           Select Class-Section
         </button>
         <div id="classSectionOptions" class="dropdown-content"></div>
@@ -111,12 +118,12 @@
           gap:6px;
           white-space:nowrap;
         ">
-          <input type="checkbox" id="globalSelect">
+          <input type="checkbox" id="globalSelect" title="Select or clear everyone (all pages)">
           <label for="globalSelect">Select / Deselect All</label>
         </div>
 
         <div id="selectionCount" style="font-weight:600;">
-          Selected: 0 students
+          Selected: 0
         </div>
       </div>
 
@@ -131,13 +138,14 @@
     <br>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button onclick="exportCardsPDF()" class="submit-btn export-btn" id="exportCardsBtn">
-        📄 Export Cards PDF (0)
-      </button>
-      <button onclick="exportExcel()" class="submit-btn export-btn excel-btn" id="exportExcelBtn">
+      <button onclick="exportExcel()" class="submit-btn export-btn excel-btn" id="exportExcelBtn" title="An Excel file with the chosen fields">
         📊 Export Excel (0)
       </button>
     </div>
+    <p style="font-size:13px; color:#6b7280; margin:10px 0 0;">
+      Card PDFs with the school's real design: <b>Print</b> page → Generate Cards → Download PDF.
+      A checklist for the school to verify the data: <b>Print</b> page → 📋 Verification checklist.
+    </p>
 
   </div>
 
@@ -147,6 +155,8 @@
   </div>
 
 </div>
+
+<div id="toast" class="toast"></div>
 
 <script>
   const _schoolName = sessionStorage.getItem("school_name") || sessionStorage.getItem("school") || "";

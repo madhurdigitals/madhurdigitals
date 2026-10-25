@@ -1,33 +1,60 @@
+/* =============================================
+   export_student.js - Export (🎓 Students | 👩‍🏫 Staff)
+   Excel with the chosen fields, or simple cards as PDF. Deleted staff are never included.
+   IDs are handled as text (students 50001, staff S-50001).
+   ============================================= */
 let students = [];
 let filtered = [];
 let headersGlobal = [];
-let allHeaders = [];          // NEW: full column list from the sheet — nothing excluded
+let allHeaders = [];          // full column list from the sheet (status columns of staff excluded)
 let selectedFields = [];
 let currentPage = 1;
 let rowsPerPage = 20;
 let schoolInfo = {};
-let selectedStudentIds = new Set();
+let selectedStudentIds = new Set();   // IDs as text
 let cardPages = [];
+let exType = "students";
+let exIdKey = "Student_ID";
 
 const school = sessionStorage.getItem("school");
+const EX_HIDDEN = ["status", "deleted_at", "deleted_by", "restored_at", "restored_by"];
+const exId = s => String(s[exIdKey] === undefined || s[exIdKey] === null ? "" : s[exIdKey]);
+const exWord = n => exType === "staff" ? `staff member${n !== 1 ? "s" : ""}` : `student${n !== 1 ? "s" : ""}`;
+
+function showToast(msg, type) {
+  const t = document.getElementById("toast");
+  if (!t) return;
+  t.innerText = msg;
+  t.className = "toast" + (type ? " toast-" + type : "");
+  t.style.display = "block";
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.style.display = "none", 3500);
+}
 
 // ========================
 // LOAD DATA
 // ========================
 async function loadStudents() {
-  const raw = await getStudents(school);
+  const rawSchools = await getSchools(true);
+  const row = typeof rtSchoolRow === "function" ? rtSchoolRow(rawSchools, school) : null;
+  exType = typeof rtCurrentType === "function" ? rtCurrentType(row) : "students";
+  exIdKey = exType === "staff" ? "Staff_ID" : "Student_ID";
+  applyExportLabels(row);
+
+  const raw = exType === "staff" ? await getStaff(school) : await getStudents(school);
+  if (!Array.isArray(raw) || !raw.length) {
+    students = []; filtered = []; allHeaders = []; headersGlobal = [];
+    renderSmartTable(); renderPagination();
+    showToast((raw && raw.error) || "Nothing to export", "error");
+    return;
+  }
 
   const headers = raw[0];
+  allHeaders = headers.filter(h => !EX_HIDDEN.includes(String(h).toLowerCase()));
 
-  // NEW: keep full column list for the field selector
-  allHeaders = [...headers];
-
-  headersGlobal = headers.filter(h => {
-    const key = h.toLowerCase();
-    return key !== "timestamp" &&
-          key !== "added_via" &&
-          key !== "updated_by" &&
-          key !== "photo_link";  // exclude photo_link but keep photo_id
+  headersGlobal = allHeaders.filter(h => {
+    const key = String(h).toLowerCase();
+    return key !== "timestamp" && key !== "added_via" && key !== "updated_by" && key !== "photo_link";
   });
 
   students = raw.slice(1).map(r => {
@@ -37,39 +64,48 @@ async function loadStudents() {
   });
 
   filtered = [...students];
-
-  // Select all by default
-  students.forEach(s => selectedStudentIds.add(Number(s.Student_ID)));
+  selectedStudentIds = new Set(students.map(exId));   // all selected by default
+  currentPage = 1;
 
   renderSmartTable();
   renderPagination();
   generateClassSectionOptions();
   generateFieldSelector();
-  await loadSchoolInfo();
+  loadSchoolInfo(rawSchools);
   updateSelectionUI();
-  attachGlobalSelect();
   updateGlobalCheckbox();
 }
 
+function applyExportLabels(row) {
+  const staff = exType === "staff";
+  const heading = document.querySelector(".heading-wrapper");
+  if (heading && typeof rtRenderTabs === "function") {
+    rtRenderTabs(heading, row, () => {
+      document.getElementById("searchName").value = "";
+      loadStudents();
+    });
+  }
+  const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  set("exHeading", staff ? "💾 Export Staff" : "💾 Export Students");
+  set("groupBtn", staff ? "Select Category" : "Select Class-Section");
+  document.querySelectorAll(".container > .card").forEach(c => { c.style.borderTop = staff ? "4px solid #059669" : ""; });
+}
+
 loadStudents();
+attachGlobalSelect();
 
 // ========================
 // SCHOOL INFO
 // ========================
-async function loadSchoolInfo() {
-  const raw = await getSchools(true);
+function loadSchoolInfo(raw) {
   const headers = raw[0];
-
   const schools = raw.slice(1).map(row => {
     let obj = {};
     headers.forEach((h, i) => obj[h] = row[i]);
     return obj;
   });
-
-  schoolInfo = schools.find(
-    s => s.school && school &&
-         s.school.toLowerCase() === school.toLowerCase()
-  ) || {};
+  schoolInfo = schools.find(s => s.school !== "" && s.school !== undefined && school &&
+                                 String(s.school).toLowerCase() === String(school).toLowerCase()) || {};
 }
 
 // ========================
@@ -77,7 +113,7 @@ async function loadSchoolInfo() {
 // ========================
 function renderTable(data, headers) {
   const visibleHeaders = headers.filter(h => {
-    const key = h.toLowerCase();
+    const key = String(h).toLowerCase();
     return !key.includes("address") && !key.includes("photo");
   });
 
@@ -86,7 +122,7 @@ function renderTable(data, headers) {
 
   thead.innerHTML = `
     <tr>
-      <th><input type="checkbox" id="selectAll" checked></th>
+      <th><input type="checkbox" id="selectAll" checked title="Tick / untick everyone on this page"></th>
       ${visibleHeaders.map(h => `<th>${h}</th>`).join("")}
     </tr>
   `;
@@ -94,7 +130,7 @@ function renderTable(data, headers) {
   tbody.innerHTML = data.map(s => `
     <tr>
       <td>
-        <input type="checkbox" class="rowCheck" value="${s.Student_ID}" checked>
+        <input type="checkbox" class="rowCheck" value="${exId(s)}" checked>
       </td>
       ${visibleHeaders.map(h => `<td>${s[h] || ""}</td>`).join("")}
     </tr>
@@ -166,14 +202,14 @@ function generateFieldSelector() {
   // Only these are unticked by default — everything else (including custom fields) is checked
   const defaultUnchecked = ["timestamp", "added_via", "updated_by", "photo_link"];
 
-  const fields = allHeaders;   // every column from the sheet, nothing hardcoded out
+  const fields = allHeaders;
 
-  selectedFields = fields.filter(f => !defaultUnchecked.includes(f.toLowerCase()));
+  selectedFields = fields.filter(f => !defaultUnchecked.includes(String(f).toLowerCase()));
 
   container.innerHTML = fields.map(f => {
-    const checked = !defaultUnchecked.includes(f.toLowerCase());
+    const checked = !defaultUnchecked.includes(String(f).toLowerCase());
     return `
-      <label class="field-chip ${checked ? "active" : ""}">
+      <label class="field-chip ${checked ? "active" : ""}" title="Include this field in the export">
         <input type="checkbox" value="${f}" ${checked ? "checked" : ""}>
         <span>${f}</span>
       </label>
@@ -205,12 +241,16 @@ function clearAllFields() {
 }
 
 // ========================
-// CLASS-SECTION FILTER
+// CLASS-SECTION (students) / CATEGORY (staff) FILTER
 // ========================
+function groupKey(s) {
+  if (exType === "staff") return String(s.Category || "");
+  return s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`;
+}
+
 function generateClassSectionOptions() {
-  const unique = [...new Set(
-    students.map(s => s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`)
-  )].sort((a, b) => {
+  const unique = [...new Set(students.map(groupKey).filter(Boolean))].sort((a, b) => {
+    if (exType === "staff") return a.localeCompare(b);
     const [c1, s1] = a.split("-");
     const [c2, s2] = b.split("-");
     if (c1 != c2) return Number(c1) - Number(c2);
@@ -236,13 +276,9 @@ function applyFilter() {
   const name = document.getElementById("searchName").value.toLowerCase();
   const selectedCS = [...document.querySelectorAll(".csCheck:checked")].map(cb => cb.value);
 
-  filtered = students.filter(s => {
-    const cs = s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`;
-    return (
-      (s.Name || "").toLowerCase().includes(name) &&
-      (selectedCS.length === 0 || selectedCS.includes(cs))
-    );
-  });
+  filtered = students.filter(s =>
+    (String(s.Name || "").toLowerCase().includes(name) || exId(s).toLowerCase().includes(name)) &&
+    (selectedCS.length === 0 || selectedCS.includes(groupKey(s))));
 
   currentPage = 1;
   renderSmartTable();
@@ -270,7 +306,7 @@ document.addEventListener("click", function (e) {
 });
 
 // ========================
-// CHECKBOXES
+// CHECKBOXES (IDs as text)
 // ========================
 function attachCheckboxEvents() {
   const selectAll = document.getElementById("selectAll");
@@ -281,20 +317,18 @@ function attachCheckboxEvents() {
 
     selectAll.addEventListener("change", function () {
       document.querySelectorAll(".rowCheck").forEach(cb => {
-        const id = Number(cb.value);
         cb.checked = this.checked;
-        this.checked ? selectedStudentIds.add(id) : selectedStudentIds.delete(id);
+        this.checked ? selectedStudentIds.add(cb.value) : selectedStudentIds.delete(cb.value);
       });
       updateSelectionUI();
     });
   }
 
   document.querySelectorAll(".rowCheck").forEach(cb => {
-    const id = Number(cb.value);
-    cb.checked = selectedStudentIds.has(id);
+    cb.checked = selectedStudentIds.has(cb.value);
 
     cb.addEventListener("change", () => {
-      cb.checked ? selectedStudentIds.add(id) : selectedStudentIds.delete(id);
+      cb.checked ? selectedStudentIds.add(cb.value) : selectedStudentIds.delete(cb.value);
       updateSelectAllState();
       updateSelectionUI();
     });
@@ -306,11 +340,8 @@ function attachGlobalSelect() {
   if (!global) return;
 
   global.addEventListener("change", function () {
-    if (this.checked) {
-      students.forEach(s => selectedStudentIds.add(Number(s.Student_ID)));
-    } else {
-      selectedStudentIds.clear();
-    }
+    if (this.checked) students.forEach(s => selectedStudentIds.add(exId(s)));
+    else selectedStudentIds.clear();
     renderSmartTable();
     updateSelectionUI();
     updateGlobalCheckbox();
@@ -350,8 +381,8 @@ function updateSelectionUI() {
   const cardsBtn = document.getElementById("exportCardsBtn");
   const excelBtn = document.getElementById("exportExcelBtn");
 
-  if (label) label.innerText = `Selected: ${count} student${count !== 1 ? "s" : ""}`;
-  if (cardsBtn) cardsBtn.innerText = `📄 Export Cards PDF (${count})`;
+  if (label) label.innerText = `Selected: ${count} ${exWord(count)}`;
+  if (cardsBtn && !cardsBtn.disabled) cardsBtn.innerText = `📄 Export Cards PDF (${count})`;
   if (excelBtn) excelBtn.innerText = `📊 Export Excel (${count})`;
 
   updateGlobalCheckbox();
@@ -392,14 +423,18 @@ function buildCardHTML(pageData) {
   `;
 }
 
+function selectedPeople() {
+  return filtered.filter(s => selectedStudentIds.has(exId(s)));
+}
+
 // ========================
 // EXPORT CARDS PDF
 // ========================
 async function exportCardsPDF() {
-  const selected = filtered.filter(s => selectedStudentIds.has(Number(s.Student_ID)));
+  const selected = selectedPeople();
 
   if (selected.length === 0) {
-    alert("Select at least one student");
+    alert(`Select at least one ${exWord(1)}`);
     return;
   }
 
@@ -407,53 +442,54 @@ async function exportCardsPDF() {
   btn.innerText = "⏳ Generating PDF...";
   btn.disabled = true;
 
-  // Split into pages of 10
-  const pages = [];
-  for (let i = 0; i < selected.length; i += 10) {
-    pages.push(selected.slice(i, i + 10));
-  }
-
-  // Render all pages into hidden container
-  const container = document.getElementById("cardContainer");
-  container.innerHTML = pages.map(p => buildCardHTML(p)).join("");
-
   const cardSection = document.getElementById("cardSection");
-  cardSection.style.display = "block";
+  const container = document.getElementById("cardContainer");
+  try {
+    const pages = [];
+    for (let i = 0; i < selected.length; i += 10) pages.push(selected.slice(i, i + 10));
 
-  // Wait for DOM
-  await new Promise(r => setTimeout(r, 300));
+    container.innerHTML = pages.map(p => buildCardHTML(p)).join("");
+    cardSection.style.display = "block";
+    await new Promise(r => setTimeout(r, 300));
 
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF("p", "mm", "a4");
-
-  const pageEls = container.querySelectorAll(".page");
-
-  for (let i = 0; i < pageEls.length; i++) {
-    const canvas = await html2canvas(pageEls[i], { scale: 2 });
-    const img = canvas.toDataURL("image/png");
-    if (i !== 0) pdf.addPage();
-    pdf.addImage(img, "PNG", 0, 0, 210, 297);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageEls = container.querySelectorAll(".page");
+    for (let i = 0; i < pageEls.length; i++) {
+      const canvas = await html2canvas(pageEls[i], { scale: 2 });
+      const img = canvas.toDataURL("image/png");
+      if (i !== 0) pdf.addPage();
+      pdf.addImage(img, "PNG", 0, 0, 210, 297);
+    }
+    const schoolLabel = schoolInfo.school_name || school || "export";
+    pdf.save(`${schoolLabel}_${exType}_cards.pdf`);
+    showToast(`PDF ready: ${selected.length} ${exWord(selected.length)}`, "success");
+  } catch (err) {
+    console.error(err);
+    showToast("PDF could not be created — please try again", "error");
+  } finally {
+    cardSection.style.display = "none";
+    container.innerHTML = "";
+    btn.disabled = false;
+    updateSelectionUI();
   }
-
-  const schoolLabel = schoolInfo.school_name || school || "students";
-  pdf.save(`${schoolLabel}_cards.pdf`);
-
-  // Cleanup
-  cardSection.style.display = "none";
-  container.innerHTML = "";
-
-  btn.disabled = false;
-  updateSelectionUI();
 }
 
 // ========================
-// EXPORT EXCEL
+// EXPORT EXCEL - recorded first (no record, no file); the file says who exported it and when
 // ========================
-function exportExcel() {
-  const selected = filtered.filter(s => selectedStudentIds.has(Number(s.Student_ID)));
+function portalName() {
+  try { const b = JSON.parse(sessionStorage.getItem("brand") || "null"); if (b && b.name) return b.name; } catch (err) { /* default */ }
+  return "Madhur Digitals";
+}
+
+let exExporting = false;
+async function exportExcel() {
+  if (exExporting) return;
+  const selected = selectedPeople();
 
   if (selected.length === 0) {
-    alert("Select at least one student");
+    alert(`Select at least one ${exWord(1)}`);
     return;
   }
 
@@ -462,22 +498,33 @@ function exportExcel() {
     return;
   }
 
-  // Build rows using only selectedFields
-  const rows = selected.map(s => {
-    let row = {};
-    selectedFields.forEach(f => {
-      row[f] = s[f] || "";
+  const btn = document.getElementById("exportExcelBtn");
+  exExporting = true;
+  if (btn) { btn.disabled = true; btn.innerText = "⏳ Preparing Excel…"; }
+  try {
+    const log = await apiGet({ action: "logExport", school: school, type: exType, count: String(selected.length),
+                               fields: selectedFields.join(","), format: "excel" });
+    if (!log || log.error || log.auth_error || log.status !== "logged") {
+      showToast("Excel NOT created: " + ((log && (log.error || log.message || log.auth_error)) || "no answer from the server"), "error");
+      return;
+    }
+    const rows = selected.map(s => {
+      let row = {};
+      selectedFields.forEach(f => { row[f] = s[f] || ""; });
+      return row;
     });
-    return row;
-  });
+    const ws = XLSX.utils.json_to_sheet(rows, { header: selectedFields });
+    XLSX.utils.sheet_add_aoa(ws, [[], [`Exported from ${portalName()} by ${log.by} on ${log.at}`]], { origin: -1 });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, exType === "staff" ? "Staff" : "Students");
+    ws["!cols"] = selectedFields.map(() => ({ wch: 20 }));
 
-  const ws = XLSX.utils.json_to_sheet(rows, { header: selectedFields });
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Students");
-
-  // Column widths
-  ws["!cols"] = selectedFields.map(() => ({ wch: 20 }));
-
-  const schoolLabel = schoolInfo.school_name || school || "students";
-  XLSX.writeFile(wb, `${schoolLabel}_students.xlsx`);
+    const schoolLabel = schoolInfo.school_name || school || "export";
+    XLSX.writeFile(wb, `${schoolLabel}_${exType}.xlsx`);
+    showToast(`Excel ready: ${selected.length} ${exWord(selected.length)} (this export is recorded)`, "success");
+  } finally {
+    exExporting = false;
+    if (btn) btn.disabled = false;
+    updateSelectionUI();
+  }
 }

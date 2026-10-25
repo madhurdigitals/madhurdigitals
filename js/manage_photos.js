@@ -14,6 +14,31 @@ let stagedNew       = [];   // { file, student }
 let stagedConflict  = [];   // { file, student, decision: "skip"|"replace" }
 let stagedUnmatched = [];   // { file, filenameId }
 
+/* ── 🎓 Students | 👩‍🏫 Staff (staff S3a) ── */
+let photoType = "students";
+let pIdKey    = "Student_ID";
+const pKey = id => String(id === undefined || id === null ? "" : id).trim().toLowerCase();   // S-60001 = s-60001
+
+function applyPhotoLabels(row) {
+  const staff = photoType === "staff";
+  const heading = document.querySelector(".heading-wrapper");
+  if (heading && typeof rtRenderTabs === "function") rtRenderTabs(heading, row, () => { cancelStaging(); loadStudents(); });
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  set("statTotalLbl", staff ? "Total Staff" : "Total Students");
+  set("gridTitle", staff ? "👩‍🏫 Staff" : "🎓 Students");
+  set("bulkHint", staff ? "Select or drop photo files named exactly by Staff ID (e.g. <code>S-60001.jpg</code>)."
+                        : "Select or drop photo files named exactly by Student ID (e.g. <code>80205.jpg</code>).");
+  document.querySelectorAll(".container > .card").forEach(c => { c.style.borderTop = staff ? "4px solid #059669" : ""; });
+}
+
+// Line under a name: class + father for students, designation + category for staff
+function personLine(s) {
+  if (photoType === "staff") return [s.Designation, s.Category].filter(Boolean).join(" • ");
+  const classSection = s.Section ? `${s.Class}-${s.Section}` : (s.Class || "");
+  const fatherName = s["Father's Name"] || s["Fathers_Name"] || s["Father_Name"] || "";
+  return `${classSection ? `Class ${classSection}` : ""}${fatherName ? ` • S/D/O ${fatherName}` : ""}`;
+}
+
 function showToast(msg, type) {
   const t = document.getElementById("toast");
   if (!t) return;
@@ -25,7 +50,14 @@ function showToast(msg, type) {
 
 /* ── LOAD ── */
 async function loadStudents() {
-  const raw = await getStudents(school);
+  if (typeof schoolsData === "undefined" || !schoolsData || !schoolsData.length) schoolsData = await getSchools();
+  const row = typeof rtSchoolRow === "function" ? rtSchoolRow(schoolsData, school) : null;
+  photoType = typeof rtCurrentType === "function" ? rtCurrentType(row) : "students";
+  pIdKey = photoType === "staff" ? "Staff_ID" : "Student_ID";
+  applyPhotoLabels(row);
+
+  const raw = photoType === "staff" ? await getStaff(school) : await getStudents(school);
+  if (!Array.isArray(raw)) { students = []; studentMap = {}; updateStats(); renderPhotoGrid(); showToast((raw && raw.error) || "Could not load", "error"); return; }
   if (!raw || raw.length === 0) return;
 
   const headers = raw[0];
@@ -36,7 +68,7 @@ async function loadStudents() {
   });
 
   studentMap = {};
-  students.forEach(s => { studentMap[String(s.Student_ID)] = s; });
+  students.forEach(s => { studentMap[pKey(s[pIdKey])] = s; });
 
   updateStats();
   renderPhotoGrid();
@@ -68,10 +100,10 @@ function renderPhotoGrid() {
       : `<div class="no-photo-box">No Photo</div>`;
 
     return `
-      <div class="photo-card ${hasPhoto ? "" : "missing"}" onclick="openSinglePhotoPopup('${s.Student_ID}')">
+      <div class="photo-card ${hasPhoto ? "" : "missing"}" onclick="openSinglePhotoPopup('${s[pIdKey]}')" title="${hasPhoto ? "Click to replace the photo" : "Click to add a photo"}">
         ${thumb}
         <div class="pc-name">${s.Name || ""}</div>
-        <div class="pc-id">#${s.Student_ID}</div>
+        <div class="pc-id">#${s[pIdKey]}</div>
       </div>
     `;
   }).join("");
@@ -84,17 +116,12 @@ let singlePhotoStudentId = null;
 
 function openSinglePhotoPopup(studentId) {
   singlePhotoStudentId = studentId;
-  const student = studentMap[String(studentId)];
+  const student = studentMap[pKey(studentId)];
   if (!student) return;
-
-  const classSection = student.Section ? `${student.Class}-${student.Section}` : (student.Class || "");
-  const fatherName = student["Father's Name"] || student["Fathers_Name"] || student["Father_Name"] || "";
 
   document.getElementById("singlePhotoTitle").innerHTML = `
     ${student.Name} <span style="font-weight:400; color:#9ca3af; font-size:12px;">#${studentId}</span>
-    <br><span style="font-size:12px; font-weight:400; color:#6b7280;">
-      ${classSection ? `Class ${classSection}` : ""}${fatherName ? ` • S/D/O ${fatherName}` : ""}
-    </span>
+    <br><span style="font-size:12px; font-weight:400; color:#6b7280;">${personLine(student)}</span>
   `;
 
   const preview = document.getElementById("singlePhotoPreview");
@@ -113,26 +140,25 @@ async function uploadSinglePhoto() {
   const file = document.getElementById("singlePhotoFile").files[0];
   if (!file) { showToast("Select a photo first", "error"); return; }
 
-  const student = studentMap[String(singlePhotoStudentId)];
+  const student = studentMap[pKey(singlePhotoStudentId)];
   const schoolId = sessionStorage.getItem("school_id");
   const oldLink = student["Photo_Link"] || "";
+  const btn = document.getElementById("singleUploadBtn");
+  if (btn) { btn.disabled = true; btn.innerText = "⏳ Saving…"; }
 
   try {
-    if (oldLink) {
-      const oldPublicId = oldLink.split("|")[0];
-      await deleteCloudinaryPhoto(oldPublicId);
-    }
-    const publicId = await uploadPhotoToCloudinary(file, schoolId, singlePhotoStudentId);
-    await savePhotoLink(school, singlePhotoStudentId, publicId);
-
+    // new photo first; the old one is removed only after the new one is saved
+    const publicId = await replacePhotoSafely(file, schoolId, school, student[pIdKey], oldLink, photoType === "staff");
     student["Photo_Link"] = publicId;   // update local cache
-    showToast("Photo saved", "success");
+    showToast(`Photo saved for ${student.Name}`, "success");
     closeSinglePhotoPopup();
     updateStats();
     renderPhotoGrid();
   } catch (err) {
     console.error(err);
-    showToast("Upload failed", "error");
+    showToast("Photo NOT saved: " + (err.message || "upload failed") + (oldLink ? " — the current photo is kept" : ""), "error");
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerText = "Upload / Replace"; }
   }
 }
 
@@ -159,7 +185,7 @@ function handleFiles(fileList) {
 
   files.forEach(file => {
     const filenameId = file.name.replace(/\.[^/.]+$/, "").trim();  // strip extension
-    const student = studentMap[filenameId];
+    const student = studentMap[pKey(filenameId)];
 
     if (!student) {
       stagedUnmatched.push({ file, filenameId });
@@ -185,7 +211,7 @@ function renderStaging() {
         <img src="${URL.createObjectURL(item.file)}">
         <div class="stage-info">
           <b>${item.student.Name}</b>
-          <span>#${item.student.Student_ID}</span>
+          <span>#${item.student[pIdKey]}</span>
         </div>
       </div>
     `).join("");
@@ -195,8 +221,7 @@ function renderStaging() {
   conflictBox.innerHTML = `<h4>⚠️ Already has a photo (${stagedConflict.length}) — review each</h4>` +
     stagedConflict.map((item, i) => {
       const s = item.student;
-      const classSection = s.Section ? `${s.Class}-${s.Section}` : (s.Class || "");
-      const fatherName = s["Father's Name"] || s["Fathers_Name"] || s["Father_Name"] || "";
+      const line = personLine(s);
 
       return `
       <div class="stage-row">
@@ -207,12 +232,12 @@ function renderStaging() {
         </div>
         <div class="stage-info">
           <b>${s.Name}</b>
-          <span>#${s.Student_ID}${classSection ? ` • Class ${classSection}` : ""}${fatherName ? ` • S/D/O ${fatherName}` : ""}</span>
+          <span>#${s[pIdKey]}${line ? ` • ${line}` : ""}</span>
         </div>
         <button class="zoom-btn" onclick="openZoom(${i})">🔍 Zoom to compare</button>
         <div class="toggle-group">
-          <button class="toggle-btn skip ${item.decision === 'skip' ? 'active' : ''}" onclick="setConflictDecision(${i}, 'skip')">Skip</button>
-          <button class="toggle-btn replace ${item.decision === 'replace' ? 'active' : ''}" onclick="setConflictDecision(${i}, 'replace')">Replace</button>
+          <button class="toggle-btn skip ${item.decision === 'skip' ? 'active' : ''}" onclick="setConflictDecision(${i}, 'skip')" title="Keep the current photo">Skip</button>
+          <button class="toggle-btn replace ${item.decision === 'replace' ? 'active' : ''}" onclick="setConflictDecision(${i}, 'replace')" title="Use the new photo instead">Replace</button>
         </div>
       </div>
     `;
@@ -221,13 +246,13 @@ function renderStaging() {
   // UNMATCHED
   const unmatchedBox = document.getElementById("stageUnmatched");
   unmatchedBox.innerHTML = stagedUnmatched.length
-    ? `<h4>❌ Unmatched (${stagedUnmatched.length}) — no student with this ID, will be skipped</h4>` +
+    ? `<h4>❌ Unmatched (${stagedUnmatched.length}) — no ${photoType === "staff" ? "staff member" : "student"} with this ID, will be skipped</h4>` +
       stagedUnmatched.map(item => `
         <div class="stage-row unmatched">
           <img src="${URL.createObjectURL(item.file)}">
           <div class="stage-info">
             <b>${item.filenameId}</b>
-            <span>No matching Student ID</span>
+            <span>No matching ${photoType === "staff" ? "Staff ID" : "Student ID"}</span>
           </div>
         </div>
       `).join("")
@@ -242,9 +267,8 @@ function setConflictDecision(index, decision) {
 function openZoom(index) {
   const item = stagedConflict[index];
   const s = item.student;
-  const classSection = s.Section ? `${s.Class}-${s.Section}` : (s.Class || "");
-  const fatherName = s["Father's Name"] || s["Fathers_Name"] || s["Father_Name"] || "";
-  const identity = `${s.Name} (#${s.Student_ID})${classSection ? ` — Class ${classSection}` : ""}${fatherName ? ` — S/D/O ${fatherName}` : ""}`;
+  const line = personLine(s);
+  const identity = `${s.Name} (#${s[pIdKey]})${line ? ` — ${line}` : ""}`;
 
   const overlay = document.getElementById("zoomOverlay");
   document.getElementById("zoomImages").innerHTML = `
@@ -288,6 +312,7 @@ async function confirmBulkUpload() {
   }
 
   document.getElementById("confirmUploadBtn").disabled = true;
+  document.getElementById("confirmUploadBtn").innerText = "⏳ Uploading…";
   document.getElementById("progressWrap").style.display = "block";
 
   const schoolId = sessionStorage.getItem("school_id");
@@ -297,18 +322,15 @@ async function confirmBulkUpload() {
 
   for (let i = 0; i < toUpload.length; i++) {
     const item = toUpload[i];
-    const studentId = item.student.Student_ID;
+    const studentId = item.student[pIdKey];
 
     document.getElementById("progressText").innerText = `Uploading ${i + 1} / ${toUpload.length}...`;
     document.getElementById("progressBar").style.width = `${((i + 1) / toUpload.length) * 100}%`;
 
     try {
-      if (item.isReplace && item.student["Photo_Link"]) {
-        const oldPublicId = item.student["Photo_Link"].split("|")[0];
-        await deleteCloudinaryPhoto(oldPublicId);
-      }
-      const publicId = await uploadPhotoToCloudinary(item.file, schoolId, studentId);
-      await savePhotoLink(school, studentId, publicId);
+      // new photo first; the old one is removed only after the new one is saved
+      const oldLink = item.isReplace ? (item.student["Photo_Link"] || "") : "";
+      const publicId = await replacePhotoSafely(item.file, schoolId, school, studentId, oldLink, photoType === "staff");
 
       item.student["Photo_Link"] = publicId;   // update local cache
       successCount++;
@@ -321,6 +343,7 @@ async function confirmBulkUpload() {
 
   document.getElementById("progressWrap").style.display = "none";
   document.getElementById("confirmUploadBtn").disabled = false;
+  document.getElementById("confirmUploadBtn").innerText = "✅ Confirm & Upload";
   document.getElementById("stagingArea").style.display = "none";
 
   const summary = document.getElementById("resultSummary");
