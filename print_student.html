@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Print Students</title>
+  <title>Print Cards</title>
 
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
@@ -15,6 +15,15 @@
   <link rel="stylesheet" href="css/print_student.css">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    #printTypeTabs { display:none; justify-content:center; gap:8px; margin:10px auto 4px; flex-wrap:wrap; }
+    #printTypeTabs button { padding:9px 18px; border-radius:22px; border:2px solid #d1d5db; background:#fff; font-size:14px; font-weight:700; cursor:pointer; color:#374151; }
+    #printTypeTabs button.on { background:#0d6efd; border-color:#0d6efd; color:#fff; }
+    #noDesignBox { display:none; margin-top:12px; padding:10px 12px; border-radius:8px; border:1px solid; font-size:14px; }
+    #checklistSection { display:none; }
+    #checklistContainer { background:#e5e7eb; padding:10px; overflow:auto; }
+    @media print { #checklistSection { display:none !important; } }
+  </style>
 </head>
 
 <body>
@@ -36,22 +45,20 @@
 
 <div class="heading-wrapper">
   <div class="heading-badge">
-    Print Students: <span id="schoolName"></span>
+    <span id="printHeading">🎓 Print Students</span>: <span id="schoolName"></span>
   </div>
 </div>
+<div id="printTypeTabs" title="Which cards to print"></div>
 
 <div class="container">
 
   <!-- FILTERS -->
   <div class="card">
 
-    <input id="searchName" placeholder="Search Name">
-    
-    <!-- CARD DESIGN (only shown when the school has more than one design) -->
-    <div id="designChoiceWrap" style="display:none; margin-top:12px;">
-      <b>Card design:</b>
-      <select id="designSelect" onchange="switchDesign(this.value)" style="margin-left:6px; padding:6px 10px; border-radius:6px;"></select>
-    </div>
+    <input id="searchName" placeholder="Search name or ID">
+
+    <div id="noDesignBox"></div>
+
     <div style="margin-top:15px;">
       <b>Select Fields for Card:</b>
       <div id="fieldSelector" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:5px;"></div>
@@ -59,7 +66,7 @@
 
     <div style="margin-top:10px;">
       <div class="dropdown">
-        <button onclick="toggleDropdown('classSectionOptions', event)">
+        <button onclick="toggleDropdown('classSectionOptions', event)" id="groupBtn">
           Select Class-Section
         </button>
         <div id="classSectionOptions" class="dropdown-content"></div>
@@ -93,7 +100,7 @@
         </div>
 
         <div id="selectionCount" style="font-weight:600;">
-          Selected: 0 students
+          Selected: 0
         </div>
       </div>
 
@@ -106,10 +113,25 @@
     <div id="pagination" style="margin-top:10px;"></div>
 
     <br>
-    <button onclick="generateCards()" class="submit-btn" id="generateBtn">
-      Generate Cards (0)
-    </button>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button onclick="generateCards()" class="submit-btn" id="generateBtn" title="Make the cards of the selected people with the card design">
+        Generate Cards (0)
+      </button>
+      <button onclick="showChecklist()" class="submit-btn" id="checklistBtn" style="background:#374151;" title="A plain black & white list for the school to check the data before printing">
+        📋 Verification checklist
+      </button>
+    </div>
 
+  </div>
+
+  <!-- VERIFICATION CHECKLIST -->
+  <div id="checklistSection" class="card" style="text-align:center;">
+    <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px; flex-wrap:wrap;">
+      <button onclick="printChecklist()" class="submit-btn" title="Print the checklist (A4, black & white)">🖨 Print checklist</button>
+      <button onclick="downloadChecklistPDF()" class="submit-btn" title="Save the checklist as a PDF to send to the school">⬇ Download checklist PDF</button>
+      <button onclick="document.getElementById('checklistSection').style.display='none'" class="clear-btn">Close</button>
+    </div>
+    <div id="checklistContainer"></div>
   </div>
 
   <div id="cardSection" class="card" style="display:none; text-align:center;">

@@ -21,6 +21,36 @@ let filteredData    = [];
 let selectedFilters = [];
 let currentEditPhotoLink = "";   // 📸 tracks the current student's photo public_id during edit
 
+/* ── 🎓 Students | 👩‍🏫 Staff (staff S2) ── */
+let recordType = "students";     // what this page shows right now
+let idKey      = "Student_ID";   // "Staff_ID" on the Staff tab
+const STATUS_KEYS = ["status", "deleted_at", "deleted_by", "restored_at", "restored_by"];
+
+function msSetText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
+
+// Always clear which data is on screen: heading, labels, colours follow the tab
+function applyManageLabels(row) {
+  const staff = recordType === "staff";
+  const heading = document.querySelector(".heading-wrapper");
+  if (heading && typeof rtRenderTabs === "function") rtRenderTabs(heading, row, () => { resetFiltersQuietly(); loadStudents(); });
+  msSetText("recordHeadingLabel", staff ? "👩‍🏫 Manage Staff" : "🎓 Manage Students");
+  msSetText("statTotalLbl", staff ? "Total staff" : "Total students");
+  msSetText("lblName", staff ? "Name" : "Student Name");
+  msSetText("lblId", staff ? "Staff ID" : "Student ID");
+  msSetText("lblGroup", staff ? "Category" : "Class — Section");
+  msSetText("groupBtn", staff ? "Select Category ▾" : "Select Class-Section ▾");
+  const idBox = document.getElementById("searchStudentId");
+  if (idBox) idBox.placeholder = staff ? "e.g. S-60001" : "Enter ID...";
+  const tc = document.querySelector(".table-card");
+  if (tc) tc.style.borderTop = staff ? "4px solid #059669" : "";
+}
+
+function resetFiltersQuietly() {
+  ["searchName", "searchStudentId", "filterAddedBy", "dateFrom", "dateTo"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  selectedFilters = [];
+  renderChips();
+}
+
 function normalizeKey(str) {
   return str.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_");
 }
@@ -58,10 +88,22 @@ function parseTimestamp(ts) {
 async function loadStudents() {
   showSkeleton(true);
 
-  const raw = await getStudents(school);
+  if (typeof schoolsData === "undefined" || !schoolsData || !schoolsData.length) schoolsData = await getSchools();
+  const msRow = rtSchoolRow(schoolsData, school);
+  recordType = rtCurrentType(msRow);
+  idKey = recordType === "staff" ? "Staff_ID" : "Student_ID";
+  applyManageLabels(msRow);
+
+  const raw = recordType === "staff" ? await getStaff(school) : await getStudents(school);
 
   showSkeleton(false);
 
+  if (!Array.isArray(raw)) {
+    students = []; filteredData = []; headersGlobal = [];
+    renderSmartTable(); renderPagination();
+    showToast((raw && raw.error) || "Could not load", "error");
+    return;
+  }
   if (!raw || raw.length === 0) return;
 
   const headers = raw[0];
@@ -70,7 +112,8 @@ async function loadStudents() {
     const key = h.toLowerCase();
     return key !== "timestamp" &&
            key !== "added_via" &&
-           key !== "updated_by";
+           key !== "updated_by" &&
+           !STATUS_KEYS.includes(key);
   });
 
   students = raw.slice(1).map(row => {
@@ -134,7 +177,8 @@ function renderTable(data, headers) {
            !key.includes("photo")   &&
            key !== "updated_by"     &&
            key !== "added_via"      &&
-           key !== "timestamp";
+           key !== "timestamp"      &&
+           !STATUS_KEYS.includes(key);
   });
 
   const thead = document.getElementById("tableHead");
@@ -159,8 +203,8 @@ function renderTable(data, headers) {
         <td>${thumb}</td>
         ${visibleHeaders.map(h => `<td>${s[h] || ""}</td>`).join("")}
         <td>
-          <button class="btn-edit"   onclick="openEdit('${s["Student_ID"]}')">Edit</button>
-          <button class="btn-delete" onclick="deleteStudent('${s["Student_ID"]}')">Delete</button>
+          <button class="btn-edit"   onclick="openEdit('${s[idKey]}')" title="Change details or photo">Edit</button>
+          <button class="btn-delete" onclick="deleteStudent('${s[idKey]}', this)" title="Remove from all lists, printing and exports">Delete</button>
         </td>
       </tr>
     `;
@@ -179,10 +223,10 @@ function applyFilter() {
   const toDate   = dateTo   ? new Date(dateTo   + "T23:59:59") : null;
 
   filteredData = students.filter(s => {
-    const key = s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`;
+    const key = recordType === "staff" ? String(s.Category || "") : (s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`);
 
     if (!(s.Name || "").toLowerCase().includes(name))                          return false;
-    if (studentId && !String(s.Student_ID || "").includes(studentId))          return false;
+    if (studentId && !String(s[idKey] || "").toLowerCase().includes(studentId.toLowerCase())) return false;
     if (addedBy   && !(s.Added_By || "").toLowerCase().includes(addedBy))      return false;
     if (selectedFilters.length > 0 && !selectedFilters.includes(key))         return false;
 
@@ -267,15 +311,29 @@ function nextPage()   { goToPage(currentPage + 1); }
 function prevPage()   { goToPage(currentPage - 1); }
 
 /* ── DELETE (original logic preserved) ── */
-async function deleteStudent(id) {
-  if (!confirm("Are you sure you want to delete this student?")) return;
+async function deleteStudent(id, btn) {
+  const staff = recordType === "staff";
+  const who = students.find(s => String(s[idKey]) === String(id));
+  const whoName = who && who.Name ? ` (${who.Name})` : "";
+  if (!confirm(staff ? `Delete staff member ${id}${whoName}?\n\nThey will be removed from all lists, printing and exports.`
+                     : `Delete student ${id}${whoName}?\n\nThey will be removed from all lists, printing and exports.`)) return;
 
   const filters = { name: document.getElementById("searchName").value };
   const scrollPos = window.scrollY;
+  if (btn) { btn.disabled = true; btn.innerText = "⏳ Deleting…"; }
 
-  await fetch(`${API_URL}?action=deleteStudent&school=${school}&student_id=${id}`);
+  let res = null;
+  try {
+    res = staff ? await deleteStaff(school, id)
+                : await (await fetch(`${API_URL}?action=deleteStudent&school=${encodeURIComponent(school)}&student_id=${encodeURIComponent(id)}`)).json();
+  } catch (err) { res = null; }
+  if (!res || res.error) {
+    if (btn) { btn.disabled = false; btn.innerText = "Delete"; }
+    showToast("NOT deleted: " + ((res && res.error) || "no answer from the server"), "error");
+    return;
+  }
 
-  alert("Student moved to deleted records");
+  showToast("Deleted " + id + whoName, "success");
 
   await loadStudents();
 
@@ -286,6 +344,7 @@ async function deleteStudent(id) {
 
 /* ── OPEN EDIT (photo row added) ── */
 async function openEdit(id) {
+  if (recordType === "staff") return openStaffEditManage(id);
   const container = document.getElementById("editPopup");
 
   container.innerHTML = `
@@ -374,7 +433,7 @@ async function openEdit(id) {
 
   html += `
     <div class="btn-group">
-      <button class="submit-btn" onclick="saveEditDynamic(${id})">Save</button>
+      <button class="submit-btn" onclick="saveEditDynamic('${id}')">Save</button>
       <button class="clear-btn"  onclick="closeEdit()">Cancel</button>
     </div>
   `;
@@ -450,22 +509,25 @@ async function saveEditDynamic(id) {
 
   closeEdit();
 
-  // Backend save
-  await fetch(`${API_URL}?${params.toString()}`);
+  // Backend save - only report success when the server confirms it
+  let editRes = null;
+  try { editRes = await (await fetch(`${API_URL}?${params.toString()}`)).json(); } catch (err) { editRes = null; }
+  if (!editRes || editRes.error) {
+    showToast("NOT saved: " + ((editRes && editRes.error) || "no answer from the server"), "error");
+    await loadStudents();      // show what is really stored
+    return;
+  }
+  showToast("Saved", "success");
 
   // 📸 Handle photo replacement
   if (newPhotoFile) {
     try {
-      if (oldPhotoLink) {
-        const oldPublicId = oldPhotoLink.split("|")[0]; 
-        await deleteCloudinaryPhoto(oldPublicId);
-      }
-      const publicId = await uploadPhotoToCloudinary(newPhotoFile, editSchoolId, id);
-      await savePhotoLink(school, id, publicId);
+      // new photo first; the old one is removed only after the new one is saved
+      await replacePhotoSafely(newPhotoFile, editSchoolId, school, id, oldPhotoLink, false);
       showToast("Photo updated", "success");
     } catch (err) {
       console.error("Photo update failed:", err);
-      showToast("Details saved, but photo update failed", "error");
+      showToast("Details saved, but the photo was NOT changed: " + (err.message || "upload failed"), "error");
     }
   }
 
@@ -519,8 +581,8 @@ function formatDOB(value) {
 function populateClassSectionDropdown() {
   const set = new Set();
   students.forEach(s => {
-    const key = s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`;
-    set.add(key);
+    const key = recordType === "staff" ? String(s.Category || "") : (s.Section ? `${s.Class}-${s.Section}` : `${s.Class}`);
+    if (key) set.add(key);
   });
 
   const sorted = [...set].sort((a, b) => {
@@ -632,3 +694,59 @@ async function initSchools() { schoolsData = await getSchools(); }
 
 loadSchools();
 initSchools();
+
+
+/* ── 👩‍🏫 EDIT STAFF (Manage Records, Staff tab) ── */
+async function openStaffEditManage(id) {
+  const box = document.getElementById("editPopup");
+  const s = students.find(x => String(x.Staff_ID) === String(id));
+  if (!s) return;
+  const row = rtSchoolRow(schoolsData, school);
+  staffEditPhotoLink = s.Photo_Link || "";
+  let html = `<div class="school-header"><h3>Edit Staff Member</h3><span class="close-btn" onclick="closeEdit()">✖</span></div>
+    <div class="form-row"><label>Staff ID</label><input value="${staffEsc(id)}" disabled></div>
+    <div class="form-row"><label>Photo</label><div class="photo-upload-wrap">
+      ${staffEditPhotoLink ? `<img src="${getPhotoUrl(staffEditPhotoLink, "w_100,h_100,c_fill")}" alt="">` : `<span class="no-photo-label">No photo</span>`}
+      <input type="file" id="edit_photo_file" accept="image/*"></div></div>
+    <div class="form-row"><label>Name *</label><input id="edit_name" value="${staffEsc(s.Name)}"></div>
+    <div class="form-row"><label>Category *</label>${categorySelectHtml("edit_category", s.Category)}</div>
+    <div class="form-row"><label>Designation *</label><div style="flex:1;">${designationSelectHtml("edit_designation", s.Designation)}</div></div>`;
+  rtStaffFields(row).forEach(label => {
+    let v = s[label] || "";
+    if (normalizeKey(label) === "dob") v = formatDOB(v);
+    html += `<div class="form-row"><label>${staffEsc(label)}</label>${staffFieldInput(label, "edit_" + normalizeKey(label), v)}</div>`;
+  });
+  html += `<div class="btn-group"><button class="submit-btn" id="staffSaveBtn" onclick="saveStaffEditManage('${staffEsc(id)}')">Save</button>
+           <button class="clear-btn" onclick="closeEdit()">Cancel</button></div>`;
+  box.innerHTML = html;
+  box.style.display = "block";
+  if (typeof attachDOBFormatterAll === "function") attachDOBFormatterAll();
+}
+
+async function saveStaffEditManage(id) {
+  const name = (document.getElementById("edit_name").value || "").trim();
+  const designation = designationValue("edit_designation");
+  if (!name || !designation) { showToast("Name and Designation are required", "error"); return; }
+  const data = { school: school, staff_id: id, name: name, category: document.getElementById("edit_category").value, designation: designation };
+  rtStaffFields(rtSchoolRow(schoolsData, school)).forEach(label => {
+    const key = normalizeKey(label);
+    let v = (document.getElementById("edit_" + key)?.value || "").trim();
+    if (key === "dob") v = formatDOB(v);
+    data[key] = v;
+  });
+  const newPhoto = document.getElementById("edit_photo_file")?.files[0] || null;
+  const oldPhoto = staffEditPhotoLink;
+  const btn = document.getElementById("staffSaveBtn");
+  btn.disabled = true; btn.innerText = "⏳ Saving…";
+  const res = await updateStaff(data);
+  if (!res || res.error) { btn.disabled = false; btn.innerText = "Save"; showToast("NOT saved: " + ((res && res.error) || "no answer from the server"), "error"); return; }
+  closeEdit();
+  showToast("Saved: " + id, "success");
+  if (newPhoto) {
+    try {
+      await replacePhotoSafely(newPhoto, sessionStorage.getItem("school_id"), school, id, oldPhoto, true);
+      showToast("Photo updated", "success");
+    } catch (err) { showToast("Details saved, but the photo was NOT changed: " + (err.message || "upload failed"), "error"); }
+  }
+  await loadStudents();
+}

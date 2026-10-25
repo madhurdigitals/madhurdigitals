@@ -171,6 +171,11 @@ async function addSchool(data) {
       vendor_id:   data.vendor_id || "",  // blank = Madhur Digitals (vendor 1)
       new_login_password: data.new_login_password || ""   // "generate" = strong password, shown once
     });
+    // Staff cards (new pages only): on/off + staff fields
+    if (data.staff_enabled !== undefined) {
+      params.set("staff_enabled", data.staff_enabled ? "yes" : "no");
+      params.set("staff_fields", data.staff_fields || "");
+    }
 
     const url = `${API_URL}?${params.toString()}`;
 
@@ -641,6 +646,11 @@ async function addVendor(data) {
       max_users:   data.max_users   || "",
       branding:    data.branding    || ""
     });
+    // First vendor login (Add Vendor page): username = web name, with these permissions
+    if (data.create_login) {
+      params.set("create_login", "1");
+      params.set("login_permissions", data.login_permissions || "");
+    }
     const res = await fetch(`${API_URL}?${params.toString()}`);
     return await res.json();
   } catch (err) {
@@ -865,3 +875,105 @@ if (typeof document !== "undefined" && document.addEventListener) {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initBranding);
   else initBranding();
 }
+
+
+/* ========================= */
+/* STAFF RECORDS (staff S2)  */
+/* ========================= */
+// Same safety as students: the server answers with the new Staff ID, or an error.
+async function getStaff(school, includeDeleted) {
+  try {
+    const params = new URLSearchParams({ action: "getStaff", school: school });
+    if (includeDeleted) params.set("include_deleted", "1");
+    const res = await fetch(`${API_URL}?${params.toString()}`);
+    const data = await res.json();
+    return Array.isArray(data) ? data : { error: (data && data.error) || "Could not load staff" };
+  } catch (err) {
+    return { error: "Could not load staff" };
+  }
+}
+
+async function addStaff(data) {
+  try {
+    const params = new URLSearchParams(Object.assign({ action: "addStaff" }, data));
+    const res = await fetch(`${API_URL}?${params.toString()}`);
+    return await res.json();
+  } catch (err) {
+    return { error: "no answer from the server" };
+  }
+}
+
+async function updateStaff(data) {
+  try {
+    const params = new URLSearchParams(Object.assign({ action: "updateStaff" }, data));
+    const res = await fetch(`${API_URL}?${params.toString()}`);
+    return await res.json();
+  } catch (err) {
+    return { error: "no answer from the server" };
+  }
+}
+
+async function deleteStaff(school, staffId) {
+  try {
+    const params = new URLSearchParams({ action: "deleteStaff", school: school, staff_id: staffId });
+    const res = await fetch(`${API_URL}?${params.toString()}`);
+    return await res.json();
+  } catch (err) {
+    return { error: "no answer from the server" };
+  }
+}
+
+async function saveStaffPhotoLink(school, staffId, publicId) {
+  const params = new URLSearchParams({ action: "updateStaffPhoto", school: school, staff_id: staffId, photo_link: publicId });
+  const res = await fetch(`${API_URL}?${params.toString()}`);
+  return res.json();
+}
+
+
+/* ========================= */
+/* SAFE PHOTO REPLACE (S3a)  */
+/* ========================= */
+// Replacing a photo: upload the NEW one under a new name, save its link, and only THEN remove the old
+// one. If anything fails on the way, the person keeps the old photo (never left without a photo).
+async function uploadPhotoUnique(file, schoolId, personId) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  formData.append("public_id", `madhur_digitals/school_${schoolId}/${personId}_${Date.now().toString(36)}`);
+  formData.append("folder", `madhur_digitals/school_${schoolId}`);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: "POST", body: formData });
+  const data = await res.json();
+  if (data.public_id) return `${data.public_id}|${data.version}`;
+  throw new Error((data.error && data.error.message) || "Photo upload failed");
+}
+
+async function replacePhotoSafely(file, schoolId, school, personId, oldLink, isStaff) {
+  const newLink = oldLink ? await uploadPhotoUnique(file, schoolId, personId)
+                          : await uploadPhotoToCloudinary(file, schoolId, personId);
+  const saved = isStaff ? await saveStaffPhotoLink(school, personId, newLink) : await savePhotoLink(school, personId, newLink);
+  if (!saved || saved.error) throw new Error((saved && saved.error) || "photo link not saved");
+  if (oldLink) {
+    const oldId = String(oldLink).split("|")[0], newId = String(newLink).split("|")[0];
+    if (oldId && oldId !== newId) { try { await deleteCloudinaryPhoto(oldId); } catch (err) { /* old file stays - harmless */ } }
+  }
+  return newLink;
+}
+
+
+/* ========================= */
+/* RESTORE (S3a)             */
+/* ========================= */
+async function apiGet(params) {
+  try {
+    const res = await fetch(`${API_URL}?${new URLSearchParams(params).toString()}`);
+    return await res.json();
+  } catch (err) {
+    return { error: "no answer from the server" };
+  }
+}
+async function getDeletedStudentsRaw()   { return apiGet({ action: "getDeletedStudents" }); }
+async function getDeletedStaffList()     { return apiGet({ action: "getDeletedStaff" }); }
+async function restoreStudentsMany(ids)  { return apiGet({ action: "restoreStudentsMany", ids: ids.join(",") }); }
+async function purgeStudentsMany(ids)    { return apiGet({ action: "purgeStudentsMany", ids: ids.join(",") }); }
+async function restoreStaffMany(items)   { return apiGet({ action: "restoreStaffMany", items: items.join(",") }); }
+async function purgeStaffMany(items)     { return apiGet({ action: "purgeStaffMany", items: items.join(",") }); }

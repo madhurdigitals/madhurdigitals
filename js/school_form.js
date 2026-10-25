@@ -10,6 +10,51 @@ let schoolInfo = null;
 
 let fieldConfig = [];
 
+/* ── 🎓 Students | 👩‍🏫 Staff forms (S4c) ── */
+let formType = "students";
+let formSchoolRow = null;                       // the school's row (staff on? staff fields)
+const STAFF_FORM_TITLE = "STAFF ID CARD FORM";
+const staffLabelMap = { name: "Name", designation: "Designation", category: "Category",
+  father_s_husband_s_name: "Father's/Husband's Name", dob: "Date of Birth", phone: "Phone", address: "Address",
+  blood_group: "Blood Group", employee_id: "Employee ID" };
+const staffTypes = { name: "full", designation: "half", category: "category", father_s_husband_s_name: "full",
+  dob: "half", phone: "half", address: "multiline", blood_group: "half", employee_id: "half" };
+const nkey = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_");
+
+function staffFieldList() {
+  const raw = formSchoolRow && formSchoolRow.staff_fields ? String(formSchoolRow.staff_fields)
+            : "Father's/Husband's Name,DOB,Phone,Address,Blood Group,Employee ID";
+  return raw.split(",").map(f => f.trim()).filter(Boolean);
+}
+
+// Staff form: Name, Designation, Category (tick boxes), then the school's staff fields
+function buildStaffFieldConfig() {
+  const seen = {};
+  const list = [{ key: "name", label: "Name" }, { key: "designation", label: "Designation" }, { key: "category", label: "Category" }]
+    .concat(staffFieldList().map(f => ({ key: nkey(f), label: staffLabelMap[nkey(f)] || f })))
+    .filter(x => (seen[x.key] ? false : (seen[x.key] = true)));
+  fieldConfig = list.map(x => ({ key: x.key, label: x.label, enabled: true, type: staffTypes[x.key] || "full" }));
+  renderFieldSettings();
+}
+
+function setupFormTabs() {
+  if (typeof rtRenderTabs !== "function") return;
+  formType = rtCurrentType(formSchoolRow);
+  const anchor = document.querySelector(".heading-wrapper");
+  if (anchor) rtRenderTabs(anchor, formSchoolRow, () => {
+    formType = rtCurrentType(formSchoolRow);
+    setFormLabels();
+    buildFieldConfig();
+    document.getElementById("formSection").style.display = "none";
+  });
+  setFormLabels();
+}
+
+function setFormLabels() {
+  const h = document.getElementById("formsTitle");
+  if (h) h.textContent = formType === "staff" ? "👩‍🏫 Print Staff Forms" : "🎓 Print Student Forms";
+}
+
 /* LABELS */
 const labelMap = {
   name: "Name",
@@ -57,6 +102,10 @@ async function loadSchool() {
     // ✅ Store custom title globally
     window.customFormTitle = customSchool.form_title;
 
+    // a new school can need staff forms too
+    formSchoolRow = { staff_enabled: "yes", staff_fields: "" };
+    setupFormTabs();
+
     // ✅ Build fields like normal
     buildFieldConfig();
 
@@ -93,6 +142,8 @@ async function loadSchool() {
   // ✅ Default title
   window.customFormTitle = "STUDENT ID CARD FORM";
 
+  formSchoolRow = schoolInfo;
+  setupFormTabs();
   buildFieldConfig();
 }
 
@@ -100,6 +151,7 @@ loadSchool();
 
 /* BUILD CONFIG */
 function buildFieldConfig() {
+  if (formType === "staff") { buildStaffFieldConfig(); return; }
 
   const schoolFields = schoolInfo.fields
     .split(",")
@@ -137,11 +189,13 @@ function renderFieldSettings() {
 
       <span>${f.label}</span>
 
-      <select onchange="changeType(${i}, this.value)">
+      ${f.type === "category"
+        ? `<span title="Printed as tick boxes" style="font-size:12px; color:#6b7280;">☐ Staff ☐ Management</span>`
+        : `<select onchange="changeType(${i}, this.value)">
         <option value="full" ${f.type==="full"?"selected":""}>Full</option>
         <option value="half" ${f.type==="half"?"selected":""}>Half</option>
         <option value="multiline" ${f.type==="multiline"?"selected":""}>Multiline</option>
-      </select>
+      </select>`}
 
     </div>
   `).join("");
@@ -268,7 +322,7 @@ function generateForm(fields, color="light") {
         <div class="divider"></div>
 
         <div class="form-title">
-          ${(window.customFormTitle || "STUDENT ID CARD FORM").toUpperCase()}
+          ${formType === "staff" ? STAFF_FORM_TITLE : (window.customFormTitle || "STUDENT ID CARD FORM").toUpperCase()}
         </div>
 
       </div>
@@ -287,6 +341,21 @@ function generateForm(fields, color="light") {
   let halfBuffer = [];
 
 fields.forEach(f => {
+
+  // CATEGORY (staff form): tick boxes
+  if (f.type === "category") {
+    if (halfBuffer.length === 1) {
+      html += fieldRow(halfBuffer[0].label);
+      halfBuffer = [];
+    }
+    html += `
+      <div class="row field">
+        <span>${f.label}:</span>
+        <span style="margin-left:4mm; white-space:nowrap;">☐ Staff &nbsp;&nbsp;&nbsp; ☐ Management</span>
+      </div>
+    `;
+    return;
+  }
 
   // MULTILINE
   if (f.type === "multiline") {
@@ -454,5 +523,5 @@ async function downloadPDF() {
 
   if (!name) name = "school";
 
-  pdf.save(`${name}_form.pdf`);
+  pdf.save(`${name}_${formType === "staff" ? "staff" : "student"}_form.pdf`);
 }

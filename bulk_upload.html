@@ -1,17 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Bulk Upload</title>
+  <title>Bulk Upload — Madhur Digitals</title>
 
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/record_types.js"></script>
   <script src="js/bulk_upload.js" defer></script>
 
   <link rel="stylesheet" href="css/manage_student.css">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    .bu-hint { font-size:13px; color:#6b7280; margin:8px 0 0; }
+    .bu-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .bu-btn { padding:9px 14px; border-radius:8px; border:1px solid #0d6efd; background:#fff; color:#0d6efd; font-weight:600; cursor:pointer; }
+    .bu-btn:hover { background:#0d6efd; color:#fff; }
+    .bu-btn:disabled { opacity:.55; cursor:not-allowed; }
+    .bu-result { display:none; margin:10px 0; padding:10px 12px; border-radius:8px; font-size:14px; }
+    .bu-result.ok  { background:#f0fdf4; border:1px solid #86efac; color:#166534; }
+    .bu-result.bad { background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; }
+    .bu-status { font-size:12px; font-weight:700; white-space:nowrap; }
+    #mappingBox:empty { display:none; }
+    #mappingBox > div { margin:4px 0; }
+    #mappingBox select { padding:5px 8px; border-radius:6px; border:1px solid #d1d5db; margin-left:6px; }
+  </style>
 </head>
 
 <body>
@@ -33,7 +49,7 @@
 
 <div class="heading-wrapper">
   <div class="heading-badge">
-    Bulk Upload: <span id="schoolName"></span>
+    <span id="buHeading">📤 Bulk Upload Students</span>: <span id="schoolName"></span>
   </div>
 </div>
 
@@ -41,11 +57,12 @@
 
   <!-- Upload -->
   <div class="card">
-    <input type="file" id="fileInput" onchange="showLoadBtn()">
-    <button id="loadBtn" onclick="loadData()" style="display:none;">
-      Load Data
-    </button>
-    <button onclick="downloadSample()">Download Sample</button>
+    <div class="bu-row">
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="showLoadBtn()" title="Choose the Excel file to upload" style="max-width:340px;">
+      <button id="loadBtn" class="bu-btn" onclick="loadData()" style="display:none;" title="Read the file and show its rows below">Load Data</button>
+      <button class="bu-btn" id="sampleBtn" onclick="downloadSample()" title="Download an Excel file with the right columns for this school">Download Sample</button>
+    </div>
+    <p class="bu-hint" id="buHint"></p>
   </div>
 
   <!-- Mapping -->
@@ -53,23 +70,35 @@
 
   <!-- Table -->
   <div class="card">
-    <table>
-      <thead id="tableHead"></thead>
-      <tbody id="tableBody"></tbody>
-    </table>
+    <div class="bu-result" id="buResult"></div>
+    <div id="bulkSetBar" style="display:none; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px; font-size:13px;">
+      <span>Set Category for ticked rows:</span>
+      <select id="bulkCategory" title="Category to give every ticked row" style="padding:5px 8px; border-radius:6px; border:1px solid #d1d5db;">
+        <option value="Staff">Staff</option><option value="Management">Management</option>
+      </select>
+      <button type="button" class="bu-btn" style="padding:5px 12px;" onclick="applyCategoryToTicked()" title="Change the Category of every ticked row at once">Apply</button>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
 
     <br>
     <div style="display:flex; gap:10px;">
-      <button onclick="submitData()" class="submit-btn">
+      <button onclick="submitData()" class="submit-btn" id="submitBtn" title="Save the ticked rows. Rows already saved are never saved twice.">
         Submit Selected
       </button>
-      <button onclick="downloadExcel()" class="submit-btn">
+      <button onclick="downloadExcel()" class="submit-btn" title="Download these rows with their result (ID or reason)">
         Download Excel
       </button>
     </div>
   </div>
 
 </div>
+
+<div id="toast" class="toast"></div>
 
 <script>
   const _schoolName = sessionStorage.getItem("school_name") || sessionStorage.getItem("school") || "";

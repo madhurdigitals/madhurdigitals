@@ -202,6 +202,18 @@
 
   <label class="field-label">Fields</label>
   <input id="edit_fields" placeholder="Fields">
+  <div class="vendor-hint">A new field gets its own column. Removing a field only hides it — its data is kept.</div>
+
+  <label class="field-label">👩‍🏫 Staff cards</label>
+  <label style="display:flex; gap:6px; align-items:center; font-size:13px; cursor:pointer; margin-bottom:8px;"
+         title="Staff and management get their own records and card designs. Switching off keeps their data.">
+    <input type="checkbox" id="edit_staff_enabled" style="width:auto; margin:0;" onchange="toggleEditStaff()"> This school also needs staff cards
+  </label>
+  <div id="editStaffBox" style="display:none;">
+    <label class="field-label">Staff fields</label>
+    <input id="edit_staff_fields" placeholder="Father's/Husband's Name,DOB,Phone,Address,Blood Group,Employee ID">
+    <div class="vendor-hint">🔒 Name, Category (Staff / Management) and Designation are always included.</div>
+  </div>
 
   <label class="field-label">Template</label>
   <select id="edit_template" required></select>
@@ -236,8 +248,8 @@
       <span>📄 School Forms</span>
     </label>
 
-    <label class="perm-item-popup">
-      <input type="checkbox" value="export">
+    <label class="perm-item-popup" id="editExportPermItem">
+      <input type="checkbox" value="export" id="editExportPermBox">
       <span>💾 Export</span>
     </label>
 
@@ -251,6 +263,10 @@
     <label class="perm-item-popup">
       <input type="checkbox" value="restore">
       <span>♻️ Restore</span>
+    </label>
+    <label class="perm-item-popup" title="Add / edit the school's staff records (with Add / Manage)">
+      <input type="checkbox" value="staff">
+      <span>👩‍🏫 Staff data</span>
     </label>
 
   </div>
@@ -387,6 +403,10 @@ function editSchool(id) {
   document.getElementById("edit_address").value     = s.address;
   document.getElementById("edit_contact").value     = s.contact;
   document.getElementById("edit_fields").value      = s.fields;
+  document.getElementById("edit_staff_enabled").checked = String(s.staff_enabled || "").toLowerCase() === "yes";
+  document.getElementById("edit_staff_fields").value = s.staff_fields || "Father's/Husband's Name,DOB,Phone,Address,Blood Group,Employee ID";
+  toggleEditStaff();
+  lockExportForNonAdmins();
   const isCustomTemplate = String(s.template || "").indexOf("custom_") === 0;
   const resolvedTemplate = isCustomTemplate ? s.template : resolveTemplateId(s.template);
   populateTemplateDropdownWithCustom(document.getElementById("edit_template"), resolvedTemplate, false,
@@ -433,6 +453,18 @@ function getEditPermissions() {
 }
 
 /* UPDATE */
+// 💾 Export: only an admin gives or removes it (others see it, greyed out; the server keeps it as it was)
+function lockExportForNonAdmins() {
+  const b = document.getElementById("editExportPermBox"), item = document.getElementById("editExportPermItem");
+  if (!b || sessionStorage.getItem("role") === "admin") return;
+  b.disabled = true;
+  if (item) { item.style.opacity = ".55"; item.title = "Only an admin can give or remove Export"; }
+}
+
+function toggleEditStaff() {
+  document.getElementById("editStaffBox").style.display = document.getElementById("edit_staff_enabled").checked ? "" : "none";
+}
+
 async function updateSchoolData() {
   const permissions = getEditPermissions();
   if (!permissions) {
@@ -456,7 +488,9 @@ async function updateSchoolData() {
     template:    document.getElementById("edit_template").value,
     logo:        document.getElementById("edit_logo").value,
     card_color:  document.getElementById("edit_color").value,
-    permissions: permissions   // 🔥
+    permissions: permissions,   // 🔥
+    staff_enabled: document.getElementById("edit_staff_enabled").checked ? "yes" : "no",
+    staff_fields:  document.getElementById("edit_staff_fields").value
   };
 
   // Owner: only sent when it changes. Unchanged = the school keeps its vendor.

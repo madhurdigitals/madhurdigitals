@@ -80,6 +80,34 @@
     </div>
     <input type="hidden" id="fields">
 
+    <div class="section-title"><span class="icon">👩‍🏫</span> Staff Cards</div>
+
+    <div class="form-row">
+      <label>Staff cards
+        <span class="hint">Teachers, drivers, office staff, principal…</span>
+      </label>
+      <label style="display:flex; gap:8px; align-items:center; font-weight:500; cursor:pointer;" title="Staff and management get their own records and card designs. You can also switch this on later in School Management.">
+        <input type="checkbox" id="staffEnabled" onchange="toggleStaffSection()" style="width:auto;"> This school also needs staff cards
+      </label>
+    </div>
+    <div id="staffSection" style="display:none;">
+      <div class="form-row" style="align-items:flex-start;">
+        <label>Staff fields
+          <span class="hint">Tap to include/exclude</span>
+        </label>
+        <div class="field-chip-wrap" id="staffChipWrap"></div>
+      </div>
+      <div class="form-row" style="margin-top:-6px;">
+        <label></label>
+        <div class="field-add-row">
+          <input id="staffCustomInput" placeholder="Custom staff field (e.g. Vehicle No.)" onkeydown="if(event.key==='Enter'){event.preventDefault();addStaffChip();}">
+          <button type="button" class="field-add-btn" onclick="addStaffChip()">+ Add Field</button>
+        </div>
+        <div class="fields-hint">🔒 Name, Category (Staff / Management) and Designation are always included.</div>
+      </div>
+    </div>
+    <input type="hidden" id="staff_fields">
+
     <div class="section-title"><span class="icon">🎨</span> Card & Branding</div>
 
     <div class="form-row">
@@ -157,7 +185,7 @@
             </label>
 
             <label class="perm-item">
-              <input type="checkbox" value="export"><span class="perm-check"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <input type="checkbox" value="export" id="exportPermBox"><span class="perm-check"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               <span>
                 <span class="perm-label">💾 Export Students</span>
                 <span class="perm-desc">Export PDF / Excel</span>
@@ -179,6 +207,13 @@
               <span>
                 <span class="perm-label">♻️ Restore Students</span>
                 <span class="perm-desc">Restore deleted students</span>
+              </span>
+            </label>
+            <label class="perm-item">
+              <input type="checkbox" value="staff"><span class="perm-check"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span>
+                <span class="perm-label">👩‍🏫 Staff data</span>
+                <span class="perm-desc">Add / edit the school's staff records</span>
               </span>
             </label>
 
@@ -249,6 +284,46 @@ function addCustomFieldChip() {
 function syncFieldsInput() {
   document.getElementById("fields").value =
     fieldChips.filter(c => c.active).map(c => c.label).join(",");
+}
+
+/* ── STAFF FIELDS ── */
+const STAFF_FIXED_CHIPS   = ["Name", "Category", "Designation"];
+const STAFF_DEFAULT_CHIPS = ["Father's/Husband's Name", "DOB", "Phone", "Address", "Blood Group", "Employee ID"];
+let staffChips = [];
+
+function resetStaffChips() {
+  staffChips = STAFF_DEFAULT_CHIPS.map(label => ({ label, active: true, custom: false }));
+  document.getElementById("staffEnabled").checked = false;
+  toggleStaffSection();
+  renderStaffChips();
+}
+
+function toggleStaffSection() {
+  document.getElementById("staffSection").style.display = document.getElementById("staffEnabled").checked ? "" : "none";
+}
+
+function renderStaffChips() {
+  const fixed = STAFF_FIXED_CHIPS.map(l => `<span class="field-chip active" title="Always included" style="cursor:default; opacity:.8;">🔒 ${l}</span>`).join("");
+  document.getElementById("staffChipWrap").innerHTML = fixed + staffChips.map((chip, i) => `
+    <span class="field-chip ${chip.active ? "active" : ""}" onclick="toggleStaffChip(${i})">
+      ${chip.label}
+      ${chip.custom ? `<span class="remove-x" onclick="event.stopPropagation(); removeStaffChip(${i})">✕</span>` : ""}
+    </span>`).join("");
+  document.getElementById("staff_fields").value = staffChips.filter(c => c.active).map(c => c.label).join(",");
+}
+
+function toggleStaffChip(i) { staffChips[i].active = !staffChips[i].active; renderStaffChips(); }
+function removeStaffChip(i) { staffChips.splice(i, 1); renderStaffChips(); }
+
+function addStaffChip() {
+  const input = document.getElementById("staffCustomInput");
+  const raw = input.value.trim();
+  if (!raw) return;
+  const all = STAFF_FIXED_CHIPS.concat(staffChips.map(c => c.label));
+  if (all.some(l => l.toLowerCase() === raw.toLowerCase())) { showToast("That field already exists"); return; }
+  staffChips.push({ label: raw, active: true, custom: true });
+  input.value = "";
+  renderStaffChips();
 }
 
 /* ── VENDOR (owner) ── */
@@ -351,6 +426,7 @@ function clearForm() {
   document.getElementById("address").value     = "";
   document.getElementById("contact").value     = "";
   resetFieldChips();
+  resetStaffChips();
   refreshTemplateChoices("");
   document.getElementById("logo").value        = "";
   document.getElementById("card_color").value  = "#FF5733";
@@ -394,6 +470,8 @@ async function submitSchool() {
     address:      document.getElementById("address").value.trim(),
     contact:      document.getElementById("contact").value.trim(),
     fields:       document.getElementById("fields").value.trim(),
+    staff_enabled: document.getElementById("staffEnabled").checked,
+    staff_fields:  document.getElementById("staff_fields").value.trim(),
     template:     templateValue,
     logo:         document.getElementById("logo").value.trim(),
     card_color:   document.getElementById("card_color").value,
@@ -479,7 +557,16 @@ function goBack() {
 /* ── INIT ── */
 updateColorPreview();
 resetFieldChips();
+resetStaffChips();
 loadVendorOptions();
+// 💾 Export for the school's login: only an admin gives it
+(function () {
+  const b = document.getElementById("exportPermBox");
+  if (b && sessionStorage.getItem("role") !== "admin") {
+    b.checked = false; b.disabled = true;
+    const item = b.closest("label"); if (item) { item.style.opacity = ".55"; item.title = "Only an admin can give the Export permission"; }
+  }
+})();
 
 </script>
 

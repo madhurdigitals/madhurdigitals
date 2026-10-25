@@ -274,9 +274,28 @@
       oninput="syncColorPicker()">
   </div>
 
-  <label class="field-label">Web Name</label>
+  <label class="field-label" id="slugLabel">Username (also the web name)</label>
   <input id="pv_slug" placeholder="made from the name if left blank" oninput="updateSlugHint()">
-  <div class="hint" id="slugHint">Used later for the vendor's own login link. English letters, numbers and dashes.</div>
+  <div class="hint" id="slugHint">The vendor's first login and its login link use it. English letters, numbers and dashes.</div>
+
+  <!-- Add Vendor only: the vendor's first login -->
+  <div id="firstLoginBlock">
+    <label class="field-label">First login — permissions</label>
+    <div class="perm-mini" id="flPerms">
+      <label><input type="checkbox" value="add" checked> ➕ Add</label>
+      <label><input type="checkbox" value="manage" checked> 🧾 Manage</label>
+      <label><input type="checkbox" value="print" checked> 🖨 Print</label>
+      <label><input type="checkbox" value="export"> 💾 Export</label>
+      <label><input type="checkbox" value="bulk" checked> 📤 Bulk Upload</label>
+      <label><input type="checkbox" value="form" checked> 📄 Forms</label>
+      <label title="Design ID card templates (their templates stay private to them)"><input type="checkbox" value="templates" checked> 🎨 Template Builder</label>
+      <label title="Restore deleted students of their own schools"><input type="checkbox" value="restore" checked> ♻️ Restore</label>
+      <label title="Add / edit staff records of their schools"><input type="checkbox" value="staff" checked> 👩‍🏫 Staff data</label>
+      <label title="Edit their own schools (no adding, deleting or moving)"><input type="checkbox" value="own_schools" checked> 🏫 Edit own schools</label>
+      <label title="Manage their staff and schools' logins (no deleting)"><input type="checkbox" value="own_users" checked> 👥 Manage own users</label>
+    </div>
+    <div class="hint" style="margin-top:-6px;">A strong password is generated and shown once, with the login link.</div>
+  </div>
 
   <div id="maxUsersRow">
     <label class="field-label">Max users</label>
@@ -319,6 +338,7 @@
       <label><input type="checkbox" value="form" checked> 📄 Forms</label>
       <label title="Design ID card templates (their templates stay private to them)"><input type="checkbox" value="templates" checked> 🎨 Template Builder</label>
       <label title="Restore deleted students of their own schools"><input type="checkbox" value="restore" checked> ♻️ Restore</label>
+      <label title="Add / edit staff records of their schools"><input type="checkbox" value="staff" checked> 👩‍🏫 Staff data</label>
       <label title="Edit their own schools (no adding, deleting or moving)"><input type="checkbox" value="own_schools" checked> 🏫 Edit own schools</label>
       <label title="Manage their staff and schools' logins (no deleting)"><input type="checkbox" value="own_users" checked> 👥 Manage own users</label>
     </div>
@@ -545,6 +565,11 @@ function fillPopup(v) {
   document.getElementById("pv_email").value   = v ? (v.email || "") : "";
   document.getElementById("pv_logo").value    = v ? (v.logo || "") : "";
   document.getElementById("pv_slug").value    = v ? (v.slug || "") : "";
+  // Add: the username/web name is chosen + the first login is created. Edit: it is fixed (links are shared).
+  document.getElementById("pv_slug").disabled = !!v;
+  document.getElementById("slugLabel").innerText = v ? "Username / web name (fixed)" : "Username (also the web name)";
+  document.getElementById("firstLoginBlock").style.display = v ? "none" : "";
+  document.querySelectorAll("#flPerms input").forEach(cb => { cb.checked = cb.defaultChecked; });
   const color = v && /^#[0-9a-fA-F]{6}$/.test(String(v.brand_color)) ? String(v.brand_color).toLowerCase() : "#0d6efd";
   document.getElementById("pv_color").value      = color;
   document.getElementById("pv_color_pick").value = color;
@@ -606,7 +631,9 @@ function updateSlugHint() {
   } else if (slug) {
     hint.innerText = `Will be saved as: ${slug}`;
   } else {
-    hint.innerText = "Used later for the vendor's own login link. English letters, numbers and dashes.";
+    hint.innerText = document.getElementById("pv_slug").disabled
+      ? "Fixed after creation: the vendor's login and its login link use it."
+      : "The vendor's first login and its login link use it. English letters, numbers and dashes.";
   }
 }
 
@@ -636,7 +663,7 @@ async function saveVendor() {
   if (data.brand_color && !/^#[0-9a-f]{6}$/.test(data.brand_color)) { alert("Brand color must look like #1a2b3c"); return; }
   if (data.slug && !makeSlug(data.slug)) { alert("Web name must use English letters or numbers"); return; }
   if (!data.slug && !makeSlug(data.name)) { alert("Enter a web name using English letters or numbers"); return; }
-  if (editingId && !data.slug) { alert("Web name cannot be empty"); return; }
+  // (edit: the web name is fixed and not sent)
 
   saving = true;
   const btn = document.getElementById("saveBtn");
@@ -645,6 +672,11 @@ async function saveVendor() {
   btn.innerText = "Saving…";
 
   try {
+    if (!editingId) {
+      data.create_login = true;
+      data.login_permissions = [...document.querySelectorAll("#flPerms input:checked")].map(cb => cb.value).join(",");
+    }
+    if (editingId) delete data.slug;          // fixed after creation
     const res = editingId
       ? await updateVendor(Object.assign({ vendor_id: editingId }, data))
       : await addVendor(data);
@@ -659,7 +691,9 @@ async function saveVendor() {
       showToast(`Vendor added (web name: ${res.slug})`);
     }
     await loadVendors();
+    await loadUsers();
     renderVendors();
+    if (!editingId && res.login) showVendorLoginCard(res.login.username, res.login.password, res.slug, res.branding);
 
   } finally {
     saving = false;
@@ -820,8 +854,61 @@ async function createVendorLogin(override) {
   }
 }
 
+// The link a vendor's people log in with: the vendor's branded page, or the normal Madhur Digitals login
+function portalLinkFor(slug, branding) {
+  const branded = ["branded", "white_label"].includes(String(branding || "").toLowerCase());
+  return new URL(branded ? "login.html?v=" + encodeURIComponent(slug) : "login.html", window.location.href).href;
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (err) { /* fall back */ }
+  const tmp = document.createElement("textarea");
+  tmp.value = text; document.body.appendChild(tmp); tmp.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+  tmp.remove();
+  return ok;
+}
+
+// After Add Vendor: the first login, shown ONCE, with the right login link
+function showVendorLoginCard(username, password, slug, branding) {
+  const link = portalLinkFor(slug, branding);
+  const wrap = document.createElement("div");
+  wrap.id = "vendorLoginCard";
+  wrap.innerHTML = `
+    <div style="position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:3000; display:flex; align-items:center; justify-content:center;">
+      <div style="background:#fff; border-radius:14px; padding:22px; width:440px; max-width:92%; box-shadow:0 10px 40px rgba(0,0,0,.25);">
+        <h3 style="margin:0 0 6px; color:#166534;">✅ Vendor created — first login</h3>
+        <p style="font-size:13px; color:#6b7280; margin:0 0 12px;">Send these to the vendor. The password is shown <b>only now</b>.</p>
+        <div style="font-size:13px; line-height:1.9; background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:10px 12px; word-break:break-all;">
+          <div><b>Login:</b> <span id="vlcLink"></span></div>
+          <div><b>Username:</b> <span id="vlcUser"></span></div>
+          <div><b>Password:</b> <code id="vlcPw" style="font-size:15px; font-weight:700; color:#166534;"></code></div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button type="button" id="vlcCopy" style="flex:1; padding:10px; border:none; border-radius:8px; background:#0d6efd; color:#fff; cursor:pointer;">📋 Copy all</button>
+          <button type="button" id="vlcClose" style="padding:10px 16px; border:1px solid #d1d5db; border-radius:8px; background:#fff; cursor:pointer;">Done</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  wrap.querySelector("#vlcLink").textContent = link;
+  wrap.querySelector("#vlcUser").textContent = username;
+  wrap.querySelector("#vlcPw").textContent   = password;
+  wrap.querySelector("#vlcCopy").onclick = async () => {
+    const ok = await copyText(`Login: ${link}\nUsername: ${username}\nPassword: ${password}`);
+    wrap.querySelector("#vlcCopy").innerText = ok ? "✅ Copied" : "Select the text + Ctrl+C";
+  };
+  wrap.querySelector("#vlcClose").onclick = () => {
+    if (confirm("Have you copied the password? It can't be shown again (you can reset it on Manage Users).")) wrap.remove();
+  };
+}
+
 async function copyLoginPassword() {
-  const text = document.getElementById("nlDoneUser").innerText + " / " + document.getElementById("nlDonePw").innerText;
+  const link = loginsVendor ? portalLinkFor(loginsVendor.slug, loginsVendor.branding) : "";
+  const text = (link ? "Login: " + link + "\n" : "") +
+               "Username: " + document.getElementById("nlDoneUser").innerText + "\n" +
+               "Password: " + document.getElementById("nlDonePw").innerText;
   let copied = false;
   try { await navigator.clipboard.writeText(text); copied = true; } catch (err) { copied = false; }
   if (!copied) {
