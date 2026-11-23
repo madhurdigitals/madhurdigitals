@@ -647,15 +647,42 @@
 
   /* ── follow the builder ── */
   let originalLoad = function () {}, originalReset = function () {};
+  /* ── SE1: the session as a School Data field, shown with the school's real session in the preview ── */
+  function sessionOfRow(row) {
+    const v = String((row && row.active_session) || "").replace(/^'/, "");
+    if (/^\d{4}-\d{2}$/.test(v)) return v;
+    const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", year: "numeric", month: "numeric" }).formatToParts(new Date());
+    const y = Number(parts.find(p => p.type === "year").value), m = Number(parts.find(p => p.type === "month").value);
+    const sm = Number(row && row.session_start_month) >= 1 ? Number(row.session_start_month) : 3;
+    const start = m >= sm ? y : y - 1;
+    return `${start}-${String((start + 1) % 100).padStart(2, "0")}`;
+  }
+  function addSessionToPreview() {
+    if (typeof tbPreviewSchoolInfo === "undefined") return;
+    const ses = sessionOfRow(tbPreviewSchoolInfo);
+    tbPreviewSchoolInfo = Object.assign({}, tbPreviewSchoolInfo, { session: ses, session_long: `${ses.slice(0, 4)}-${Number(ses.slice(0, 4)) + 1}` });
+  }
+  function addSessionFields() {
+    if (typeof AVAILABLE_SCHOOL_FIELDS === "undefined" || AVAILABLE_SCHOOL_FIELDS.some(f => f.key === "session")) return;
+    AVAILABLE_SCHOOL_FIELDS.push({ key: "session", label: "Session (2026-27)" }, { key: "session_long", label: "Session (2026-2027)" });
+  }
+
   function hookBuilder() {
     hookSave();
+    addSessionFields();
     if (typeof window.loadPreviewStudents === "function" && !window.loadPreviewStudents.__tv) {
       const originalPreview = window.loadPreviewStudents;
       window.loadPreviewStudents = async function () {
-        if (designType === "student") return originalPreview.apply(this, arguments);
+        if (designType === "student") {
+          const r = await originalPreview.apply(this, arguments);
+          addSessionToPreview();
+          if (typeof renderFields === "function") renderFields();
+          return r;
+        }
         const code = document.getElementById("tbSchoolSelect") ? document.getElementById("tbSchoolSelect").value : "";
         const srow = (window._tbAllSchools || []).find(x => String(x.school) === String(code));
         if (srow) tbPreviewSchoolInfo = srow;
+        addSessionToPreview();
         let list = [];
         try {
           const raw = await getStaff(code);
@@ -676,6 +703,7 @@
         if (typeof renderFields === "function") renderFields();
       };
       window.loadPreviewStudents.__tv = true;
+      addSessionToPreview();
     }
     if (typeof window.handleLoadSelect === "function" && !window.handleLoadSelect.__tv) {
       originalLoad = window.handleLoadSelect;

@@ -97,6 +97,7 @@ async function loadStudents() {
 }
 
 async function loadStudentsNow() {
+  if (window.mdSession) await mdSession.ready;           // SE1: the chosen session of this school
   const rawSchools = await getSchools(true);
   const sh = rawSchools[0] || [];
   const allSchools = rawSchools.slice(1).map(row => { const o = {}; sh.forEach((h, i) => o[h] = row[i]); return o; });
@@ -509,6 +510,9 @@ async function loadSchoolInfo() {
          String(s.school).toLowerCase() === String(school).toLowerCase()
   ) || {};
 
+  // SE1: the session printed on cards (Session field in designs, built-in templates)
+  setSessionOnSchool();
+
   // The school's ★ Default design for THIS card type; other designs of this type can be chosen on the page
   let tpl = String(schoolInfo[P_TYPES[printType].col] || "");
   let note = "";
@@ -520,6 +524,26 @@ async function loadSchoolInfo() {
   if (printType !== "student" && !tpl) return;          // nothing to print with
   printDefault = tpl;
   await activateTemplate(tpl);              // always the ★ Default of this card type (chosen in Template Builder)
+}
+
+function setSessionOnSchool() {
+  const ses = (window.mdSession && mdSession.current()) || String(schoolInfo.active_session || "").replace(/^'/, "");
+  schoolInfo.session = ses;
+  schoolInfo.session_long = /^\d{4}-\d{2}$/.test(ses) ? `${ses.slice(0, 4)}-${Number(ses.slice(0, 4)) + 1}` : "";
+}
+
+/* ── PRINT JOBS LOG (SE1): every print / PDF / back sheet / checklist is recorded first ── */
+function printedIds() { return cardPages.flat().map(idOf); }
+async function recordPrint(kind, mode, ids) {
+  let res = null;
+  try {
+    res = await postToApi({ action: "logPrintJob", school: school, card_type: printType, kind, mode,
+                            session: schoolInfo.session || "", design: currentTemplateId || "", ids });
+  } catch (err) { res = null; }
+  if (res && res.status === "logged") return true;
+  if (res && res.error && /can't be printed/.test(res.error)) { alert(res.error); return false; }
+  return confirm("This print could not be recorded" + (res && (res.error || res.auth_error) ? " (" + (res.error || res.auth_error) + ")" : "") +
+                 ".\nPrints are recorded for your history and billing.\n\nPrint anyway?");
 }
 
 // Staff / Management without a design: say so clearly, with a way to make one
@@ -675,6 +699,7 @@ async function downloadCardsPDF() {
     alert("Generate cards first");
     return;
   }
+  if (!(await recordPrint("cards", "pdf", printedIds()))) return;
 
   const overlay = document.getElementById("pdfLoadingOverlay");
   const loadingText = document.getElementById("pdfLoadingText");
@@ -742,7 +767,7 @@ function renderCardPage() {
     <div class="page ${currentOrientation === 'portrait' ? 'page-portrait' : ''}">
       ${pageData.map(s => `
         <div class="id-card ${cardClass}">
-          ${template.renderFront(s, schoolInfo, { selectedFields, schoolCode: school })}
+          ${template.renderFront(s, schoolInfo, { selectedFields, schoolCode: school, session: schoolInfo.session, sessionLong: schoolInfo.session_long })}
         </div>
       `).join("")}
     </div>
@@ -787,14 +812,16 @@ function renderAllCardPages() {
     <div class="page ${currentOrientation === 'portrait' ? 'page-portrait' : ''}">
       ${page.map(s => `
         <div class="id-card ${cardClass}">
-          ${template.renderFront(s, schoolInfo, { selectedFields, schoolCode: school })}
+          ${template.renderFront(s, schoolInfo, { selectedFields, schoolCode: school, session: schoolInfo.session, sessionLong: schoolInfo.session_long })}
         </div>
       `).join("")}
     </div>
   `).join("");
 }
 
-function printAllCards() {
+async function printAllCards() {
+  if (cardPages.length === 0) { alert("Generate cards first"); return; }
+  if (!(await recordPrint("cards", "print", printedIds()))) return;
 
   // render ALL pages
   renderAllCardPages();
@@ -821,6 +848,7 @@ async function printBackSheet() {
     alert("This template does not have a back design.");
     return;
   }
+  if (!(await recordPrint("cards", "back_print", printedIds()))) return;
 
   const cardClass = cardClassFor(currentTemplateId);
   const backCardHtml = `<div class="id-card ${cardClass}">${template.renderBack(schoolInfo)}</div>`;
@@ -844,6 +872,7 @@ async function downloadBackSheetPDF() {
     alert("This template does not have a back design.");
     return;
   }
+  if (!(await recordPrint("cards", "back_pdf", printedIds()))) return;
 
   const { jsPDF } = window.jspdf;
   const overlay = document.getElementById("pdfLoadingOverlay");
@@ -1043,7 +1072,7 @@ function buildChecklistPages() {
       <div class="cl-head">
         <div class="cl-school">${clEsc(schoolInfo.school_name || school)}</div>
         <div class="cl-title">${clEsc(title)}</div>
-        <div class="cl-meta"><span>Date: ${today}</span><span>Page ${p + 1} of ${pages.length}</span></div>
+        <div class="cl-meta"><span>Date: ${today}</span><span>Session: ${clEsc(schoolInfo.session || "")}</span><span>Page ${p + 1} of ${pages.length}</span></div>
       </div>
       <table class="cl-table"><thead>${head}</thead><tbody>
         ${rowsOnPage.map(r => r.group !== undefined
@@ -1084,17 +1113,28 @@ function showChecklist() {
 }
 
 // Print in its own window, so only the checklist is printed (black & white, A4)
-function printChecklist() {
-  const pages = buildChecklistPages();
+function checklistIds() { return filtered.filter(s => selectedStudentIds.has(idOf(s))).map(idOf); }
+
+async function printChecklist() {
+  // open the window right away (pop-up blockers only allow it straight after the click), then record
   const w = window.open("", "_blank");
   if (!w) { alert("Please allow pop-ups for this site to print the checklist."); return; }
+  w.document.write("<p style='font-family:Arial; padding:24px;'>⏳ Preparing the checklist…</p>");
+  if (!(await recordPrint("checklist", "print", checklistIds()))) { w.close(); return; }
+  const pages = buildChecklistPages();
+  w.document.open();
   w.document.write(`<!DOCTYPE html><html><head><title>Data verification checklist</title><style>${CL_CSS} @page { size:A4; margin:0; } body { margin:0; }</style></head>
     <body>${pages.join("")}</body></html>`);
   w.document.close();
-  w.onload = () => { w.focus(); w.print(); };
+  // print once the photos are in; onload does not always fire after document.write, so also a fallback
+  let printed = false;
+  const go = () => { if (printed || w.closed) return; printed = true; w.focus(); w.print(); };
+  w.onload = go;
+  setTimeout(go, 1500);
 }
 
 async function downloadChecklistPDF() {
+  if (!(await recordPrint("checklist", "pdf", checklistIds()))) return;
   const box = document.getElementById("checklistContainer");
   if (!box || !box.querySelector(".cl-page")) showChecklist();
   const pages = document.querySelectorAll("#checklistContainer .cl-page");

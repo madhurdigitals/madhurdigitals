@@ -80,6 +80,16 @@
     </div>
     <input type="hidden" id="fields">
 
+    <div id="sessionSection" style="display:none;">
+      <div class="section-title"><span class="icon">📅</span> Academic Session</div>
+      <div class="form-row">
+        <label>Session starts in
+          <span class="hint">The school starts in today's session. Admins only; can be changed later in School Management.</span>
+        </label>
+        <select id="session_start_month" title="The month the school's new session begins (default March)"><option value="1">January</option><option value="2">February</option><option value="3" selected>March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select>
+      </div>
+    </div>
+
     <div class="section-title"><span class="icon">👩‍🏫</span> Staff Cards</div>
 
     <div class="form-row">
@@ -481,6 +491,8 @@ async function submitSchool() {
     // the school login gets a strong generated password (shown once below), not the school ID
     new_login_password: "generate"
   };
+  // SE1: only an admin sets the session start month (the server ignores it from anyone else)
+  if (sessionStorage.getItem("role") === "admin") data.session_start_month = document.getElementById("session_start_month").value;
 
   savingSchool = true;
   const btn = document.querySelector(".submit-btn");
@@ -559,6 +571,7 @@ updateColorPreview();
 resetFieldChips();
 resetStaffChips();
 loadVendorOptions();
+if (sessionStorage.getItem("role") === "admin") document.getElementById("sessionSection").style.display = "";
 // 💾 Export for the school's login: only an admin gives it
 (function () {
   const b = document.getElementById("exportPermBox");

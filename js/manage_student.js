@@ -24,7 +24,9 @@ let currentEditPhotoLink = "";   // 📸 tracks the current student's photo publ
 /* ── 🎓 Students | 👩‍🏫 Staff (staff S2) ── */
 let recordType = "students";     // what this page shows right now
 let idKey      = "Student_ID";   // "Staff_ID" on the Staff tab
-const STATUS_KEYS = ["status", "deleted_at", "deleted_by", "restored_at", "restored_by"];
+const STATUS_KEYS = ["status", "deleted_at", "deleted_by", "restored_at", "restored_by", "student_status", "status_session", "joined_session"];
+// SE3a: which students this page lists - "in" (in school), "left" or "passed_out" (current session, students only)
+let msShow = "in";
 
 function msSetText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
 
@@ -94,7 +96,14 @@ async function loadStudents() {
   idKey = recordType === "staff" ? "Staff_ID" : "Student_ID";
   applyManageLabels(msRow);
 
-  const raw = recordType === "staff" ? await getStaff(school) : await getStudents(school);
+  if (window.mdSession) await window.mdSession.ready;
+  if (recordType === "staff" || msPastSession()) msShow = "in";       // the Left / Passed out lists: students, current session
+  msSetupShowFilter();
+
+  // SE3c: staff come with the session they joined in (shown as a tag, never a column)
+  const raw = recordType === "staff" ? await apiGet({ action: "getStaff", school, with_joined: "1" })
+            : msShow !== "in" ? await apiGet({ action: "getStudents", school, status: msShow })
+            : await getStudents(school);
 
   showSkeleton(false);
 
@@ -134,6 +143,117 @@ async function loadStudents() {
 
 loadStudents();
 
+/* ── SE3a: 🚪 Left / ↩ Re-admit ── */
+function msActiveSession() { return (window.mdSession && window.mdSession.active()) || "this session"; }
+const msEsc = v => String(v === undefined || v === null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+// "Show: In school / Left / Passed out" - students, current session only
+function msSetupShowFilter() {
+  const grid = document.querySelector(".filter-grid");
+  if (!grid) return;
+  let col = document.getElementById("msShowCol");
+  if (!col) {
+    col = document.createElement("div");
+    col.className = "filter-col";
+    col.id = "msShowCol";
+    col.innerHTML = `<label class="filter-label">Show</label>
+      <select id="msShowSelect" class="filter-input" title="Students in school, or those who left / passed out">
+        <option value="in">🎓 In school</option>
+        <option value="left">🚪 Left</option>
+        <option value="passed_out">🎓 Passed out</option>
+      </select>`;
+    grid.insertBefore(col, grid.firstChild);
+    col.querySelector("select").onchange = e => { msShow = e.target.value; resetFiltersQuietly(); loadStudents(); };
+  }
+  col.style.display = (recordType === "staff" || msPastSession()) ? "none" : "";
+  col.querySelector("select").value = msShow;
+}
+
+function msJoinedBadge(s) {
+  const j = String(s.Joined_Session || "").trim();
+  return j ? `<span class="ms-joined" style="display:inline-block; margin:0 6px 4px 0; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; background:#ecfdf5; color:#047857;"
+    title="The session this staff member was added in">Joined ${msEsc(j)}</span>` : "";
+}
+
+function msStatusBadge(s, past) {
+  const st = String(s.Student_Status || "").trim(), ssn = String(s.Status_Session || "").trim();
+  if (!st) return "";
+  const text = past ? `🚪 Left during ${window.mdSession.current()}`
+             : (st === "Left" ? "🚪 Left" : "🎓 " + st) + (ssn ? " in " + ssn : "");
+  return `<span class="ms-status" style="display:inline-block; margin:0 6px 4px 0; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700;
+    background:${st === "Left" ? "#fff7ed" : "#eef2ff"}; color:${st === "Left" ? "#9a3412" : "#3730a3"};">${msEsc(text)}</span>`;
+}
+
+async function msMarkLeft(id, btn) {
+  if (msPastBlocked()) return;
+  const who = students.find(s => String(s[idKey]) === String(id));
+  const name = who && who.Name ? ` (${who.Name})` : "";
+  if (!confirm(`Mark student ${id}${name} as Left?\n\nThey leave every list, print and export of ${msActiveSession()}. ` +
+               `Nothing is deleted: they stay in ${msActiveSession()}'s history, and ↩ Re-admit brings them back with the same ID.`)) return;
+  if (btn) { btn.disabled = true; btn.innerText = "⏳"; }
+  let res = null;
+  try { res = await postToApi({ action: "markStudentLeft", school, student_id: String(id) }); } catch (err) { res = null; }
+  if (!res || res.status !== "left") {
+    if (btn) { btn.disabled = false; btn.innerText = "🚪 Left"; }
+    showToast("NOT marked: " + ((res && (res.error || res.auth_error)) || "no answer from the server"), "error");
+    return;
+  }
+  students = students.filter(s => String(s[idKey]) !== String(id));
+  filteredData = filteredData.filter(s => String(s[idKey]) !== String(id));
+  renderSmartTable(); renderPagination(); updateStats();
+  showToast(`${id}${name} marked Left in ${res.session}`, "success");
+}
+
+function msOpenReadmit(id) {
+  if (msPastBlocked()) return;
+  const s = students.find(x => String(x[idKey]) === String(id));
+  if (!s) return;
+  const classes = (typeof CONFIG !== "undefined" && Array.isArray(CONFIG.classes)) ? CONFIG.classes.map(String) : [];
+  const oldClass = String(s.Class === undefined || s.Class === null ? "" : s.Class);
+  const oldSection = String(s.Section === undefined || s.Section === null ? "" : s.Section);
+  const opts = classes.includes(oldClass) ? classes : (oldClass ? [oldClass].concat(classes) : classes);
+  const hasSection = headersGlobal.some(h => String(h).toLowerCase() === "section");
+  const box = document.getElementById("editPopup");
+  box.innerHTML = `
+    <div class="school-header"><h3>↩ Re-admit ${msEsc(id)}</h3><span class="close-btn" onclick="closeEdit()">✖</span></div>
+    <p style="margin:10px 0; font-size:14px;"><b>${msEsc(s.Name || "")}</b> — ${msEsc(s.Student_Status || "")}${s.Status_Session ? " in " + msEsc(s.Status_Session) : ""},
+      last class <b>${msEsc(oldClass || "—")}${oldSection ? "-" + msEsc(oldSection) : ""}</b>.</p>
+    <p style="margin:0 0 10px; font-size:13px; color:#92400e;">Choose the class they join now in <b>${msEsc(msActiveSession())}</b> — the saved one may be from an earlier year.</p>
+    <label class="filter-label">Class</label>
+    <select id="msReadmitClass" class="filter-input">
+      <option value="">— choose —</option>
+      ${opts.map(c => `<option value="${msEsc(c)}">${msEsc(c)}${c === oldClass ? " (last class)" : ""}</option>`).join("")}
+    </select>
+    ${hasSection ? `<label class="filter-label" style="margin-top:8px; display:block;">Section</label>
+    <input id="msReadmitSection" class="filter-input" value="${msEsc(oldSection)}">` : ""}
+    <div class="btn-group" style="margin-top:14px;">
+      <button class="submit-btn" id="msReadmitSave" onclick="msSaveReadmit('${msEsc(id)}')">↩ Re-admit</button>
+      <button class="clear-btn" onclick="closeEdit()">Cancel</button>
+    </div>`;
+  box.style.display = "block";
+}
+
+async function msSaveReadmit(id) {
+  const cls = (document.getElementById("msReadmitClass").value || "").trim();
+  const secEl = document.getElementById("msReadmitSection");
+  const sec = secEl ? secEl.value.trim() : "";
+  if (!cls) { showToast("Choose the class first", "error"); return; }
+  const btn = document.getElementById("msReadmitSave");
+  btn.disabled = true; btn.innerText = "⏳ Saving…";
+  let res = null;
+  try { res = await postToApi({ action: "readmitStudent", school, student_id: String(id), class: cls, section: sec }); } catch (err) { res = null; }
+  if (!res || res.status !== "readmitted") {
+    btn.disabled = false; btn.innerText = "↩ Re-admit";
+    showToast("NOT re-admitted: " + ((res && (res.error || res.auth_error)) || "no answer from the server"), "error");
+    return;
+  }
+  closeEdit();
+  students = students.filter(s => String(s[idKey]) !== String(id));
+  filteredData = filteredData.filter(s => String(s[idKey]) !== String(id));
+  renderSmartTable(); renderPagination(); updateStats();
+  showToast(`${id} re-admitted in ${res.session}, class ${res.class}${res.section ? "-" + res.section : ""}`, "success");
+}
+
 /* ── SKELETON ── */
 function showSkeleton(show) {
   const sk = document.getElementById("skeletonRows");
@@ -170,6 +290,16 @@ function countActiveFilters() {
 }
 
 /* ── RENDER TABLE (photo column added) ── */
+/* ── SE2.1: an earlier session is view only (students; staff are not kept per session) ── */
+function msPastSession() {
+  return recordType !== "staff" && !!window.mdSession && !!window.mdSession.current() && !window.mdSession.isActive();
+}
+function msPastBlocked() {
+  if (!msPastSession()) return false;
+  showToast(`${window.mdSession.current()} is an earlier session — view only. Switch to ${window.mdSession.active()} to edit.`, "error");
+  return true;
+}
+
 function renderTable(data, headers) {
   const visibleHeaders = headers.filter(h => {
     const key = h.toLowerCase();
@@ -192,6 +322,10 @@ function renderTable(data, headers) {
     </tr>
   `;
 
+  const past = msPastSession();
+  const pastTip = past ? `${window.mdSession.current()} is an earlier session — view only. Switch to ${window.mdSession.active()} to edit.` : "";
+  const students_ = recordType !== "staff";
+
   tbody.innerHTML = data.map(s => {
     const photoLink = s["Photo_Link"] || "";
     const thumb = photoLink
@@ -203,8 +337,16 @@ function renderTable(data, headers) {
         <td>${thumb}</td>
         ${visibleHeaders.map(h => `<td>${s[h] || ""}</td>`).join("")}
         <td>
-          <button class="btn-edit"   onclick="openEdit('${s[idKey]}')" title="Change details or photo">Edit</button>
+          ${students_ ? msStatusBadge(s, past) : msJoinedBadge(s)}
+          ${past
+            ? `<button class="btn-edit" disabled style="opacity:.45; cursor:not-allowed;" title="${pastTip}">Edit</button>
+          <button class="btn-delete" disabled style="opacity:.45; cursor:not-allowed;" title="${pastTip}">Delete</button>`
+            : students_ && msShow !== "in"
+            ? `<button class="btn-edit ms-readmit" onclick="msOpenReadmit('${s[idKey]}')" title="Back in school with the same ID, in ${msActiveSession()}">↩ Re-admit</button>`
+            : `<button class="btn-edit"   onclick="openEdit('${s[idKey]}')" title="Change details or photo">Edit</button>
           <button class="btn-delete" onclick="deleteStudent('${s[idKey]}', this)" title="Remove from all lists, printing and exports">Delete</button>
+          ${students_ ? `<button class="btn-delete ms-left" onclick="msMarkLeft('${s[idKey]}', this)" style="background:#fff7ed; color:#9a3412; border:1px solid #fdba74;"
+             title="The student has left the school: out of every list, print and export. Nothing is deleted; ↩ Re-admit brings them back">🚪 Left</button>` : ""}`}
         </td>
       </tr>
     `;
@@ -312,6 +454,7 @@ function prevPage()   { goToPage(currentPage - 1); }
 
 /* ── DELETE (original logic preserved) ── */
 async function deleteStudent(id, btn) {
+  if (msPastBlocked()) return;
   const staff = recordType === "staff";
   const who = students.find(s => String(s[idKey]) === String(id));
   const whoName = who && who.Name ? ` (${who.Name})` : "";
@@ -344,6 +487,7 @@ async function deleteStudent(id, btn) {
 
 /* ── OPEN EDIT (photo row added) ── */
 async function openEdit(id) {
+  if (msPastBlocked()) return;
   if (recordType === "staff") return openStaffEditManage(id);
   const container = document.getElementById("editPopup");
 

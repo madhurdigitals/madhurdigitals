@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Session Pipeline — Madhur Digitals</title>
+
+  <script src="js/protect.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/pipeline.js" defer></script>
+
+  <link rel="stylesheet" href="css/manage_student.css">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    .pl-bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .pl-bar select, .pl-bar input { padding:7px 10px; border-radius:8px; border:1px solid #d1d5db; }
+    .pl-chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .pl-chip { padding:6px 12px; border-radius:16px; border:1px solid #e5e7eb; background:#f9fafb; font-size:13px; font-weight:700; cursor:pointer; }
+    .pl-chip.on { background:#0d6efd; border-color:#0d6efd; color:#fff; }
+    #plTable td, #plTable th { padding:8px 10px; text-align:left; vertical-align:top; font-size:13px; }
+    .pl-stage { display:inline-block; padding:3px 9px; border-radius:10px; font-size:12px; font-weight:700; white-space:nowrap; }
+    .pl-due { background:#fef2f2; color:#991b1b; }
+    .pl-started { background:#f3f4f6; color:#374151; }
+    .pl-promoted { background:#eff6ff; color:#1e40af; }
+    .pl-checklist { background:#fffbeb; color:#92400e; }
+    .pl-cards { background:#f0fdf4; color:#166534; }
+    .pl-sub { display:block; font-size:11px; color:#6b7280; margin-top:3px; }
+    .pl-bar-wrap { background:#e5e7eb; border-radius:6px; height:6px; width:120px; margin-top:4px; overflow:hidden; }
+    .pl-bar-fill { background:#10b981; height:6px; }
+    .pl-btn { padding:4px 9px; border-radius:7px; border:1px solid #d1d5db; background:#fff; cursor:pointer; font-size:12px; margin:0 4px 4px 0; }
+    #plMsg { display:none; margin:10px 0; padding:10px 12px; border-radius:8px; font-size:14px; border:1px solid #fca5a5; background:#fef2f2; color:#991b1b; }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <div class="logo" onclick="location.href='dashboard.html'" style="cursor:pointer;">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <div>
+      <div class="title-text">Madhur Digitals</div>
+      <div class="school-name">Session pipeline</div>
+    </div>
+  </div>
+
+  <div class="nav-actions">
+    <button onclick="location.href='dashboard.html'">Dashboard</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="heading-wrapper">
+  <div class="heading-badge">🧭 Session Pipeline</div>
+</div>
+
+<div class="container">
+
+  <div class="card" id="plNoAccess" style="display:none;">
+    <div id="plNoAccessMsg" style="padding:10px 12px; border-radius:8px; border:1px solid #fca5a5; background:#fef2f2; color:#991b1b;">
+      You need the 🔁 Session &amp; promotion permission. Only an admin can give it.</div>
+  </div>
+
+  <div class="card" id="plMain" style="display:none;">
+    <div class="pl-bar">
+      <input id="plSearch" placeholder="Search school name or code" title="Search">
+      <select id="plVendor" title="Vendor"></select>
+      <select id="plSort" title="Order">
+        <option value="stage">Order: work to do first</option>
+        <option value="name">Order: school name</option>
+      </select>
+      <button class="pl-btn" id="plReload" title="Load the latest">⟳ Refresh</button>
+    </div>
+    <div class="pl-chips" id="plChips"></div>
+    <div id="plMsg"></div>
+  </div>
+
+  <!-- SE3d: 🔁 bulk promote (admins) - ⏳ Due schools only, each a normal checked promotion, one at a time -->
+  <div class="card" id="plBulkBar" style="display:none;">
+    <div class="pl-bar">
+      <label style="display:flex; gap:6px; align-items:center; font-size:14px; cursor:pointer;">
+        <input type="checkbox" id="plPickAll" style="width:auto; margin:0;"> Select all ⏳ Due schools shown
+      </label>
+      <button class="pl-btn" id="plBulkPreview" disabled style="border-color:#047857; color:#047857; font-weight:700;">🔁 Preview bulk promote (0)</button>
+    </div>
+    <div id="plBulk" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card" id="plList" style="display:none;">
+    <div class="table-wrapper">
+      <table id="plTable">
+        <thead><tr><th id="plPickHead"></th><th>School</th><th>Session</th><th>Stage</th><th>Cards printed</th><th>Students counted</th><th></th></tr></thead>
+        <tbody id="plBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
