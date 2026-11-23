@@ -5,6 +5,7 @@
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/config.js"></script>
   <script src="card_templates/template_registry.js"></script>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -204,6 +205,17 @@
   <input id="edit_fields" placeholder="Fields">
   <div class="vendor-hint">A new field gets its own column. Removing a field only hides it — its data is kept.</div>
 
+  <label class="field-label">📅 Academic session</label>
+  <div id="editSessionBox" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:4px;">
+    <div><div style="font-size:11px; color:#6b7280;">Starts in</div>
+      <select id="edit_session_start_month" title="The month this school's new session begins"><option value="1">January</option><option value="2">February</option><option value="3" selected>March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
+    <div><div style="font-size:11px; color:#6b7280;">First session</div>
+      <select id="edit_first_session" title="Nothing exists before this session"></select></div>
+    <div><div style="font-size:11px; color:#6b7280;">Last class</div>
+      <select id="edit_last_class" title="Students in this class become 'Passed out' at promotion"></select></div>
+  </div>
+  <div class="vendor-hint" id="editSessionHint" style="margin-bottom:10px;"></div>
+
   <label class="field-label">👩‍🏫 Staff cards</label>
   <label style="display:flex; gap:6px; align-items:center; font-size:13px; cursor:pointer; margin-bottom:8px;"
          title="Staff and management get their own records and card designs. Switching off keeps their data.">
@@ -373,6 +385,8 @@ function renderSchools() {
       <td style="font-size:12px;">${s.created_at || "-"}</td>
       <td>
         <button onclick="editSchool('${s.school_id}')">✏️ Edit</button>
+        ${smMayRunSessions() ? `<button data-school="${escHtml(s.school)}" onclick="goNewSession(this.dataset.school)"
+          title="Move this school to its next session (promotion), or undo the last one">🔁 Session</button>` : ""}
         <button class="admin-only" onclick="deleteSchoolData('${s.school_id}')"
           style="border-color:#dc3545;color:#dc3545;">🗑 Delete</button>
       </td>
@@ -407,6 +421,7 @@ function editSchool(id) {
   document.getElementById("edit_staff_fields").value = s.staff_fields || "Father's/Husband's Name,DOB,Phone,Address,Blood Group,Employee ID";
   toggleEditStaff();
   lockExportForNonAdmins();
+  fillSessionSettings(s);
   const isCustomTemplate = String(s.template || "").indexOf("custom_") === 0;
   const resolvedTemplate = isCustomTemplate ? s.template : resolveTemplateId(s.template);
   populateTemplateDropdownWithCustom(document.getElementById("edit_template"), resolvedTemplate, false,
@@ -461,6 +476,48 @@ function lockExportForNonAdmins() {
   if (item) { item.style.opacity = ".55"; item.title = "Only an admin can give or remove Export"; }
 }
 
+// SE1: the school's session settings in the edit box - admins change them, everyone else sees them
+function fillSessionSettings(s) {
+  const clean = v => String(v === undefined || v === null ? "" : v).replace(/^'/, "").trim();
+  const isLabel = v => /^\d{4}-\d{2}$/.test(v);
+  const active = isLabel(clean(s.active_session)) ? clean(s.active_session) : "";
+  const first = isLabel(clean(s.first_session)) ? clean(s.first_session) : active;
+  const startY = Number((active || "2026").slice(0, 4));
+  const label = y => `${y}-${String((y + 1) % 100).padStart(2, "0")}`;
+  const firstSel = document.getElementById("edit_first_session");
+  const years = []; for (let y = startY; y >= startY - 10; y--) years.push(label(y));
+  firstSel.innerHTML = years.map(l => `<option value="${l}" ${l === first ? "selected" : ""}>${l}</option>`).join("");
+  document.getElementById("edit_session_start_month").value = String(Number(clean(s.session_start_month)) || 3);
+  const classes = (typeof CONFIG !== "undefined" && CONFIG.classes) ? CONFIG.classes : [];
+  const last = clean(s.last_class);
+  document.getElementById("edit_last_class").innerHTML = `<option value="">Default (${classes[classes.length - 1] || "12"})</option>` +
+    classes.map(c => `<option value="${c}" ${String(c) === last ? "selected" : ""}>${c}</option>`).join("");
+  const admin = sessionStorage.getItem("role") === "admin";
+  ["edit_session_start_month", "edit_first_session", "edit_last_class"].forEach(id => { document.getElementById(id).disabled = !admin; });
+  const hint = document.getElementById("editSessionHint");
+  hint.textContent = (active ? `Active session: ${active}. ` : "") +
+    (admin ? "Changing these is recorded in the audit log." : "Only an admin can change session settings.");
+  // SE2: promotion to the next session (and its undo) has its own page
+  if (smMayRunSessions()) {
+    const a = document.createElement("a");
+    a.href = "new_session.html?school=" + encodeURIComponent(s.school);
+    a.textContent = "🔁 Start the next session / undo →";
+    a.style.cssText = "font-weight:700; margin-left:6px;";
+    hint.appendChild(a);
+  }
+}
+
+// SE3a: admins, and people an admin gave 🔁 Session & promotion
+function smMayRunSessions() {
+  if (sessionStorage.getItem("role") === "admin") return true;
+  try { return JSON.parse(sessionStorage.getItem("permissions") || "[]").includes("session"); } catch (err) { return false; }
+}
+
+// SE2: 🔁 the New Session page for one school
+function goNewSession(code) {
+  location.href = "new_session.html?school=" + encodeURIComponent(code);
+}
+
 function toggleEditStaff() {
   document.getElementById("editStaffBox").style.display = document.getElementById("edit_staff_enabled").checked ? "" : "none";
 }
@@ -492,6 +549,12 @@ async function updateSchoolData() {
     staff_enabled: document.getElementById("edit_staff_enabled").checked ? "yes" : "no",
     staff_fields:  document.getElementById("edit_staff_fields").value
   };
+  // SE1: session settings - sent by admins only (the server refuses them from anyone else)
+  if (sessionStorage.getItem("role") === "admin") {
+    data.session_start_month = document.getElementById("edit_session_start_month").value;
+    data.first_session       = document.getElementById("edit_first_session").value;
+    data.last_class          = document.getElementById("edit_last_class").value;
+  }
 
   // Owner: only sent when it changes. Unchanged = the school keeps its vendor.
   const vendorSel = document.getElementById("edit_vendor");

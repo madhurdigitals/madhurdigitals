@@ -21,6 +21,17 @@ const staffTypes = { name: "full", designation: "half", category: "category", fa
   dob: "half", phone: "half", address: "multiline", blood_group: "half", employee_id: "half" };
 const nkey = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_");
 
+// SE1: the session printed on the form - the school's chosen session; "Other school" forms use today's
+// session (1 March start, India time)
+function formSession() {
+  const chosen = window.mdSession && mdSession.current();
+  if (chosen) return chosen;
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", year: "numeric", month: "numeric" }).formatToParts(new Date());
+  const y = Number(parts.find(p => p.type === "year").value), m = Number(parts.find(p => p.type === "month").value);
+  const start = m >= 3 ? y : y - 1;
+  return `${start}-${String((start + 1) % 100).padStart(2, "0")}`;
+}
+
 function staffFieldList() {
   const raw = formSchoolRow && formSchoolRow.staff_fields ? String(formSchoolRow.staff_fields)
             : "Father's/Husband's Name,DOB,Phone,Address,Blood Group,Employee ID";
@@ -316,7 +327,7 @@ function generateForm(fields, color="light") {
         <div class="school-info">
           Address: ${schoolInfo.address} &nbsp;&nbsp; | &nbsp;&nbsp;
           Contact: ${schoolInfo.contact} &nbsp;&nbsp; | &nbsp;&nbsp;
-          Session: 2026-27
+          Session: ${formSession()}
         </div>
 
         <div class="divider"></div>

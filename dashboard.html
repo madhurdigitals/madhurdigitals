@@ -5,6 +5,7 @@
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/session.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="js/dashboard.js" defer></script>
   <link rel="stylesheet" href="css/dashboard.css">
@@ -173,6 +174,16 @@
         <div class="ac-label">Manage Schools</div>
       </div>
 
+      <div class="action-card ac-slate" data-permission="session" onclick="location.href='new_session.html'" title="Admins, and people an admin gave 🔁 Session & promotion">
+        <div class="ac-icon">🔁</div>
+        <div class="ac-label">New Session</div>
+      </div>
+
+      <div class="action-card ac-slate" data-permission="session" onclick="location.href='pipeline.html'" title="Where every school stands in this year's session work">
+        <div class="ac-icon">🧭</div>
+        <div class="ac-label">Session Pipeline</div>
+      </div>
+
       <div class="action-card ac-violet" data-permission="templates" onclick="showSchoolSelector('templates')">
         <div class="ac-icon">🎨</div>
         <div class="ac-label">Template Builder</div>
@@ -190,7 +201,7 @@
 
       <div class="action-card ac-teal" data-permission="restore" onclick="location.href='restore_students.html'">
         <div class="ac-icon">♻️</div>
-        <div class="ac-label">Restore Records</div>
+        <div class="ac-label">Restore Students</div>
       </div>
 
       <div class="action-card ac-violet" data-permission="users|own_users" onclick="location.href='manage_users.html'">

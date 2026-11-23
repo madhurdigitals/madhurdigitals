@@ -380,6 +380,11 @@
       <input type="checkbox" value="templates" id="templatesPermBox">
       <span>🎨 Template Builder</span>
     </label>
+    <!-- SE3a: only an admin gives/removes it; Madhur employees and vendor logins only (never a vendor's staff or a school) -->
+    <label class="perm-item" id="sessionPermItem" title="Move whole schools to the next session (promotion) and undo it">
+      <input type="checkbox" value="session" id="sessionPermBox" onchange="sessionPermWarn(this)">
+      <span>🔁 Session &amp; promotion</span>
+    </label>
     <!-- Vendor logins only (optional, unticked by default): the vendor manages its OWN schools / people -->
     <label class="perm-item own-perm" style="display:none;" title="Edit its own schools' details, fields, logo, colour and school-login permissions. Can't add, delete or move schools.">
       <input type="checkbox" value="own_schools">
@@ -451,8 +456,17 @@ const PERM_LABELS = {
   add:"➕ Add", manage:"🧾 Manage", print:"🖨 Print",
   export:"💾 Export", bulk:"📤 Bulk", form:"📄 Forms",
   schools:"🏫 Schools", restore:"♻️ Restore", users:"👥 Users",
-  vendors:"🤝 Vendors", own_schools:"🏫 Own schools", own_users:"👥 Own users", templates:"🎨 Templates", staff:"👩‍🏫 Staff"
+  vendors:"🤝 Vendors", own_schools:"🏫 Own schools", own_users:"👥 Own users", templates:"🎨 Templates", staff:"👩‍🏫 Staff",
+  session:"🔁 Session"
 };
+
+// SE3a: ticking 🔁 Session & promotion asks first - it changes the class of every student of a school
+function sessionPermWarn(cb) {
+  if (!cb.checked) return;
+  if (!confirm("🔁 Session & promotion lets this person move whole schools to the next session — " +
+               "the class of every student changes.\n\nThey can only do it for schools they can see, and only once the new session has started. " +
+               "Give it only to someone you trust.\n\nGive it?")) cb.checked = false;
+}
 
 // The logged-in person may give / take Manage Vendors (the server checks this too).
 function iCanManageVendors() {
@@ -489,7 +503,7 @@ function passwordInfoText(u) {
 
 /* ── VENDORS (Phase 2) ── */
 let allVendorsList = [];
-const VENDOR_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "restore", "own_schools", "own_users", "templates", "staff"];
+const VENDOR_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "restore", "own_schools", "own_users", "templates", "staff", "session"];
 const SCHOOL_LOGIN_UI_PERMS = ["add", "manage", "print", "export", "bulk", "form", "restore", "staff"];
 
 // The logged-in person is a vendor login managing its OWN people (Manage own users)
@@ -822,6 +836,15 @@ function handleRoleChange(userChanged) {
     expBox.disabled = !mayExp;
     expItem.style.opacity = mayExp ? "" : ".55";
     expItem.title = mayExp ? "Download data as Excel (every export is recorded)" : "Only an admin can give or remove Export";
+  }
+  // 🔁 Session & promotion: only an admin gives or removes it (vendor staff / schools never see it - lists above)
+  const sesBox  = document.getElementById("sessionPermBox");
+  const sesItem = document.getElementById("sessionPermItem");
+  if (sesBox && sesItem) {
+    const maySes = getRole() === "admin";
+    sesBox.disabled = !maySes;
+    sesItem.style.opacity = maySes ? "" : ".55";
+    sesItem.title = maySes ? "Move whole schools to the next session (promotion) and undo it" : "Only an admin can give or remove Session & promotion";
   }
 
   if (iAmVendor()) {
