@@ -54,14 +54,17 @@ function designationValue(id) {
 function categorySelectHtml(id, value) {
   const cats = (typeof CONFIG !== "undefined" && CONFIG.staffCategories) ? CONFIG.staffCategories : ["Staff", "Management"];
   const v = value || cats[0];
-  return `<select id="${id}">${cats.map(c => `<option value="${staffEsc(c)}" ${c === v ? "selected" : ""}>${staffEsc(c)}</option>`).join("")}</select>`;
+  // P2a: a saved category not in the list stays selected (it used to fall back to the first one on Save)
+  const extra = cats.includes(v) ? "" : `<option value="${staffEsc(v)}" selected>${staffEsc(v)} (as saved)</option>`;
+  return `<select id="${id}">${extra}${cats.map(c => `<option value="${staffEsc(c)}" ${c === v ? "selected" : ""}>${staffEsc(c)}</option>`).join("")}</select>`;
 }
 
 function staffFieldInput(label, id, value) {
   const key = normalizeKey(label);
   const v = staffEsc(value || "");
-  if (key === "dob") return `<input id="${id}" type="text" inputmode="numeric" maxlength="10" placeholder="DDMMYYYY" value="${v}">`;
-  if (key.includes("phone") || key.includes("contact") || key.includes("mobile")) return `<input id="${id}" inputmode="numeric" maxlength="10" value="${v}">`;
+  // R1: data-person-kind="staff" -> the DOB rule uses the staff age range (12-100)
+  if (key === "dob") return `<input id="${id}" type="text" inputmode="numeric" maxlength="10" placeholder="DDMMYYYY" value="${v}" data-person-kind="staff">`;
+  if (typeof mdIsPhoneKey === "function" ? mdIsPhoneKey(key) : (key.includes("phone") || key.includes("contact") || key.includes("mobile"))) return `<input id="${id}" inputmode="numeric" maxlength="10" value="${v}" data-person-kind="staff">`;
   if (key.includes("address")) return `<textarea id="${id}" rows="1">${v}</textarea>`;
   return `<input id="${id}" value="${v}">`;
 }
@@ -96,6 +99,7 @@ function renderStaffForm() {
 let staffSubmitting = false;
 async function submitStaff() {
   if (staffSubmitting) return;
+  if (typeof mdTidyDobInput === "function") document.querySelectorAll('#dynamicForm input[data-dob-bound="1"]').forEach(mdTidyDobInput);   // P2a.2: 1/2/2015 -> 01/02/2015 before reading
   const row = staffSchoolRow();
   const name = (document.getElementById("name")?.value || "").trim();
   const category = document.getElementById("category")?.value || "";
@@ -114,12 +118,14 @@ async function submitStaff() {
       if (value.replace(/\D/g, "").length !== 8) { valid = false; mark(key); showToast("Enter valid DOB (DDMMYYYY)"); }
       value = formatDOB(value);
     }
-    if ((key.includes("phone") || key.includes("contact") || key.includes("mobile")) && value && value.length !== 10) {
+    if ((typeof mdIsPhoneKey === "function" ? mdIsPhoneKey(key) : (key.includes("phone") || key.includes("contact") || key.includes("mobile"))) && value && value.length !== 10) {   // R1
       valid = false; mark(key); showToast("Please enter a valid 10-digit number");
     }
     data[key] = value;
   });
-  if (!valid) { showToast("Fill required fields"); return; }
+  const personProblem = typeof mdFormProblem === "function" ? mdFormProblem(document.getElementById("dynamicForm")) : "";   // R1
+  if (personProblem) valid = false;
+  if (!valid) { showToast(personProblem || "Fill required fields"); return; }
 
   staffSubmitting = true;
   const photoFile = document.getElementById("studentPhoto")?.files[0] || null;
@@ -297,7 +303,7 @@ async function openStaffEdit(id) {
     <div class="form-row"><label>Category *</label>${categorySelectHtml("edit_category", s.Category)}</div>
     <div class="form-row"><label>Designation *</label><div style="flex:1;">${designationSelectHtml("edit_designation", s.Designation)}</div></div>`;
   rtStaffFields(staffSchoolRow()).forEach(label => {
-    let v = s[label] || "";
+    let v = mdFieldValue(s, label);   // P2b.1
     if (normalizeKey(label) === "dob") v = formatDOB(v);
     html += `<div class="form-row"><label>${staffEsc(label)} :</label>${staffFieldInput(label, "edit_" + normalizeKey(label), v)}</div>`;
   });
@@ -305,12 +311,15 @@ async function openStaffEdit(id) {
            <button class="clear-btn" onclick="closeEditPopup()">Cancel</button>`;
   box.innerHTML = html;
   if (typeof attachDOBFormatterAll === "function") attachDOBFormatterAll();
+  if (typeof attachPhoneValidation === "function") attachPhoneValidation();   // R1
 }
 
 async function saveStaffEdit(id) {
   const name = (document.getElementById("edit_name").value || "").trim();
   const designation = designationValue("edit_designation");
   if (!name || !designation) { showToast("Name and Designation are required"); return; }
+  const editProblem = typeof mdFormProblem === "function" ? mdFormProblem(document.getElementById("editPopup")) : "";   // R1
+  if (editProblem) { showToast(editProblem); return; }
   const data = { school: school, staff_id: id, name: name, category: document.getElementById("edit_category").value, designation: designation };
   rtStaffFields(staffSchoolRow()).forEach(label => {
     const key = normalizeKey(label);

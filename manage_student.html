@@ -13,127 +13,106 @@
   <script src="js/manage_student.js" defer></script>
 
   <link rel="stylesheet" href="css/manage_student.css">
+  <link rel="stylesheet" href="css/app.css">
+  <script src="js/layout.js" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
-
-<!-- NAV -->
-<nav>
-  <div class="logo" onclick="goHome()" style="cursor:pointer;">
-    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
-    <div>
-      <div class="title-text">Madhur Digitals</div>
-      <div class="school-name" id="schoolNameTop"></div>
+<body class="md-app md-records" data-md-layout>
+<!-- P2b: the shared top bar (layout.js) replaces the old nav; Dashboard and Log out are in it -->
+<div class="md-school md-records__strip">
+  <div class="md-school__in">
+    <h1 class="md-records__title"><span id="recordHeadingLabel">🎓 Manage Students</span></h1>
+    <div class="heading-wrapper">
+      <span class="md-school__tag heading-badge"><span class="md-school__label">School</span> <span id="schoolName"></span></span>
+      <span id="schoolNameTop" hidden></span>
     </div>
-  </div>
-  <div class="nav-actions">
-    <button onclick="changeSchool()">Change School</button>
-    <button onclick="location.href='dashboard.html'">Dashboard</button>
-    <button onclick="logout()">Logout</button>
-  </div>
-</nav>
-
-<!-- HEADING + STATS -->
-<div class="heading-wrapper">
-  <div class="heading-badge">
-    <span id="recordHeadingLabel">🎓 Manage Students</span>: <span id="schoolName"></span>
-  </div>
-  <div class="stats-row">
-    <div class="stat-pill">
-      <span class="stat-num" id="statTotal">—</span>
-      <span class="stat-lbl" id="statTotalLbl">Total students</span>
-    </div>
-    <div class="stat-pill">
-      <span class="stat-num" id="statFiltered">—</span>
-      <span class="stat-lbl">Filtered</span>
-    </div>
-    <div class="stat-pill stat-pill-blue" id="statActiveWrap" style="display:none;">
-      <span class="stat-num" id="statActive">0</span>
-      <span class="stat-lbl">Active Filters</span>
-    </div>
+    <button type="button" class="md-btn md-btn--secondary md-btn--sm md-records__change" onclick="changeSchool(event)">Change school</button>
   </div>
 </div>
 
-<div class="container">
+<main class="container md-records__main" id="mdMain">
+  <!-- the old number pills: kept (hidden) so nothing that fills them breaks; the totals line below replaces them -->
+  <div class="stats-row" hidden>
+    <span id="statTotal">—</span><span id="statTotalLbl">Total students</span>
+    <span id="statFiltered">—</span>
+    <span id="statActiveWrap" style="display:none;"><span id="statActive">0</span></span>
+  </div>
 
-  <!-- FILTER CARD -->
-  <div class="card filter-card">
-
-    <div class="filter-top">
-      <span class="filter-title">🔍 Filters</span>
-      <button class="btn-clear" onclick="clearAllFilters()">Clear All</button>
+  <!-- FILTERS: one bar + "More filters" -->
+  <div class="card filter-card md-rec__filters">
+    <div class="filter-grid md-rec__bar">
+      <div class="filter-col md-rec__search">
+        <label class="filter-label" id="lblName" for="searchName">Search</label>
+        <input id="searchName" class="filter-input" type="search" autocomplete="off" placeholder="Search name or student ID">
+        <input id="searchStudentId" type="hidden" value="">
+      </div>
+      <div class="filter-col">
+        <label class="filter-label" id="lblGroup">Class — Section</label>
+        <div class="dropdown">
+          <button type="button" onclick="toggleDropdown('classSectionDropdown')" class="dropdown-btn" id="groupBtn">Select Class-Section ▾</button>
+          <div id="classSectionDropdown" class="dropdown-content"></div>
+        </div>
+      </div>
+      <div class="filter-col">
+        <span class="filter-label" aria-hidden="true">&nbsp;</span>
+        <button type="button" class="md-rec__morebtn" id="mdRecMoreBtn" aria-expanded="false" aria-controls="mdRecMore" onclick="msToggleMore()">More filters</button>
+      </div>
+      <div class="filter-col md-rec__colscol">
+        <span class="filter-label" aria-hidden="true">&nbsp;</span>
+        <div class="md-rec__colswrap">
+          <button type="button" class="md-rec__morebtn" id="mdRecColsBtn" aria-expanded="false" aria-controls="mdRecCols" onclick="msToggleCols()">Columns</button>
+          <div id="mdRecCols" class="md-rec__cols" hidden></div>
+        </div>
+      </div>
+      <div class="filter-col md-rec__viewcol">
+        <span class="filter-label">View</span>
+        <div class="md-rec__view" role="group" aria-label="Show as">
+          <button type="button" id="mdRecViewTable" aria-pressed="true" onclick="msSetView('table')">Table</button>
+          <button type="button" id="mdRecViewCards" aria-pressed="false" onclick="msSetView('cards')">Cards</button>
+        </div>
+      </div>
     </div>
 
-    <div class="filter-grid">
-
-      <!-- Name -->
-      <div class="filter-col">
-        <label class="filter-label" id="lblName">Student Name</label>
-        <input id="searchName" class="filter-input" placeholder="Search name...">
+    <div id="mdRecMore" class="md-rec__more" hidden>
+      <div class="md-rec__group">
+        <div class="md-rec__gtitle">Missing</div>
+        <div id="mdRecMissing" class="md-rec__ticks"></div>
       </div>
-
-      <!-- Student ID -->
-      <div class="filter-col">
-        <label class="filter-label" id="lblId">Student ID</label>
-        <input id="searchStudentId" type="text" class="filter-input"
-               placeholder="Enter ID..." oninput="applyFilter()">
+      <div class="md-rec__group">
+        <div class="md-rec__gtitle">Needs fixing</div>
+        <div id="mdRecFix" class="md-rec__ticks"></div>
+        <div class="md-rec__gtitle" style="margin-top:14px;">Any field contains</div>
+        <div id="mdRecRules"></div>
+        <button type="button" class="md-rec__link" id="mdRecAddRule" onclick="msAddRule()">+ Add rule</button>
       </div>
-
-      <!-- Date From -->
-      <div class="filter-col">
-        <label class="filter-label">Date Added From</label>
+      <div class="md-rec__group">
+        <div class="md-rec__gtitle">Added</div>
+        <label class="filter-label" for="dateFrom">From</label>
         <input id="dateFrom" type="date" class="filter-input" onchange="applyFilter()">
-      </div>
-
-      <!-- Date To -->
-      <div class="filter-col">
-        <label class="filter-label">Date Added To</label>
+        <label class="filter-label" for="dateTo">To</label>
         <input id="dateTo" type="date" class="filter-input" onchange="applyFilter()">
-      </div>
-
-      <!-- Added By -->
-      <div class="filter-col">
-        <label class="filter-label">Added By</label>
+        <label class="filter-label" for="filterAddedBy">By</label>
         <select id="filterAddedBy" class="filter-input" onchange="applyFilter()">
           <option value="">All Users</option>
         </select>
       </div>
-
-      <!-- Class Section -->
-      <div class="filter-col">
-        <label class="filter-label" id="lblGroup">Class — Section</label>
-        <div class="dropdown">
-          <button onclick="toggleDropdown('classSectionDropdown')" class="dropdown-btn" id="groupBtn">
-            Select Class-Section ▾
-          </button>
-          <div id="classSectionDropdown" class="dropdown-content"></div>
-        </div>
-      </div>
-
-      <!-- Rows Per Page -->
-      <div class="filter-col">
-        <label class="filter-label">Rows Per Page</label>
-        <select id="rowsPerPageSelect" class="filter-input" onchange="changeRowsPerPage(this.value)">
-          <option value="20">20</option>
-          <option value="50" selected>50</option>
-          <option value="100">100</option>
-        </select>
-      </div>
-
     </div>
 
-    <!-- Chips -->
-    <div id="selectedChips" class="chips-row"></div>
-
+    <div class="md-rec__chipsline">
+      <div id="selectedChips" class="chips-row"></div>
+      <button type="button" class="btn-clear md-rec__clearall" id="mdRecClearAll" onclick="clearAllFilters()" hidden>Clear all filters</button>
+      <span class="md-rec__idnote" id="mdRecIdNote">Searching by ID · other filters paused</span>
+      <div class="md-rec__totals" id="mdRecTotals" aria-live="polite"></div>
+      <button type="button" class="md-rec__morebtn md-rec__selectbtn" id="mdRecSelectBtn" onclick="msSelectStart()" hidden>Select</button>
+    </div>
+    <div id="mdRecBulk" class="md-rec__bulk" hidden aria-live="polite"></div>
   </div>
 
-  <!-- TABLE CARD -->
-  <div class="card table-card">
-
-    <!-- Skeleton -->
+  <!-- RECORDS: table or cards -->
+  <div class="card table-card md-rec__list">
     <div id="skeletonRows" class="skeleton-wrap" style="display:none;">
       <div class="sk-row"></div>
       <div class="sk-row" style="width:94%"></div>
@@ -142,29 +121,35 @@
       <div class="sk-row" style="width:98%"></div>
       <div class="sk-row" style="width:95%"></div>
     </div>
-
-    <!-- Table -->
     <div id="tableWrapper">
-      <div class="table-wrapper">
+      <div class="table-wrapper md-rec__tablewrap" id="mdRecTableWrap">
         <table>
           <thead id="tableHead"></thead>
           <tbody id="studentTable"></tbody>
         </table>
       </div>
+      <div id="mdRecCards" class="md-rec__cards" hidden></div>
+      <div id="mdRecEmpty" class="md-rec__empty" hidden></div>
     </div>
-
-    <!-- Pagination -->
     <div class="pagination-row">
+      <label class="md-rec__rows">Rows
+        <select id="rowsPerPageSelect" onchange="changeRowsPerPage(this.value)">
+          <option value="20">20</option>
+          <option value="50" selected>50</option>
+          <option value="100">100</option>
+        </select>
+      </label>
       <div id="pagination"></div>
       <div class="page-jump">
-        <input type="number" id="pageInput" placeholder="Go to page" min="1">
-        <button onclick="jumpToPage()">Go</button>
+        <input type="number" id="pageInput" placeholder="Go to page" min="1" aria-label="Go to page">
+        <button type="button" onclick="jumpToPage()">Go</button>
       </div>
     </div>
-
   </div>
+</main>
 
-</div>
+<!-- P2b: one student at a time (name link); Prev / Next go through the filtered list -->
+<aside id="mdRecPanel" class="md-rec__panel" hidden role="dialog" aria-modal="false" aria-labelledby="mdRecPanelName"></aside>
 
 <!-- SCHOOL SELECTOR -->
 <div id="schoolBox" class="school-box">

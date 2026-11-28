@@ -162,7 +162,123 @@ function rowProblem(obj) {
   } else if (schoolFields.some(f => normalizeKey(f) === "class") && !String(obj.class || "").trim()) {
     return "Class is empty";
   }
+  return personProblemForRow(obj);
+}
+
+/* ── R1: DATE OF BIRTH AND PHONE RULES (api.js; the server checks the same) ── */
+function personProblemForRow(obj) {
+  const kind = buType === "staff" ? "staff" : "student";
+  for (const f of schoolFields) {
+    const key = normalizeKey(f);
+    if (columnMap[key] === undefined && obj[key] === undefined) continue;
+    const v = obj[key];
+    if (key === "dob" && typeof mdDobProblem === "function") { const why = mdDobProblem(String(v === undefined || v === null ? "" : v), kind); if (why) return why; }
+    else if (typeof mdIsPhoneKey === "function" && mdIsPhoneKey(key)) { const why = mdPhoneProblem(String(v === undefined || v === null ? "" : v), f.trim()); if (why) return why; }
+  }
   return "";
+}
+// A phone cell that only needs tidying ("+91 98765 43210", "098765-43210") -> its 10 digits; "" if it cannot be fixed safely
+function bulkPhoneFix(value) {
+  const s = String(value === undefined || value === null ? "" : value).trim();
+  if (!s) return "";
+  if (/[\/,;|&]|\band\b|\bor\b/i.test(s)) return "";            // two numbers in one cell: a person must choose
+  if (/[^\d\s\-().+]/.test(s)) return "";                          // letters or other marks: not a phone format issue
+  let d = s.replace(/[^\d+]/g, "");
+  if (d.startsWith("+91")) d = d.slice(3);
+  else if (d.startsWith("+")) return "";
+  else if (d.length === 12 && d.startsWith("91")) d = d.slice(2);
+  else if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
+  return /^[6-9]\d{9}$/.test(d) && d !== s ? d : "";
+}
+// every phone cell (rows not yet uploaded) that can be tidied, and every DOB / phone problem that needs a person
+function bulkPhoneReview() {
+  const fixes = [], byHand = [];
+  mappedData.forEach((r, i) => {
+    if (r.status === "uploaded") return;
+    schoolFields.forEach(f => {
+      const key = normalizeKey(f);
+      if (columnMap[key] === undefined) return;
+      const v = r[key];
+      if (typeof mdIsPhoneKey === "function" && mdIsPhoneKey(key)) {
+        const why = mdPhoneProblem(String(v === undefined || v === null ? "" : v), f.trim());
+        if (!why) return;
+        const fixed = bulkPhoneFix(v);
+        if (fixed) fixes.push({ i, key, field: f.trim(), from: String(v), to: fixed });
+        else byHand.push({ i, field: f.trim(), value: String(v), why });
+      } else if (key === "dob" && typeof mdDobProblem === "function") {
+        const why = mdDobProblem(String(v === undefined || v === null ? "" : v), buType === "staff" ? "staff" : "student");
+        if (why) byHand.push({ i, field: f.trim(), value: String(v), why });
+      }
+    });
+  });
+  return { fixes, byHand };
+}
+let bulkLastFix = [];            // [{ i, key, from }] - for "Undo fix"
+function updatePhoneFixBar() {
+  const bar = document.getElementById("phoneFixBar");
+  if (!bar) return;
+  const n = bulkPhoneReview().fixes.length;
+  document.getElementById("phoneFixText").textContent = n ? `${n} phone number${n === 1 ? "" : "s"} can be fixed automatically (spaces, dashes, +91 or a leading 0).` : "";
+  document.getElementById("phoneFixBtn").style.display = n ? "" : "none";
+  document.getElementById("phoneUndoBtn").style.display = bulkLastFix.length ? "" : "none";
+  bar.style.display = n || bulkLastFix.length ? "flex" : "none";
+}
+function openPhoneReview() {
+  const { fixes, byHand } = bulkPhoneReview();
+  const name = i => buEsc(mappedData[i].name || "");
+  document.getElementById("phoneReviewBody").innerHTML =
+    `<p style="margin:0 0 8px;">Nothing changes until you press <b>Fix ticked</b>, and even then only in this table: nothing is saved until <b>Submit Selected</b>.</p>` +
+    (fixes.length ? `<table class="pr-table"><thead><tr><th><input type="checkbox" checked onclick="document.querySelectorAll('.pr-fix').forEach(c => { c.checked = this.checked; }); countPhoneFixes();" title="Tick / untick all"></th><th>Row</th><th>Name</th><th>Field</th><th>Now</th><th>Becomes</th></tr></thead><tbody>` +
+      fixes.map((x, k) => `<tr><td><input type="checkbox" class="pr-fix" data-k="${k}" checked onchange="countPhoneFixes()"></td><td>${x.i + 1}</td><td>${name(x.i)}</td><td>${buEsc(x.field)}</td><td><code>${buEsc(x.from)}</code></td><td><code>${buEsc(x.to)}</code></td></tr>`).join("") +
+      `</tbody></table>` : `<p>No phone numbers can be fixed automatically.</p>`) +
+    (byHand.length ? `<h4 style="margin:14px 0 6px;">Need fixing by hand (${byHand.length})</h4><p style="margin:0 0 6px; font-size:13px; color:#6b7280;">Click the cell in the table and correct it.</p><table class="pr-table"><thead><tr><th>Row</th><th>Name</th><th>Field</th><th>Value</th><th>Why</th></tr></thead><tbody>` +
+      byHand.map(x => `<tr><td>${x.i + 1}</td><td>${name(x.i)}</td><td>${buEsc(x.field)}</td><td><code>${buEsc(x.value)}</code></td><td>${buEsc(x.why)}</td></tr>`).join("") + `</tbody></table>` : "");
+  document.getElementById("phoneReview").__fixes = fixes;
+  countPhoneFixes();
+  document.getElementById("phoneReview").style.display = "block";
+  document.getElementById("phoneReviewOverlay").style.display = "block";
+}
+function countPhoneFixes() {
+  const n = document.querySelectorAll(".pr-fix:checked").length;
+  const b = document.getElementById("phoneFixApply");
+  b.textContent = `Fix ticked (${n})`; b.disabled = !n;
+}
+function closePhoneReview() {
+  document.getElementById("phoneReview").style.display = "none";
+  document.getElementById("phoneReviewOverlay").style.display = "none";
+}
+function applyPhoneFixes() {
+  const fixes = document.getElementById("phoneReview").__fixes || [];
+  const picked = [...document.querySelectorAll(".pr-fix:checked")].map(c => fixes[Number(c.dataset.k)]).filter(Boolean);
+  bulkLastFix = [];
+  picked.forEach(x => {
+    const r = mappedData[x.i];
+    if (String(r[x.key]) !== x.from) return;                       // changed since the review: leave it
+    bulkLastFix.push({ i: x.i, key: x.key, from: r[x.key] });
+    r[x.key] = x.to; r.edited = true;
+    r.fixed = r.fixed || {}; r.fixed[x.key] = x.from;
+    r.problem = rowProblem(r); r.valid = !r.problem;
+    if (r.status === "failed") { r.status = "pending"; r.error = ""; }
+    if (r.valid && !r.dup) r.selected = true;
+  });
+  closePhoneReview();
+  renderTable();
+  scheduleDupCheck();
+  showToast(`${bulkLastFix.length} phone number${bulkLastFix.length === 1 ? "" : "s"} fixed in the table (not saved yet). Check them, then Submit Selected.`, "success");
+}
+function undoPhoneFixes() {
+  bulkLastFix.forEach(x => {
+    const r = mappedData[x.i];
+    if (!r || r.status === "uploaded") return;
+    r[x.key] = x.from;
+    if (r.fixed) delete r.fixed[x.key];
+    r.problem = rowProblem(r); r.valid = !r.problem;
+    if (!r.valid) r.selected = false;
+  });
+  const n = bulkLastFix.length; bulkLastFix = [];
+  renderTable();
+  scheduleDupCheck();
+  showToast(`Undone: ${n} phone number${n === 1 ? "" : "s"} back as they were.`, "success");
 }
 
 function buildTable() {
@@ -261,18 +377,22 @@ function renderTable() {
       }
       if (!locked && buType === "staff" && key === "category") return `<td>${categoryCellHtml(i, r)}</td>`;
       if (!locked && buType === "staff" && key === "designation") return `<td>${designationCellHtml(i, r)}</td>`;
+      const fixedFrom = r.fixed && r.fixed[key] !== undefined ? r.fixed[key] : null;   // R1: tidied by "Review and fix"
+      const fixedAttr = fixedFrom !== null ? ` class="bu-fixed" title="Fixed from: ${buEsc(fixedFrom)}"` : ` title="Click to correct"`;
       return locked ? `<td>${buEsc(r[key])}</td>`
-                    : `<td contenteditable="true" title="Click to correct" oninput="editCell(${i}, '${key}', this.innerText, this)">${buEsc(r[key])}</td>`;
+                    : `<td contenteditable="true"${fixedAttr} oninput="editCell(${i}, '${key}', this.innerText, this)">${buEsc(r[key])}</td>`;
     }).join("");
     return `<tr style="background:${getRowColor(r)}">
         <td><input type="checkbox" ${r.selected === true && !locked ? "checked" : ""} ${locked || !r.valid ? "disabled" : ""} onchange="toggleRow(${i}, this.checked)"></td>
         <td style="white-space:normal; max-width:none; min-width:200px; overflow:visible; text-align:left;">${statusCell(r)}</td>${cells}</tr>`;
   }).join("");
+  updatePhoneFixBar();                                                     // R1
 }
 
 function editCell(i, field, value, el) {
   const r = mappedData[i];
   r[field] = value; r.edited = true;
+  if (r.fixed && r.fixed[field] !== undefined) { delete r.fixed[field]; el.classList.remove("bu-fixed"); }   // R1
   r.problem = rowProblem(r); r.valid = !r.problem;
   if (r.status === "failed") { r.status = "pending"; r.error = ""; }
   const row = el.parentElement;
@@ -281,6 +401,7 @@ function editCell(i, field, value, el) {
   row.children[1].innerHTML = statusCell(r);
   const cb = row.querySelector("input[type=checkbox]");
   if (cb) { cb.disabled = !r.valid; if (r.valid && !r.dup && !r.selected) { r.selected = true; cb.checked = true; } }
+  updatePhoneFixBar();                                                     // R1
   scheduleDupCheck();
 }
 
