@@ -179,12 +179,10 @@ async function addSchool(data) {
 
     const url = `${API_URL}?${params.toString()}`;
 
-    console.log("Add School URL:", url);
 
     const res    = await fetch(url);
     const result = await res.json();
 
-    console.log("Add School Result:", result);
 
     // 🔥 Clear schools cache so dashboard reloads fresh
     sessionStorage.removeItem("schoolsCache");
@@ -206,7 +204,6 @@ async function addStudent(data) {
     });
 
     const url = `${API_URL}?${params.toString()}`;
-    console.log("Add URL:", url);
 
     const res    = await fetch(url);
     const result = await res.json();
@@ -226,7 +223,6 @@ async function getStudents(school) {
   try {
     const url = `${API_URL}?action=getStudents&school=${encodeURIComponent(school)}`;
 
-    console.log("Fetch URL:", url);
 
     const res = await fetch(url);
 
@@ -236,7 +232,6 @@ async function getStudents(school) {
 
     const data = await res.json();
 
-    console.log("Students:", data);
 
     // Pages expect a list (header row + students). An error answer becomes an empty list,
     // so no page crashes; a session error has already opened the "log in again" box.
@@ -267,15 +262,16 @@ function getSchools(forceRefresh = false) {
     const cached = sessionStorage.getItem("schoolsCache"); // 🔥 renamed
 
     if (cached && !forceRefresh) {
-      console.log("Using session cached schools");
       resolve(JSON.parse(cached));
       return;
     }
 
-    const callbackName = "jsonpCallback_" + Date.now();
+    // DS1.1: unique per request. Two pages' requests started in the same millisecond used to get the same
+    // name - one answer went to the wrong request and the other request never finished.
+    window.__mdJsonpSeq = (window.__mdJsonpSeq || 0) + 1;
+    const callbackName = "jsonpCallback_" + Date.now() + "_" + window.__mdJsonpSeq;
 
     window[callbackName] = function(data) {
-      console.log("Schools (API):", data);
       if (data && !Array.isArray(data) && (data.error || data.auth_error)) {
         // An error is never cached (it would break every page until logout).
         if (SESSION_ERRORS.indexOf(data.auth_error) !== -1) showSessionExpired();
@@ -310,6 +306,234 @@ function getSchools(forceRefresh = false) {
   });
 }
 
+/* ===== R1: DATE OF BIRTH AND PHONE RULES (the same rules as the server, Code.gs) =====
+   DOB: a real date, not in the future, age 1-80 (students) or 12-100 (staff).
+   Phone / Mobile / Contact: one 10-digit number starting with 6, 7, 8 or 9.
+   Empty is fine. In an edit popup only a value you CHANGED is checked (old records can still be edited).
+   A staff box says so with data-person-kind="staff" (staff_entry.js); every other box is a student's. */
+const MD_AGE_LIMITS = { student: [1, 80], staff: [12, 100] };
+function mdIsPhoneKey(key) {
+  key = String(key || "");
+  return /phone|mobile|contact/.test(key) && !/name|person|email|mail|address/.test(key);
+}
+function mdIndiaToday() { const n = new Date(Date.now() + 330 * 60000); return [n.getUTCFullYear(), n.getUTCMonth() + 1, n.getUTCDate()]; }
+function mdDobProblem(value, kind) {
+  const v = String(value || "").replace(/^'/, "").trim();
+  if (!v) return "";
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(v);
+  if (!m) return "Date of birth must be day/month/year, like 12/07/2001.";
+  const d = +m[1], mo = +m[2], y = +m[3];
+  const dim = [31, (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (mo < 1 || mo > 12 || d < 1 || d > dim[mo - 1]) return "Date of birth: " + v + " is not a real date.";
+  const t = mdIndiaToday();
+  if (y > t[0] || (y === t[0] && (mo > t[1] || (mo === t[1] && d > t[2])))) return "Date of birth: " + v + " is in the future.";
+  const age = t[0] - y - ((t[1] < mo || (t[1] === mo && t[2] < d)) ? 1 : 0);
+  const lim = MD_AGE_LIMITS[kind === "staff" ? "staff" : "student"];
+  if (age < lim[0] || age > lim[1]) return "Date of birth: " + v + " gives age " + age + "; " + (kind === "staff" ? "staff" : "students") + " must be " + lim[0] + " to " + lim[1] + ".";
+  return "";
+}
+function mdPhoneProblem(value, label) {
+  const v = String(value || "").replace(/^'/, "").trim();
+  if (!v) return "";
+  label = label || "Phone";
+  if (!/^\d{10}$/.test(v)) return label + ": enter one 10-digit number.";
+  if (!/^[6-9]/.test(v)) return label + ": a mobile number starts with 6, 7, 8 or 9.";
+  return "";
+}
+function mdInputKind(input) { return input && input.getAttribute && input.getAttribute("data-person-kind") === "staff" ? "staff" : "student"; }
+function mdInputLabel(input) {
+  const row = input.closest ? input.closest(".form-row, div") : null;
+  const lab = row ? row.querySelector("label") : null;
+  const t = lab ? lab.textContent.replace(/[:*]/g, "").trim() : "";
+  return t || "Phone";
+}
+// the short reason shown under a box (the full sentence is in the toast and the box's tooltip)
+function mdShortReason(msg) {
+  const m = String(msg || "");
+  let x;
+  if (/is not a real date/.test(m)) return "Not a real date";
+  if (/is in the future/.test(m)) return "Date is in the future";
+  if ((x = /gives age (\d+); (students|staff) must be (\d+) to (\d+)/.exec(m))) return `Age ${x[1]} (${x[2]} ${x[3]}–${x[4]})`;
+  if (/type 8 digits|day\/month\/year/i.test(m)) return "Type 8 digits, like 12072001";
+  if (/starts with 6, 7, 8 or 9/.test(m)) return "Must start with 6, 7, 8 or 9";
+  if (/10-digit/.test(m)) return "Enter one 10-digit number";
+  return m;
+}
+// P2a: safe text inside HTML (a name like D"Souza or <b> no longer breaks a popup box)
+function mdEsc(v) {
+  return String(v === undefined || v === null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+// P2a: options for an edit popup's Class / Section list. A saved value that is not in the list
+// (an old or bulk-uploaded "Arts", "a", "PG") stays selected exactly as saved, so Save never blanks it.
+function mdOptionsHtml(list, value, blankLabel) {
+  const v = String(value === undefined || value === null ? "" : value);
+  const items = (list || []).map(String);
+  const known = items.includes(v);
+  let html = `<option value="" ${v === "" ? "selected" : ""}>${mdEsc(blankLabel || "— Select —")}</option>`;
+  if (v !== "" && !known) html += `<option value="${mdEsc(v)}" selected>${mdEsc(v)} (as saved)</option>`;
+  return html + items.map(c => `<option value="${mdEsc(c)}" ${c === v ? "selected" : ""}>${mdEsc(c)}</option>`).join("");
+}
+
+// a mistake stays shown (red box + message under it) until it is fixed
+function mdShowFieldError(input, msg) {
+  const id = (input.id || "f") + "__mdErr";
+  let box = document.getElementById(id);
+  if (msg) {
+    input.style.border = "2px solid red";
+    input.setAttribute("aria-invalid", "true");
+    input.title = msg;
+    if (!box) {
+      box = document.createElement("div");
+      box.id = id; box.className = "md-field-err"; box.setAttribute("role", "alert");
+      box.style.cssText = "position:absolute; font-size:12px; line-height:1.3; color:#b91c1c; margin-top:2px; max-width:100%;";
+      input.insertAdjacentElement("afterend", box);
+      input.setAttribute("aria-describedby", id);
+    }
+    const p = input.parentElement;
+    if (p && getComputedStyle(p).position === "static") p.style.position = "relative";
+    box.style.left = (input.offsetLeft || 0) + "px";
+    box.style.top = ((input.offsetTop || 0) + (input.offsetHeight || 38)) + "px";
+    box.textContent = mdShortReason(msg);
+    box.style.whiteSpace = "nowrap";
+  } else {
+    input.style.border = "";
+    input.removeAttribute("aria-invalid");
+    if (input.title && /date of birth|digit|mobile number|day\/month/i.test(input.title)) input.title = "";
+    if (box) { box.remove(); input.removeAttribute("aria-describedby"); }
+  }
+}
+// the problem with one DOB / phone box right now ("" = fine). Unchanged values (edit popups) are not checked.
+function mdCheckPersonInput(input) {
+  const isDob = input.dataset.dobBound === "1";
+  let v = String(input.value || "").trim();
+  const initial = String(input.dataset.mdInitial || "").trim();
+  if (initial && v === initial) return "";                          // Option A: an untouched saved value is never checked
+  if (isDob && v) {
+    v = mdNormalizeDob(v);                                          // P2a.2: 12/7/2001 is read as 12/07/2001
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(v)) return "Date of birth: type 8 digits, day month year, like 12072001.";
+  }
+  if (initial && (isDob ? initial.replace(/\D/g, "") === v.replace(/\D/g, "") : initial === v)) return "";
+  return isDob ? mdDobProblem(v, mdInputKind(input)) : mdPhoneProblem(v, mdInputLabel(input));
+}
+// Save: every DOB / phone box in this form or popup; marks them and returns the first problem ("" = fine)
+// P2b.1: a saved value for a school field, even when the field is written differently from the
+// sheet column ("Mobile No" vs "Mobile_No", "SECTION" vs "Section"). The server matches them the same way,
+// so an edit popup no longer shows such a box empty (and Save no longer blanks it).
+function mdFieldValue(obj, field) {
+  if (!obj) return "";
+  const has = v => v !== undefined && v !== null && v !== "";
+  if (has(obj[field])) return obj[field];
+  const norm = x => String(x).toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_");
+  const want = norm(field);
+  for (const k of Object.keys(obj)) if (norm(k) === want && has(obj[k])) return obj[k];
+  return "";
+}
+
+/* ── P2b: "?" tips next to a box's name, shared by every page (Add records keeps its own copy for now) ──
+   mdTipsInit(["editPopup"]) watches those boxes and adds a tip to Photo, DOB and phone / mobile names.
+   Hover or click opens one tip at a time; Tab skips them; the "?" itself is drawn by CSS. */
+if (typeof mdTipText !== "function") {
+  // eslint-disable-next-line no-var
+  var mdTipText = function (input) {
+    const id = input.id || "";
+    if (id === "studentPhoto" || id === "edit_photo_file") return "Choose a clear face photo.";
+    if (input.dataset.dobBound === "1" || id === "dob" || /(^|_)dob$/.test(id)) {
+      const staff = input.dataset.personKind === "staff";
+      return "Type 8 digits: 12072001 becomes 12/07/2001. Age must be " + (staff ? "12 to 100 for staff." : "1 to 80 for students.");
+    }
+    if (typeof mdIsPhoneKey === "function" && mdIsPhoneKey(id)) return "10 digits, starting with 6, 7, 8 or 9. Leave out +91 and the first 0.";
+    return "";
+  };
+}
+if (typeof mdAddTips !== "function") {
+  // eslint-disable-next-line no-var
+  var mdAddTips = function (scope) {
+    if (!scope) return;
+    scope.querySelectorAll(".form-row label").forEach(label => {
+      label.childNodes.forEach(n => { if (n.nodeType === 3 && /\s*:\s*$/.test(n.nodeValue)) n.nodeValue = n.nodeValue.replace(/\s*:\s*$/, ""); });
+    });
+    scope.querySelectorAll(".form-row").forEach(row => {
+      row.querySelectorAll("input:not([type=hidden]):not([disabled]), textarea").forEach(input => {
+        const text = mdTipText(input);
+        const cell = input.closest(".form-row > div");
+        const label = (cell && cell.querySelector(":scope > label")) || row.querySelector(":scope > label");
+        if (!text || !label || label.querySelector(".md-tip")) return;
+        const tip = document.createElement("button");
+        tip.type = "button"; tip.className = "md-tip"; tip.tabIndex = -1;
+        tip.setAttribute("aria-label", "Help: " + label.textContent.replace(/[:*]/g, "").trim());
+        tip.setAttribute("data-tip", text);
+        label.appendChild(tip);
+      });
+    });
+  };
+}
+let mdTipsReady = false;
+function mdTipsInit(ids) {
+  (ids || []).forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.dataset.mdTips) { el.dataset.mdTips = "1"; new MutationObserver(() => mdAddTips(el)).observe(el, { childList: true, subtree: true }); }
+  });
+  if (mdTipsReady) return;
+  mdTipsReady = true;
+  document.addEventListener("click", e => {
+    const tip = e.target.closest && e.target.closest(".md-tip");
+    document.querySelectorAll(".md-tip.is-open").forEach(t => { if (t !== tip) t.classList.remove("is-open"); });
+    if (tip) { e.preventDefault(); tip.classList.toggle("is-open"); }
+  }, true);
+  document.addEventListener("mouseover", e => {
+    const tip = e.target.closest && e.target.closest(".md-tip");
+    if (tip) document.querySelectorAll(".md-tip.is-open").forEach(t => { if (t !== tip) t.classList.remove("is-open"); });
+  });
+}
+
+// P2a.2: 12072001 -> 12/07/2001 and 12/7/2001 -> 12/07/2001. Anything else is left as typed (the check explains it).
+function mdNormalizeDob(value) {
+  const v = String(value || "").trim();
+  if (/^\d{8}$/.test(v)) return `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
+  const m = /^(\d{1,2})[\/.\- ](\d{1,2})[\/.\- ](\d{4})$/.exec(v);
+  if (m) return `${m[1].padStart(2, "0")}/${m[2].padStart(2, "0")}/${m[3]}`;
+  const iso = /^(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})$/.exec(v);           // P2a.3: 2001-07-12 (some autofill) -> 12/07/2001
+  if (iso) return `${iso[3].padStart(2, "0")}/${iso[2].padStart(2, "0")}/${iso[1]}`;
+  return v;
+}
+// P2a.3: a full date (not one still being typed): 8 digits, d/m/yyyy or yyyy/m/d
+function mdDobLooksComplete(v) {
+  return /^\d{8}$/.test(v) || /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(v) || /^\d{4}\/\d{1,2}\/\d{1,2}$/.test(v);
+}
+// tidy a DOB box the person changed (an old saved value left alone stays exactly as it is)
+function mdTidyDobInput(input) {
+  if (!input || input.value === (input.dataset.mdInitial || "")) return;
+  const tidy = mdNormalizeDob(input.value);
+  if (tidy !== input.value) input.value = tidy;
+}
+
+function mdFormProblem(scope) {
+  const root = scope || document;
+  if (typeof attachDOBFormatterAll === "function") attachDOBFormatterAll();
+  if (typeof attachPhoneValidation === "function") attachPhoneValidation();
+  let first = "", firstInput = null;
+  root.querySelectorAll('input[data-dob-bound="1"]').forEach(mdTidyDobInput);   // P2a.2: saved as 12/07/2001
+  root.querySelectorAll('input[data-dob-bound="1"], input[data-phone-bound="1"]').forEach(inp => {
+    const why = mdCheckPersonInput(inp);
+    mdShowFieldError(inp, why);
+    if (why && !first) { first = why; firstInput = inp; }
+  });
+  if (firstInput && firstInput.focus) firstInput.focus();
+  return first;
+}
+
+// P2a.3: tidy (12/7/2001 -> 12/07/2001) and check one DOB box, showing the result in the box
+function mdDobDone(input) {
+  if (!input.value) { mdShowFieldError(input, ""); return; }
+  mdTidyDobInput(input);
+  const why = mdCheckPersonInput(input);
+  mdShowFieldError(input, why);
+  // Tab fires "change" and then "blur": toast the message once, not twice
+  const now = Date.now(), last = input._mdToast || {};
+  if (why && typeof showToast === "function" && !(last.why === why && now - last.at < 800)) showToast(why);
+  input._mdToast = { why: why, at: now };
+}
+
 function attachDOBFormatterAll() {
   const inputs = document.querySelectorAll('input[id*="dob"]');
 
@@ -318,70 +542,57 @@ function attachDOBFormatterAll() {
     // ✅ Skip if already wired up (prevents duplicate listeners)
     if (input.dataset.dobBound === "1") return;
     input.dataset.dobBound = "1";
+    input.dataset.mdInitial = input.value || "";      // R1: an edit popup's saved value (unchanged = not checked)
+    if (input.maxLength > 0 && input.maxLength < 10) input.maxLength = 10;   // P2a.2: room to edit 12/07/2001 (it was 8)
 
-    // ✅ Allow only numbers (max 8)
-    input.addEventListener("input", function () {
-      this.value = this.value.replace(/\D/g, "").slice(0, 8);
-      this.style.border = ""; // reset while typing
-    });
-
-    // 🔥 VALIDATION ON BLUR
-    input.addEventListener("blur", function () {
-
-      const value = this.value;
-
-      // ❌ INVALID
-      if (value.length !== 8) {
-        this.style.border = "2px solid red";
-
-        // optional toast (clean UX)
-        if (value.length > 0) {
-          showToast("Enter valid DOB (DDMMYYYY)");
-        }
-
-        return;
+    // ✅ Digits only: at most 8 (12072001). With a separator: at most 10 (12/07/2001).
+    // "-", "." and spaces become "/" as you type (12-07 shows 12/07). The box is only rewritten when something
+    // changed, and the cursor stays where it was (P2a.2), so fixing 12/97/2001 one digit at a time works.
+    // The box itself takes 10 characters, so autofill or paste of 12/07/2001 is never cut to 120720.
+    input.addEventListener("input", function (e) {
+      const v = this.value;
+      const keep = str => str.replace(/[-. ]/g, "/").replace(/[^\d/]/g, "");
+      let clean = keep(v);
+      clean = clean.includes("/") ? clean.slice(0, 10) : clean.slice(0, 8);
+      if (clean !== v) {
+        const pos = this.selectionStart == null ? clean.length : this.selectionStart;
+        this.value = clean;
+        const at = Math.min(keep(v.slice(0, pos)).length, clean.length);
+        try { this.setSelectionRange(at, at); } catch (err) { /* some boxes do not allow it */ }
       }
-
-      // ✅ VALID → FORMAT
-      const day = value.substring(0, 2);
-      const month = value.substring(2, 4);
-      const year = value.substring(4, 8);
-
-      this.value = `${day}/${month}/${year}`;
-      this.style.border = "";
+      // P2a.3: autofill or paste puts a whole date in at once: tidy and check it now, where the person can see it
+      const typed = e && /^(insertText|deleteContent|insertCompositionText|deleteWord|deleteSoft|deleteHard)/.test(e.inputType || "");
+      if (!typed && mdDobLooksComplete(clean)) mdDobDone(this);
     });
 
+    // 🔥 CHECK ON LEAVING THE BOX (Tab, Enter, a click elsewhere) and on autofill's "change":
+    // 12072001, 12/7/2001 or 12-7-2001 -> 12/07/2001 right away, then the R1 rules. The message stays until fixed.
+    input.addEventListener("blur", function () { mdDobDone(this); });
+    input.addEventListener("change", function () { mdDobDone(this); });
   });
 }
 
 function attachPhoneValidation() {
-  const inputs = document.querySelectorAll('input[id*="phone"], input[id*="contact"]');
+  // R1: Phone, Mobile and Contact boxes (not a contact person's name, email or address)
+  const inputs = [...document.querySelectorAll("input[id]")].filter(i => mdIsPhoneKey(i.id) && !/dob/.test(i.id) && i.type !== "file");
 
   inputs.forEach(input => {
 
     // ✅ Skip if already wired up (prevents duplicate listeners)
     if (input.dataset.phoneBound === "1") return;
     input.dataset.phoneBound = "1";
+    input.dataset.mdInitial = input.value || "";      // R1: unchanged = not checked
 
     // ✅ Only digits, max 10
     input.addEventListener("input", function () {
       this.value = this.value.replace(/\D/g, "").slice(0, 10);
-      this.style.border = ""; // reset while typing
     });
 
-    // 🔥 VALIDATE ON BLUR
+    // 🔥 CHECK ON LEAVING THE BOX (the message stays until fixed)
     input.addEventListener("blur", function () {
-      const value = this.value;
-
-      if (value.length !== 10) {
-        this.style.border = "2px solid red";
-
-        if (value.length > 0) {
-          showToast("Enter valid 10-digit number");
-        }
-      } else {
-        this.style.border = "";
-      }
+      const why = mdCheckPersonInput(this);
+      mdShowFieldError(this, why);
+      if (why && typeof showToast === "function") showToast(why);
     });
 
   });

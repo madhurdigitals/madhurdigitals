@@ -1,234 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Login</title>
+  <meta charset="utf-8">
+  <title>Log in — Madhur Digitals</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Log in to Madhur Digitals: school ID card records, photos and printing.">
   <script src="js/protect.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <style>
-    * { box-sizing: border-box; }
-
-    html, body {
-      margin: 0; padding: 0; height: 100%;
-      font-family: 'Segoe UI', sans-serif;
-      background: #f5f7fb;
-    }
-
-    .page-wrapper {
-      min-height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 25px;
-      background: white;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-
-    .logo {
-      font-weight: bold;
-      font-size: 18px;
-      color: #0d6efd;
-      cursor: pointer;
-    }
-
-    .nav-btn {
-      padding: 8px 15px;
-      border: 1px solid #0d6efd;
-      background: transparent;
-      color: #0d6efd;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .nav-btn:hover { background: #0d6efd; color: white; }
-
-    .main {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .login-card {
-      background: white;
-      padding: 30px;
-      width: 350px;
-      max-width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      text-align: center;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeIn 0.6s ease forwards;
-    }
-
-    @keyframes fadeIn {
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .login-card h2 { margin-bottom: 5px; color: #0d6efd; }
-    .login-card p  { margin-bottom: 20px; color: #666; }
-
-    .input-group {
-      position: relative;
-      margin-bottom: 20px;
-    }
-
-    .input-group input {
-      width: 100%;
-      padding: 12px;
-      padding-right: 40px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      outline: none;
-      transition: 0.2s;
-      background: transparent;
-    }
-
-    .input-group input:focus {
-      border-color: #0d6efd;
-      box-shadow: 0 0 0 2px rgba(13,110,253,0.1);
-    }
-
-    .input-group label {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #777;
-      font-size: 14px;
-      pointer-events: none;
-      transition: 0.2s;
-      background: white;
-      padding: 0 4px;
-    }
-
-    .input-group input:focus + label,
-    .input-group input:not(:placeholder-shown) + label {
-      top: -8px;
-      font-size: 12px;
-      color: #0d6efd;
-    }
-
-    .toggle-password {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
-      font-size: 14px;
-      color: #555;
-    }
-
-    .login-btn {
-      width: 100%;
-      padding: 12px;
-      background: #0d6efd;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: 0.3s;
-      font-size: 15px;
-    }
-
-    .login-btn:hover   { background: #0b5ed7; }
-    .login-btn:disabled {
-      background: #aaa;
-      cursor: not-allowed;
-    }
-
-    /* ERROR BOX */
-    .error-box {
-      display: none;
-      background: #fff0f0;
-      border: 1px solid #f5c2c7;
-      color: #842029;
-      padding: 10px 14px;
-      border-radius: 6px;
-      margin-bottom: 15px;
-      font-size: 14px;
-      text-align: left;
-    }
-
-    footer {
-      text-align: center;
-      padding: 15px;
-      background: #111;
-      color: white;
-      font-size: 14px;
-    }
-
-    @media (max-width: 768px) {
-      .login-card { padding: 20px; }
-    }
-  </style>
+  <script src="js/layout.js" defer></script><!-- only for the vendor colours here (no top bar on this page) -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
 </head>
+<body class="md-app">
 
-<body>
-<div class="page-wrapper">
-
-  <nav>
-    <div class="logo" onclick="location.href='index.html'">Madhur Digitals</div>
-    <button class="nav-btn" onclick="location.href='index.html'">Home</button>
-  </nav>
-
-  <div class="main">
-    <div class="login-card">
-      <h2>Madhur Digitals</h2>
-      <p>Welcome Back</p>
-
-      <!-- ERROR -->
-      <div class="error-box" id="errorBox"></div>
-
-      <div class="input-group">
-        <input id="username" placeholder=" " required>
-        <label>Username</label>
-      </div>
-
-      <div class="input-group">
-        <input id="password" type="password" placeholder=" " required>
-        <label>Password</label>
-        <span class="toggle-password" onclick="togglePassword()">👁️</span>
-      </div>
-
-      <button class="login-btn" id="loginBtn" onclick="handleLogin()">
-        Login
-      </button>
+<!-- .login-card: hidden while a vendor's login link (?v=...) works out whose page it is (api.js), so our name never flashes -->
+<main class="md-login login-card">
+  <div class="md-login__brand">
+    <a class="md-login__mark" id="lgHome" href="index.html" title="Go to the homepage">
+      <img id="lgLogo" src="assets/logo.svg" alt=""><span class="md-login__name" id="lgName">Madhur Digitals</span>
+    </a>
+    <div class="md-login__pitch" id="lgPitch">
+      <p class="md-login__headline">School ID cards, from admission to printing.</p>
+      <p>Add students, check every detail with the school, and print cards that are right the first time.</p>
+    </div>
+    <div class="md-login__contact" id="lgContact">
+      <span>Need help logging in?</span>
+      <a href="mailto:madhurdigitals01@gmail.com">madhurdigitals01@gmail.com</a>
+      <span>Ambedkar Nagar, U.P.</span>
     </div>
   </div>
 
-  <footer>© 2026 Madhur Digitals | All Rights Reserved</footer>
+  <div class="md-login__formside">
+    <form class="md-login__form" id="loginForm" novalidate onsubmit="event.preventDefault(); handleLogin();">
+      <div>
+        <h1 class="md-h1">Log in</h1>
+        <p class="md-muted" style="margin:6px 0 0">Use the username and password you were given.</p>
+      </div>
 
-</div>
+      <div class="md-alert md-alert--danger" id="errorBox" role="alert" style="display:none;"></div>
+
+      <div class="md-field">
+        <label class="md-label" for="username">Username</label>
+        <input class="md-input" id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+      </div>
+      <div class="md-field">
+        <label class="md-label" for="password">Password</label>
+        <div class="md-pass">
+          <input class="md-input" id="password" name="password" type="password" autocomplete="current-password" required aria-describedby="capsNote">
+          <button type="button" id="togglePass" onclick="togglePassword()" aria-label="Show password" aria-pressed="false">Show</button>
+        </div>
+        <span class="md-capsnote" id="capsNote" role="status" hidden>Caps Lock is on</span>
+      </div>
+
+      <button class="md-btn md-btn--primary md-btn--lg" type="submit" id="loginBtn">Log in</button>
+
+      <p class="md-login__phonecontact" id="lgPhoneContact">Need help logging in? <a class="md-link" href="mailto:madhurdigitals01@gmail.com">madhurdigitals01@gmail.com</a><br>Ambedkar Nagar, U.P.</p>
+      <footer>© 2026 Madhur Digitals</footer>
+    </form>
+  </div>
+</main>
 
 <script>
+let loginBusy = false;
+
 async function handleLogin() {
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
   const btn      = document.getElementById("loginBtn");
   const errorBox = document.getElementById("errorBox");
 
+  if (loginBusy) return;                         // one login at a time (Enter + click together used to send two)
   errorBox.style.display = "none";
 
   if (!username || !password) {
     showError("Please enter username and password");
+    (username ? document.getElementById("password") : document.getElementById("username")).focus();
     return;
   }
 
+  loginBusy = true;
   btn.disabled  = true;
-  btn.innerText = "Logging in...";
+  btn.innerText = "Logging in…";
 
   const result = await login(username, password);
 
@@ -241,25 +98,78 @@ async function handleLogin() {
     window.location.href = "dashboard.html";
   } else {
     showError(result.error || "Invalid credentials");
+    loginBusy = false;
     btn.disabled  = false;
-    btn.innerText = "Login";
+    btn.innerText = "Log in";
   }
 }
 
+// the message stays until the person types again (it used to be easy to miss)
 function showError(msg) {
   const errorBox = document.getElementById("errorBox");
   errorBox.innerText = msg;
   errorBox.style.display = "block";
 }
+["username", "password"].forEach(id => document.getElementById(id).addEventListener("input", () => {
+  document.getElementById("errorBox").style.display = "none";
+}));
 
 function togglePassword() {
-  const p = document.getElementById("password");
-  p.type = p.type === "password" ? "text" : "password";
+  const p = document.getElementById("password"), b = document.getElementById("togglePass");
+  const show = p.type === "password";
+  p.type = show ? "text" : "password";
+  if (b) { b.textContent = show ? "Hide" : "Show"; b.setAttribute("aria-pressed", String(show)); b.setAttribute("aria-label", show ? "Hide password" : "Show password"); }
 }
 
-document.addEventListener("keydown", function(e) {
-  if (e.key === "Enter") handleLogin();
+// Caps Lock hint while typing the password
+["keydown", "keyup"].forEach(ev => document.getElementById("password").addEventListener(ev, e => {
+  if (typeof e.getModifierState === "function") document.getElementById("capsNote").hidden = !e.getModifierState("CapsLock");
+}));
+document.getElementById("password").addEventListener("blur", () => { document.getElementById("capsNote").hidden = true; });
+
+// Enter logs in (as before) - but not while the "already logged in on other devices" question is open,
+// and not on the Show button or a link
+document.addEventListener("keydown", function (e) {
+  if (e.key !== "Enter") return;
+  if (document.getElementById("sessionLimitBox")) return;
+  if (e.target && e.target.closest && e.target.closest("button, a") && e.target.id !== "loginBtn") return;
+  if (e.target && e.target.id === "loginBtn") return;        // the button itself submits the form
+  e.preventDefault();
+  handleLogin();
 });
+
+/* A vendor's login link (login.html?v=<web name>): api.js finds the vendor and calls applyBrand.
+   The new page also takes the vendor's name, logo (or first letter) and colour, and shows no contact of ours. */
+(function () {
+  const original = window.applyBrand;
+  if (typeof original !== "function") return;
+  window.applyBrand = function (brand) {
+    original(brand);
+    try { loginBrand(brand); } catch (err) { /* the page still works unbranded */ }
+  };
+  function loginBrand(b) {
+    if (!b || !b.name) return;
+    const name = String(b.name);
+    document.getElementById("lgName").textContent = name;
+    const home = document.getElementById("lgHome");
+    home.removeAttribute("href"); home.removeAttribute("title");            // no link to our own homepage (as before)
+    const logo = typeof brandSafeLogo === "function" ? brandSafeLogo(b.logo) : "";
+    const img = document.getElementById("lgLogo");
+    const letter = () => { const m = document.createElement("span"); m.className = "md-brand__mark"; m.setAttribute("aria-hidden", "true"); m.textContent = (name.trim().charAt(0) || "?").toUpperCase(); img.replaceWith(m); };
+    if (logo) { img.onerror = letter; img.src = logo; } else letter();
+    // colours: buttons, links and the panel in the vendor's colour, darkened until white text reads clearly
+    const colour = typeof brandSafeColor === "function" ? brandSafeColor(b.color) : "#0d6efd";
+    if (window.mdLayout && typeof window.mdLayout.brandColours === "function") {
+      const v = window.mdLayout.brandColours(colour), root = document.documentElement.style;
+      Object.keys(v).forEach(k => root.setProperty(k, v[k]));
+      root.setProperty("--md-login-a", v["--md-action"]);
+      root.setProperty("--md-login-b", v["--md-action-hover"]);
+    }
+    const help = "Need help logging in? Ask the person who gave you your login.";
+    const contact = document.getElementById("lgContact"); contact.textContent = ""; const s = document.createElement("span"); s.textContent = help; contact.appendChild(s);
+    document.getElementById("lgPhoneContact").textContent = help;
+  }
+})();
 </script>
 
 </body>

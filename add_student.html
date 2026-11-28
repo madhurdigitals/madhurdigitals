@@ -11,6 +11,8 @@
   <script src="js/staff_entry.js"></script>
 
   <link rel="stylesheet" href="css/add_student.css">
+  <link rel="stylesheet" href="css/app.css">
+  <script src="js/layout.js" defer></script>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -56,41 +58,34 @@
   </style>
 </head>
 
-<body>
+<body class="md-app md-addrec" data-md-layout>
 <div class="page-wrapper">
-<nav>
-  <div class="logo">
-    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
-    <div>
-      <div class="title-text">Madhur Digitals</div>
-      <div class="school-name" id="schoolNameTop"></div>
+<!-- P2a: the shared top bar (layout.js) replaces the old nav; Dashboard and Log out are in it -->
+<div class="md-school md-addrec__strip">
+  <div class="md-school__in">
+    <div class="heading-wrapper">
+      <span class="md-school__tag heading-badge"><span class="md-school__label">School</span> <span id="schoolName"></span></span>
+      <span id="schoolNameTop" hidden></span>
     </div>
-  </div>
-
-  <div class="nav-actions">
-    <button onclick="changeSchool()">Change School</button>
-    <button onclick="location.href='dashboard.html'">Dashboard</button>
-    <button onclick="logout()">Logout</button>
-  </div>
-</nav>
-<div class="heading-wrapper">
-  <div class="heading-badge">
-    School: <span id="schoolName"></span>
+    <button type="button" class="md-btn md-btn--secondary md-btn--sm md-addrec__change" onclick="changeSchool(event)">Change school</button>
   </div>
 </div>
-<div class="container">
+<main class="container" id="mdMain">
 
-  <div class="card">
-    <h3>Add Student</h3>
+  <div class="card md-addrec__form">
+    <div class="md-addrec__cardhead">
+      <h3>Add Student</h3>
+      <span class="md-addrec__req">* required</span>
+    </div>
     <div id="dynamicForm"></div>
 
     <div class="btn-group">
       <button type="button" class="submit-btn" onclick="submitStudent()">Submit</button>
-      <button class="clear-btn" onclick="clearForm()">Clear</button>
+      <button class="clear-btn" onclick="clearForm(true)">Clear</button>
     </div>
   </div>
 
-  <div class="card">
+  <div class="card md-addrec__recent">
     <h3>Recent Entries</h3>
     <div class="table-wrapper">
       <table>
@@ -107,9 +102,9 @@
       </table>
     </div>
   </div> 
-</div>
+</main>
 
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <!-- school box -->
 
@@ -179,7 +174,9 @@ function normalizeKey(str) {
 }
 
 /* CLEAR */
-function clearForm() {
+// After a save: Class, Section (and staff Category) stay for the next entry.
+// The Clear button (all = true): everything is emptied, Class and Section too.
+function clearForm(all) {
   const inputs = document.querySelectorAll(
     "#dynamicForm input, #dynamicForm select, #dynamicForm textarea"
   );
@@ -188,7 +185,7 @@ function clearForm() {
     const id = el.id;
 
     // Do not clear class & section
-    if (id === "class" || id === "section" || id === "category") return;
+    if (!all && (id === "class" || id === "section" || id === "category")) return;
 
     if (el.tagName === "SELECT") {
       el.selectedIndex = 0;
@@ -203,6 +200,7 @@ function clearForm() {
 
     // Remove any red border (validation reset)
     el.style.border = "";
+    if (typeof mdShowFieldError === "function" && el.tagName === "INPUT") mdShowFieldError(el, "");   // and its message
   });
 
   // Reset photo preview
@@ -221,6 +219,7 @@ let isSubmitting = false;
 
 async function submitStudent() {
   if (typeof isStaffMode === "function" && isStaffMode()) return submitStaff();   // 👩‍🏫 Staff tab
+  if (typeof mdTidyDobInput === "function") document.querySelectorAll('#dynamicForm input[data-dob-bound="1"]').forEach(mdTidyDobInput);   // P2a.2: 1/2/2015 -> 01/02/2015 before reading
   const btn = document.querySelector(".submit-btn");
 
   if (isSubmitting) return;
@@ -306,7 +305,7 @@ async function submitStudent() {
 
   // PHONE VALIDATION
   Object.keys(data).forEach(k => {
-    if (k.includes("phone") || k.includes("contact")) {
+    if (typeof mdIsPhoneKey === "function" ? mdIsPhoneKey(k) : (k.includes("phone") || k.includes("contact"))) {   // R1: same fields as everywhere
       const val = data[k];
 
       if (val && val.length !== 10) {
@@ -323,8 +322,12 @@ async function submitStudent() {
     }
   });
 
+  // R1: DOB and phone rules (the server checks the same); the reason stays under the box until fixed
+  const personProblem = typeof mdFormProblem === "function" ? mdFormProblem(document.getElementById("dynamicForm")) : "";
+  if (personProblem) valid = false;
+
   if (!valid) {
-    showToast("Fill required fields");
+    showToast(personProblem || "Fill required fields");
     isSubmitting = false;
     btn.disabled = false;
     return;
@@ -501,7 +504,9 @@ window.addEventListener("beforeunload", function (e) {
 });
 
 /* CHANGE SCHOOL */
-function changeSchool() {
+function changeSchool(ev) {
+  // the same click must not reach the "click outside closes the popup" handler (it closed it at once)
+  if (ev && ev.stopPropagation) ev.stopPropagation();
   document.getElementById("schoolBox").classList.add("active");
 }
 
@@ -665,7 +670,7 @@ async function loadEditData(student_id) {
     const original = f.trim();
     const key = normalizeKey(original);
 
-    let value = student[original] || "";
+    let value = mdFieldValue(student, original);   // P2b.1: "Mobile No" finds Mobile_No
 
     if (key === "dob") {
       value = formatDOB(value);
@@ -674,28 +679,14 @@ async function loadEditData(student_id) {
     html += `<div class="form-row"><label>${original} :</label>`;
 
     if (key === "class") {
-      html += `
-        <select id="edit_${key}">
-          <option value="" ${value === "" ? "selected" : ""}>— Select —</option>
-          ${CONFIG.classes.map(c =>
-            `<option value="${c}" ${c == value ? "selected" : ""}>${c}</option>`
-          ).join("")}
-        </select>
-      `;
+      html += `<select id="edit_${key}">${mdOptionsHtml(CONFIG.classes, value)}</select>`;   // P2a: a class not in the list is kept
     }
     else if (key === "section") {
-      html += `
-        <select id="edit_${key}">
-          <option value="" ${value === "" ? "selected" : ""}>— Select —</option>
-          ${CONFIG.sections.map(s =>
-            `<option value="${s}" ${s == value ? "selected" : ""}>${s}</option>`
-          ).join("")}
-        </select>
-      `;
+      html += `<select id="edit_${key}">${mdOptionsHtml(CONFIG.sections, value)}</select>`;   // P2a: a section not in the list is kept
     }
 
     else {
-      html += `<input id="edit_${key}" value="${value}">`;
+      html += `<input id="edit_${key}" value="${mdEsc(value)}">`;   // P2a: quotes in a value no longer cut it short
     }
 
     html += `</div>`;
@@ -709,10 +700,11 @@ async function loadEditData(student_id) {
 
   container.innerHTML = html;
   if (typeof attachDOBFormatterAll === "function") attachDOBFormatterAll();
-  
+  if (typeof attachPhoneValidation === "function") attachPhoneValidation();   // R1: the edit popup checks phones too
 }
 
 async function saveEdit(student_id) {
+  if (typeof mdTidyDobInput === "function") document.querySelectorAll('#editPopup input[data-dob-bound="1"]').forEach(mdTidyDobInput);   // P2a.2: 1/2/2015 -> 01/02/2015 before reading
 
   let params = new URLSearchParams({
     action: "updateStudent",
@@ -746,6 +738,10 @@ async function saveEdit(student_id) {
       params.append(key, value);
     }
   });
+
+  // R1: DOB and phone rules - only values that were changed in this popup
+  const editProblem = typeof mdFormProblem === "function" ? mdFormProblem(document.getElementById("editPopup")) : "";
+  if (editProblem) { showToast(editProblem); return; }
 
   // Capture new photo file + old photo link BEFORE the popup closes
   const newPhotoFile = document.getElementById("edit_photo_file")?.files[0] || null;
@@ -1042,8 +1038,8 @@ async function renderDynamicForm() {
       `;
     }
 
-    // PHONE FIELD
-    else if (key.includes("phone") || key.includes("contact")) {
+    // PHONE FIELD (R1: Mobile fields too; not a contact person's name / email / address)
+    else if (typeof mdIsPhoneKey === "function" ? mdIsPhoneKey(key) : (key.includes("phone") || key.includes("contact"))) {
       html = `
         <div class="form-row">
           <label>${original} :</label>
@@ -1222,12 +1218,58 @@ function formatDOB(value) {
   return str;
 }
 
+/* ── P2a: "?" tips next to a box's name (hover or click to read; Tab skips them) ── */
+function mdTipText(input) {
+  const id = input.id || "";
+  if (id === "studentPhoto") return "Choose a clear face photo, or use Take Photo for the camera.";
+  if (input.dataset.dobBound === "1" || id === "dob" || /(^|_)dob$/.test(id)) {
+    const staff = input.dataset.personKind === "staff";
+    return "Type 8 digits: 12072001 becomes 12/07/2001. Age must be " + (staff ? "12 to 100 for staff." : "1 to 80 for students.");
+  }
+  if (typeof mdIsPhoneKey === "function" && mdIsPhoneKey(id)) return "10 digits, starting with 6, 7, 8 or 9. Leave out +91 and the first 0.";
+  return "";
+}
+function mdAddTips(scope) {
+  if (!scope) return;
+  // box names line up on the left, so the old "Name :" colon is dropped (display only)
+  scope.querySelectorAll(".form-row label").forEach(label => {
+    label.childNodes.forEach(n => {
+      if (n.nodeType === 3 && /\s*:\s*$/.test(n.nodeValue)) n.nodeValue = n.nodeValue.replace(/\s*:\s*$/, "");
+    });
+  });
+  scope.querySelectorAll(".form-row").forEach(row => {
+    row.querySelectorAll("input:not([type=hidden]):not([disabled]), textarea").forEach(input => {
+      const text = mdTipText(input);
+      const cell = input.closest(".form-row > div");
+      const label = (cell && cell.querySelector(":scope > label")) || row.querySelector(":scope > label");
+      if (!text || !label || label.querySelector(".md-tip")) return;
+      const tip = document.createElement("button");
+      tip.type = "button";
+      tip.className = "md-tip";
+      tip.tabIndex = -1;
+      // the "?" is drawn by CSS, so the box's name (used in messages) stays "DOB", not "DOB ?"
+      tip.setAttribute("aria-label", "Help: " + label.textContent.replace(/[:*]/g, "").trim());
+      tip.setAttribute("data-tip", text);
+      label.appendChild(tip);
+    });
+  });
+}
+document.addEventListener("click", e => {
+  const tip = e.target.closest(".md-tip");
+  document.querySelectorAll(".md-tip.is-open").forEach(t => { if (t !== tip) t.classList.remove("is-open"); });
+  if (tip) { e.preventDefault(); tip.classList.toggle("is-open"); }
+}, true);   // capture: closes even when a button stops the click
+// one tip at a time: pointing at another "?" closes the one that was clicked open
+document.addEventListener("mouseover", e => {
+  const tip = e.target.closest && e.target.closest(".md-tip");
+  if (tip) document.querySelectorAll(".md-tip.is-open").forEach(t => { if (t !== tip) t.classList.remove("is-open"); });
+});
+["dynamicForm", "editModalContent"].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) new MutationObserver(() => mdAddTips(el)).observe(el, { childList: true, subtree: true });
+});
+
 </script>
-<footer>
-  <div class="footer-inner">
-    © 2026 Madhur Digitals | All Rights Reserved
-  </div>
-</footer>     
 </div> 
 </body>
 </html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Help — Madhur Digitals</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <script src="js/protect.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/layout.js" defer></script>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body class="md-app" data-md-layout>
+<main class="md-main md-help" id="mdMain">
+  <div class="md-help-head">
+    <div><h1 class="md-h1">Help</h1><p class="md-muted" id="helpIntro">How to use Madhur Digitals. You see only the parts your login can use.</p></div>
+    <div class="md-search md-help-search">
+      <label class="md-sr" for="helpSearch">Search help</label>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input class="md-input" id="helpSearch" type="search" placeholder="Search help, e.g. photo, print, duplicate" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="md-help-layout">
+    <nav class="md-help-toc" aria-label="Help topics"><div class="md-help-toc__title">Topics</div><ul id="helpToc"></ul></nav>
+    <div class="md-help-body">
+      <p class="md-empty-note" id="helpNone" hidden>No help found for that. Try another word, or <a class="md-link" href="#problems">Common problems</a>.</p>
+    <section class="md-panel md-help-sec" id="start" data-perm="" data-role="" aria-labelledby="h-start">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-start">Getting started</h2><p>Madhur Digitals keeps every school's student and staff records, their photos, and prints their ID cards.</p>
+<h3>Logging in</h3>
+<ul>
+<li>Use the username and password you were given. The password is case-sensitive: if you see <b>Caps Lock is on</b>, turn it off.</li>
+<li>One login works in every tab of the same browser. Opening a new tab doesn't ask again.</li>
+<li>A login can be used on <b>2 devices</b> at a time. On a third device you're asked whether to log out the other two. Choose <b>Cancel</b> if you don't recognise them, and tell your admin.</li>
+<li><b>Log out</b> is under your name at the top right. On a shared computer, always log out.</li>
+</ul>
+<h3>Choosing a school</h3>
+<p>Most pages work on one school. When you open one from the Dashboard or the menu, you're asked which school. If your login has only one school, you go straight to the page.</p>
+<h3>On a phone</h3>
+<p>Everything works on a phone. The menu is behind the <b>☰</b> button at the top left.</p></div>
+    </section>
+    <section class="md-panel md-help-sec" id="dashboard" data-perm="" data-role="" aria-labelledby="h-dashboard">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-dashboard">Dashboard</h2><ul>
+<li>The 4 numbers show students in school, students added this month (compared with last month), schools and the average per school. For one school, you see classes and the largest class instead.</li>
+<li><b>Showing</b> chooses all your schools or one school. You can also click a school in <b>Students per school</b>.</li>
+<li><b>Students added</b>: hover over the chart (or tap it on a phone) for exact numbers. <b>6 months / 12 months</b> changes the period, and <b>Table</b> shows the same numbers as a table.</li>
+<li><b>Refresh</b> gets the latest numbers. The time next to it shows when they were last updated.</li>
+<li><b>Quick actions</b> and <b>Manage</b> show only what your login is allowed to do.</li>
+</ul></div>
+    </section>
+    <section class="md-panel md-help-sec" id="add" data-perm="add" data-role="" aria-labelledby="h-add">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-add">Adding records</h2><p>Open <b>Add records</b> and choose the school. Use the <b>Students</b> or <b>Staff</b> tab. The boxes are the ones set up for that school.</p>
+<h3>Typing fast</h3>
+<ul>
+<li><b>Enter</b> moves to the next box (except in the address box, where it starts a new line).</li>
+<li><b>Date of birth</b>: type 8 digits, like <code>12072001</code>. When you leave the box it becomes <code>12/07/2001</code>. It must be a real date and not in the future. Students must be <b>1 to 80</b> years old, staff <b>12 to 100</b>.</li>
+<li><b>Phone, Mobile or Contact</b>: one 10-digit mobile number starting with <b>6, 7, 8 or 9</b>.</li>
+<li>A mistake is shown in red under the box and <b>stays until you fix it</b>.</li>
+<li><b>Name</b> and <b>Class</b> are required.</li>
+</ul>
+<h3>Photo</h3>
+<p>Choose a photo file, or use <b>Take photo</b> to use the camera. The photo uploads after the record is saved.</p>
+<h3>Saving</h3>
+<ul>
+<li>Press <b>Save</b>. The record appears in <b>Recent entries</b> straight away and the form clears for the next one. Class and Section stay filled in.</li>
+<li>Saving finishes in the background. A row turns green when it's saved.</li>
+<li>If a row says <b>Not saved</b>, press <b>Retry</b>. It's never saved twice.</li>
+<li>Don't close the page while rows are still saving. The page asks you first.</li>
+</ul>
+<h3>Possible duplicates</h3>
+<p>If the record looks like someone already saved (for example the same name and date of birth), you're warned while typing. If you save anyway, the row waits under <b>Waiting for your decision</b>:</p>
+<ul>
+<li><b>View</b> shows both records side by side.</li>
+<li><b>Save anyway</b> saves it (for example, two different children with the same name).</li>
+<li><b>Discard</b> removes it.</li>
+</ul></div>
+    </section>
+    <section class="md-panel md-help-sec" id="records" data-perm="manage" data-role="" aria-labelledby="h-records">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-records">Finding and editing records</h2><ul>
+<li>Search by <b>name</b> or <b>Student ID</b>, choose classes and sections, or filter by who added the record.</li>
+<li><b>Edit</b> changes a record and can replace its photo. The old photo is removed only after the new one is saved.</li>
+<li>When editing, the date of birth and phone rules are checked only for what you change, so an old record can always be edited.</li>
+<li><b>Left</b> marks a student who has left the school. <b>Re-admit</b> brings them back with the same Student ID; you choose the new class.</li>
+<li><b>Delete</b> asks first. Deleted records can be brought back with <b>Restore deleted</b> (if your login has it).</li>
+<li><b>📅 Session</b>: earlier sessions can be opened to look at and reprint, but not changed.</li>
+</ul></div>
+    </section>
+    <section class="md-panel md-help-sec" id="photos" data-perm="manage" data-role="" aria-labelledby="h-photos">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-photos">Photos</h2><ul>
+<li>Open <b>Photos</b> and choose the school to see every student with or without a photo.</li>
+<li>Drag many photo files at once. Each file is matched to a student, and you decide before anything is replaced.</li>
+<li>Click a student's photo to see it larger, or to add or replace just that one.</li>
+</ul></div>
+    </section>
+    <section class="md-panel md-help-sec" id="bulk" data-perm="bulk" data-role="" aria-labelledby="h-bulk">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-bulk">Bulk upload (Excel)</h2><ol>
+<li>Download the <b>sample</b> file to see the layout, or use your own Excel sheet.</li>
+<li>Load the file. Columns are matched to the school's boxes automatically; check them and correct any that are wrong.</li>
+<li>Rows with problems are highlighted with the reason (for example a date of birth that isn't a real date, or a phone that isn't one 10-digit mobile number), and possible duplicates are marked. Fix cells right there, or download the problem rows as Excel.</li>
+<li>Phone numbers that only need tidying (spaces, dashes, <code>+91</code> or a leading 0) can be fixed together: press <b>Review and fix</b>, check the list, untick any you don't want, then <b>Fix ticked</b>. Fixed cells turn green, and <b>Undo fix</b> puts them back. Nothing is saved until <b>Submit selected</b>. Two numbers in one cell must be fixed by hand.</li>
+<li>Tick the rows to upload and press <b>Submit selected</b>. A batch is never uploaded twice, even if you press it again.</li>
+</ol></div>
+    </section>
+    <section class="md-panel md-help-sec" id="print" data-perm="print" data-role="" aria-labelledby="h-print">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-print">Printing ID cards</h2><ul>
+<li>Open <b>Print cards</b>, choose the school, then the classes and sections. You can search for a student or select everyone.</li>
+<li><b>Generate cards</b> shows the cards. Then use <b>Print</b>, or <b>Download PDF</b>.</li>
+<li>The <b>back sheet</b> and the <b>verification checklist</b> (for the school to check every detail) are on the same page.</li>
+<li>Cards are printed for the school's current session. Earlier sessions can only be reprinted by an admin.</li>
+<li>Every print is recorded.</li>
+</ul></div>
+    </section>
+    <section class="md-panel md-help-sec" id="export" data-perm="export" data-role="" aria-labelledby="h-export">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-export">Export</h2><ul>
+<li>Choose the fields, classes and sections, then download <b>Excel</b> or the <b>cards as PDF</b>.</li>
+<li>Every export is recorded before the file is made.</li>
+</ul></div>
+    </section>
+    <section class="md-panel md-help-sec" id="forms" data-perm="form" data-role="" aria-labelledby="h-forms">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-forms">School forms</h2><p>Print blank forms for a school to fill in by hand, for students or staff. Staff and vendor logins can also make a form for a new school that isn't in the system yet (<b>Other school</b>).</p></div>
+    </section>
+    <section class="md-panel md-help-sec" id="sessions" data-perm="session" data-role="" aria-labelledby="h-sessions">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-sessions">New session and promotion</h2><ul>
+<li>A school's session usually starts in March (for example 2026-27). It can be set per school.</li>
+<li><b>New session</b> promotes classes for the new year: every class line can be checked and changed before you confirm.</li>
+<li><b>Undo</b> is possible until the first change in the new session (any edit, add, delete or print).</li>
+<li><b>Session pipeline</b> shows where every school stands: Due → Promoted → Checklist printed → Cards printed.</li>
+</ul></div>
+    </section>
+    <section class="md-panel md-help-sec" id="schools" data-perm="schools|own_schools" data-role="" aria-labelledby="h-schools">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-schools">Schools</h2><p><b>Schools</b> lists your schools. There you change a school's details, the boxes on its form, its card template and its session.</p></div>
+    </section>
+    <section class="md-panel md-help-sec" id="templates" data-perm="templates" data-role="" aria-labelledby="h-templates">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-templates">Card templates</h2><p><b>Card templates</b> designs how a school's ID card looks. Choose a school, or no school to work on the shared library.</p></div>
+    </section>
+    <section class="md-panel md-help-sec" id="restore" data-perm="restore" data-role="" aria-labelledby="h-restore">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-restore">Restore deleted</h2><p>Deleted records stay here and can be brought back to their school. Deleting from here is permanent, so it asks first.</p></div>
+    </section>
+    <section class="md-panel md-help-sec" id="users" data-perm="users|own_users" data-role="" aria-labelledby="h-users">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-users">Users and permissions</h2><ul>
+<li>Add a login, choose its role and schools, and tick what it may do (add, manage, print, export and so on). People see only the pages and buttons they're allowed.</li>
+<li>Reset a password or archive a login that's no longer needed.</li>
+</ul></div>
+    </section>
+    <section class="md-panel md-help-sec" id="vendors" data-perm="vendors" data-role="admin" aria-labelledby="h-vendors">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-vendors">Vendors</h2><p>Partners (vendors) and their branding: name, logo and colour. A vendor's people see the vendor's look, and their own login link.</p></div>
+    </section>
+    <section class="md-panel md-help-sec" id="problems" data-perm="" data-role="" aria-labelledby="h-problems">
+      <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-problems">Common problems</h2><dl class="md-help-dl">
+<dt>"You don't have permission to access …"</dt><dd>Your login isn't allowed to open that page. Ask your admin if you need it.</dd>
+<dt>"Already logged in elsewhere"</dt><dd>This login is open on 2 other devices. Log out there, or choose to log them out here.</dd>
+<dt>A row says "Not saved"</dt><dd>The internet dropped. Press <b>Retry</b>; nothing is saved twice.</dd>
+<dt>The date of birth turned red</dt><dd>Type exactly 8 digits: day, month, year, like <code>05012015</code>. Check the year too: students must be 1 to 80 years old, staff 12 to 100.</dd>
+<dt>"A mobile number starts with 6, 7, 8 or 9"</dt><dd>Only Indian mobile numbers are accepted, one per box, without +91 or 0 in front.</dd>
+<dt>Charts don't show on the Dashboard</dt><dd>They need an internet connection. The numbers are still shown.</dd>
+<dt>Numbers look old</dt><dd>Press <b>Refresh</b> on the Dashboard.</dd>
+</dl></div>
+    </section>
+      <section class="md-panel md-help-sec md-help-contact" id="contact" aria-labelledby="h-contact">
+        <div class="md-panel__body md-prose"><h2 class="md-h2" id="h-contact">Still stuck?</h2><p id="helpContact">Write to <a class="md-link" href="mailto:madhurdigitals01@gmail.com">madhurdigitals01@gmail.com</a> with the page name and what you were doing. A screenshot helps.</p></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+(function () {
+  // show only the parts this login can use (same rules as the menu and the dashboard tiles)
+  function allowed(sec) {
+    const item = { perm: sec.getAttribute("data-perm") || "", role: sec.getAttribute("data-role") || "" };
+    if (window.mdLayout && typeof window.mdLayout.allowed === "function") return window.mdLayout.allowed(item);
+    return !item.perm && !item.role;
+  }
+  function start() {
+    const secs = [...document.querySelectorAll(".md-help-sec[data-perm]")];
+    secs.forEach(s => { s.hidden = !allowed(s); s.dataset.allowed = s.hidden ? "" : "1"; });
+    // a vendor's people: ask the person who gave them their login, not us
+    let brand = null; try { brand = JSON.parse(sessionStorage.getItem("brand") || "null"); } catch (e) { brand = null; }
+    if (brand && brand.name) document.getElementById("helpContact").textContent = "Ask the person who gave you your login, with the page name and what you were doing. A screenshot helps.";
+    const toc = document.getElementById("helpToc");
+    const draw = () => {
+      toc.innerHTML = "";
+      [...document.querySelectorAll(".md-help-sec")].filter(s => !s.hidden).forEach(s => {
+        const li = document.createElement("li"), a = document.createElement("a");
+        a.href = "#" + s.id; a.textContent = s.querySelector("h2").textContent; li.appendChild(a); toc.appendChild(li);
+      });
+    };
+    draw();
+    // search: keeps the sections that mention every word typed
+    const box = document.getElementById("helpSearch");
+    box.addEventListener("input", () => {
+      const words = box.value.toLowerCase().split(/\s+/).filter(Boolean);
+      let any = false;
+      document.querySelectorAll(".md-help-sec").forEach(s => {
+        if (s.dataset.perm !== undefined && !s.dataset.allowed) { s.hidden = true; return; }
+        const hit = !words.length || words.every(w => s.textContent.toLowerCase().includes(w));
+        s.hidden = !hit; if (hit && s.id !== "contact") any = true;
+      });
+      document.getElementById("helpNone").hidden = any || !words.length;
+      draw();
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+})();
+</script>
+</body>
+</html>

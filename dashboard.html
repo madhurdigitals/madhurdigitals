@@ -1,245 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="utf-8">
   <title>Dashboard — Madhur Digitals</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <script src="js/protect.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
   <script src="js/session.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="js/layout.js" defer></script>
   <script src="js/dashboard.js" defer></script>
-  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
 </head>
-<body>
+<body class="md-app" data-md-layout>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-add" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M19 8v6M16 11h6"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12"/><rect x="3" y="4.5" width="3" height="3" rx=".8"/><rect x="3" y="10.5" width="3" height="3" rx=".8"/><rect x="3" y="16.5" width="3" height="3" rx=".8"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M4 15v3.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V15"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6H7l1.8-2.5h6.4L17 6h1.5A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.8"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4.5A1.5 1.5 0 0 1 3 16.5v-5A2.5 2.5 0 0 1 5.5 9h13a2.5 2.5 0 0 1 2.5 2.5v5a1.5 1.5 0 0 1-1.5 1.5H18"/><path d="M6 14h12v7H6z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 15v3.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V15"/></symbol>
+    <symbol id="i-form" viewBox="0 0 24 24"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-school" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10l7-5 7 5v11M10 21v-5h4v5"/><circle cx="12" cy="11" r="1.6"/></symbol>
+    <symbol id="i-session" viewBox="0 0 24 24"><path d="M20.5 13A8.5 8.5 0 0 1 5 17.3M3.5 11A8.5 8.5 0 0 1 19 6.7"/><path d="M19.5 2.5v4.5H15M4.5 21.5V17H9"/></symbol>
+    <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="5" r="2.2"/><path d="M8.2 19H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.8"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M10 4V2.5h4V4"/><circle cx="8.5" cy="11.5" r="2"/><path d="M5.5 17a3 3 0 0 1 6 0M14 10h4M14 13.5h4"/></symbol>
+    <symbol id="i-restore" viewBox="0 0 24 24"><path d="M3.5 12A8.5 8.5 0 1 0 6 6L3.5 8.5"/><path d="M3.5 3.5v5h5M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.8"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.2a3.8 3.8 0 0 1 0 7.6M21.5 20a6.5 6.5 0 0 0-4-6"/></symbol>
+    <symbol id="i-students" viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5M22 9v6"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
+    <symbol id="i-avg" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+    <symbol id="i-partner" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5A2 2 0 0 1 10.5 3.5h3a2 2 0 0 1 2 2V7M3 12.5h18M11 12.5v2h2v-2"/></symbol>
+  </defs>
+</svg>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-brand" onclick="location.href='index.html'">
-    <div class="nav-logo">
-      <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="logo">
+<main class="md-main md-dash" id="mdMain">
+
+  <!-- shown when a page was refused (protect.js) or the numbers could not load -->
+  <div id="accessNotice" class="md-alert md-alert--warning" role="alert" style="display:none;"></div>
+
+  <div class="md-dash-head md-rise" style="--i:0">
+    <div class="md-dash-head__text">
+      <h1 class="md-h1" id="welcomeUser">Dashboard</h1>
+      <p id="dashSub"></p>
+      <span class="heading-wrapper"></span><!-- 📅 Session badge (session.js) appears here for a one-school login -->
     </div>
-    <div class="nav-title">
-      <span class="nav-title-main">Madhur Digitals</span>
-      <span class="nav-title-sub">School Management</span>
+    <div class="md-dash-tools">
+      <div id="schoolFilterWrap">
+        <label class="md-sr" for="schoolFilterSelect">Showing</label>
+        <select id="schoolFilterSelect" class="md-select"><option value="all">All schools</option></select>
+      </div>
+      <button type="button" class="md-btn md-btn--secondary" id="dashRefresh" onclick="refreshDashboard()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+        Refresh</button>
+      <span class="md-updated" id="lastUpdated" aria-live="polite"></span>
     </div>
   </div>
 
-  <div class="nav-center" id="schoolFilterWrap">
-    <select id="schoolFilterSelect" class="school-filter-select">
-      <option value="all">🏫 All Schools</option>
-    </select>
+  <!-- the 4 numbers (labels change for one school) -->
+  <section class="md-stats" aria-label="Numbers">
+    <div class="md-stat md-rise" style="--i:1">
+      <div class="md-stat__top"><span class="md-stat__icon" aria-hidden="true"><svg><use href="#i-students"/></svg></span>Students in school</div>
+      <div class="md-stat__value kpi-value" id="kpiStudents">—</div>
+      <div class="md-stat__foot" id="kpiStudentsNote">&nbsp;</div>
+    </div>
+    <div class="md-stat md-rise" style="--i:2">
+      <div class="md-stat__top"><span class="md-stat__icon" aria-hidden="true"><svg><use href="#i-trend"/></svg></span>Added this month</div>
+      <div class="md-stat__value kpi-value" id="kpiThisMonth">—</div>
+      <div class="md-stat__foot" id="kpiThisMonthNote">&nbsp;</div>
+      <span id="kpiSpark"></span>
+    </div>
+    <div class="md-stat md-rise" style="--i:3" id="kpiSchoolCard">
+      <div class="md-stat__top"><span class="md-stat__icon" aria-hidden="true"><svg><use href="#i-school"/></svg></span>Schools</div>
+      <div class="md-stat__value kpi-value" id="kpiSchools">—</div>
+      <div class="md-stat__foot" id="kpiSchoolsNote">&nbsp;</div>
+    </div>
+    <div class="md-stat md-rise" style="--i:3;display:none" id="kpiClassesCard">
+      <div class="md-stat__top"><span class="md-stat__icon" aria-hidden="true"><svg><use href="#i-layers"/></svg></span>Classes</div>
+      <div class="md-stat__value kpi-value" id="kpiClasses">—</div>
+      <div class="md-stat__foot" id="kpiClassesNote">&nbsp;</div>
+    </div>
+    <div class="md-stat md-rise" style="--i:4">
+      <div class="md-stat__top"><span class="md-stat__icon" aria-hidden="true"><svg><use href="#i-avg"/></svg></span><span id="kpiFourthLabel">Average per school</span></div>
+      <div class="md-stat__value kpi-value" id="kpiFourth">—</div>
+      <div class="md-stat__foot" id="kpiFourthNote">&nbsp;</div>
+    </div>
+  </section>
+
+  <!-- quick actions: each shows only with its permission (filterActionCards), as before -->
+  <section class="md-panel md-rise" style="--i:5;margin-top:16px" id="qaPanel" aria-labelledby="qaTitle">
+    <div class="md-panel__head"><h2 class="md-panel__title" id="qaTitle">Quick actions</h2><span class="md-panel__sub" id="qaSub">You choose the school next</span></div>
+    <div class="md-panel__body"><div class="md-qa">
+      <button type="button" class="action-card md-qa__btn" data-permission="add" onclick="showSchoolSelector('add')"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-add"/></svg></span><span><span class="md-qa__name ac-label">Add records</span><span class="md-qa__desc">One by one, with photo</span></span></button>
+      <button type="button" class="action-card md-qa__btn" data-permission="manage" onclick="showSchoolSelector('manage')"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-list"/></svg></span><span><span class="md-qa__name ac-label">Records</span><span class="md-qa__desc">Find, edit, Left / Re-admit</span></span></button>
+      <button type="button" class="action-card md-qa__btn" data-permission="bulk" onclick="showSchoolSelector('bulk')"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-upload"/></svg></span><span><span class="md-qa__name ac-label">Bulk upload</span><span class="md-qa__desc">A whole class from Excel</span></span></button>
+      <button type="button" class="action-card md-qa__btn" data-permission="manage" onclick="showSchoolSelector('photos')"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-camera"/></svg></span><span><span class="md-qa__name ac-label">Photos</span><span class="md-qa__desc">Add or replace many</span></span></button>
+      <button type="button" class="action-card md-qa__btn" data-permission="print" onclick="showSchoolSelector('print')"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-print"/></svg></span><span><span class="md-qa__name ac-label">Print cards</span><span class="md-qa__desc">Cards, back sheet, checklist</span></span></button>
+      <button type="button" class="action-card md-qa__btn" data-permission="export" onclick="showSchoolSelector('export')"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-download"/></svg></span><span><span class="md-qa__name ac-label">Export</span><span class="md-qa__desc">Excel or cards PDF</span></span></button>
+      <button type="button" class="action-card md-qa__btn" data-permission="form" onclick="showSchoolSelector('form')"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-form"/></svg></span><span><span class="md-qa__name ac-label">School forms</span><span class="md-qa__desc">Blank forms to fill by hand</span></span></button>
+    </div></div>
+  </section>
+
+  <div class="md-dash-row" id="dashRow1">
+    <section class="md-panel md-rise" style="--i:6" aria-labelledby="monthTitle">
+      <div class="md-panel__head">
+        <div><h2 class="md-panel__title" id="monthTitle">Students added</h2><div class="md-panel__sub" id="monthSub">Last 6 months</div></div>
+        <div class="md-panel__tools">
+          <div class="md-seg" role="group" aria-label="Period"><button type="button" aria-pressed="true" data-months="6">6 months</button><button type="button" aria-pressed="false" data-months="12">12 months</button></div>
+          <button type="button" class="md-textbtn" data-table="month" aria-pressed="false">Table</button>
+        </div>
+      </div>
+      <div class="md-panel__body"><div class="md-chartbox" id="boxMonthly"><canvas id="chartMonthly" role="img" aria-label="Students added per month"></canvas></div><div id="tableMonthly" hidden></div></div>
+    </section>
+    <section class="md-panel md-rise" style="--i:7" id="chartAddedByCard" aria-labelledby="opsTitle">
+      <div class="md-panel__head"><div><h2 class="md-panel__title" id="opsTitle">Top data operators</h2><div class="md-panel__sub">Students each person added</div></div></div>
+      <div class="md-panel__body" id="chartAddedBy"></div>
+    </section>
   </div>
 
-  <div class="nav-right">
-    <div id="welcomeUser" class="welcome-pill"></div>
-    <div id="lastUpdated" class="last-updated"></div>
-    <button class="nav-btn refresh-btn" onclick="location.reload()" title="Refresh">↺</button>
-    <button class="nav-btn logout-btn" onclick="logout()">Logout</button>
+  <div class="md-dash-row" id="dashRow2">
+    <section class="md-panel md-rise" style="--i:8" aria-labelledby="chartSchoolBarTitle">
+      <div class="md-panel__head">
+        <div><h2 class="md-panel__title" id="chartSchoolBarTitle">Students per school</h2><div class="md-panel__sub" id="chartSchoolBarSub">Click a school to see only its numbers</div></div>
+        <div class="md-panel__tools"><button type="button" class="md-textbtn" data-table="class" aria-pressed="false" id="classTableBtn" hidden>Table</button></div>
+      </div>
+      <div class="md-panel__body">
+        <div id="schoolBars"></div>
+        <div class="md-chartbox" id="boxSchoolBar" hidden><canvas id="chartSchoolBar" role="img" aria-label="Students by class"></canvas></div>
+        <div id="tableSchoolBar" hidden></div>
+      </div>
+    </section>
+    <section class="md-panel md-rise" style="--i:9" id="managePanel" aria-labelledby="manageTitle">
+      <div class="md-panel__head"><h2 class="md-panel__title" id="manageTitle">Manage</h2></div>
+      <ul class="md-navlist">
+        <li><button type="button" class="action-card" data-permission="schools|own_schools" onclick="location.href='school_management.html'"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-school"/></svg></span><span class="md-navlist__text"><b class="ac-label">Schools</b><span>Fields, template, session</span></span><span class="md-navlist__chev" aria-hidden="true">›</span></button></li>
+        <li><button type="button" class="action-card" data-permission="session" title="Admins, and people an admin gave 🔁 Session &amp; promotion" onclick="location.href='new_session.html'"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-session"/></svg></span><span class="md-navlist__text"><b class="ac-label">New session</b><span>Promote classes for the new year</span></span><span class="md-navlist__chev" aria-hidden="true">›</span></button></li>
+        <li><button type="button" class="action-card" data-permission="session" title="Where every school stands in this year's session work" onclick="location.href='pipeline.html'"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-route"/></svg></span><span class="md-navlist__text"><b class="ac-label">Session pipeline</b><span>Where every school stands</span></span><span class="md-navlist__chev" aria-hidden="true">›</span></button></li>
+        <li><button type="button" class="action-card" data-permission="templates" onclick="showSchoolSelector('templates')"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-card"/></svg></span><span class="md-navlist__text"><b class="ac-label">Card templates</b><span>Design a school's card</span></span><span class="md-navlist__chev" aria-hidden="true">›</span></button></li>
+        <li><button type="button" class="action-card" data-permission="restore" onclick="location.href='restore_students.html'"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-restore"/></svg></span><span class="md-navlist__text"><b class="ac-label">Restore deleted</b><span>Bring back deleted records</span></span><span class="md-navlist__chev" aria-hidden="true">›</span></button></li>
+        <li><button type="button" class="action-card" data-permission="users|own_users" onclick="location.href='manage_users.html'"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-users"/></svg></span><span class="md-navlist__text"><b class="ac-label">Users</b><span>Logins and permissions</span></span><span class="md-navlist__chev" aria-hidden="true">›</span></button></li>
+        <li><button type="button" class="action-card" data-permission="vendors" data-role="admin" onclick="location.href='manage_vendors.html'"><span class="md-tile__icon" aria-hidden="true"><svg><use href="#i-partner"/></svg></span><span class="md-navlist__text"><b class="ac-label">Vendors</b><span>Partners and their branding</span></span><span class="md-navlist__chev" aria-hidden="true">›</span></button></li>
+      </ul>
+    </section>
   </div>
-</nav>
-
-<!-- ACCESS DENIED -->
-<div id="accessNotice" class="access-notice" style="display:none;"></div>
-
-<main class="dashboard-main">
-
-  <!-- KPI ROW -->
-  <section class="kpi-section">
-
-    <div class="kpi-card kpi-blue">
-      <div class="kpi-icon">👥</div>
-      <div class="kpi-body">
-        <div class="kpi-label">Total Students</div>
-        <div class="kpi-value" id="kpiStudents">—</div>
-      </div>
-      <div class="kpi-bg-icon">👥</div>
-    </div>
-
-    <div class="kpi-card kpi-green" id="kpiSchoolCard">
-      <div class="kpi-icon">🏫</div>
-      <div class="kpi-body">
-        <div class="kpi-label">Schools</div>
-        <div class="kpi-value" id="kpiSchools">—</div>
-      </div>
-      <div class="kpi-bg-icon">🏫</div>
-    </div>
-
-    <div class="kpi-card kpi-amber">
-      <div class="kpi-icon">📅</div>
-      <div class="kpi-body">
-        <div class="kpi-label">Added This Month</div>
-        <div class="kpi-value" id="kpiThisMonth">—</div>
-      </div>
-      <div class="kpi-bg-icon">📅</div>
-    </div>
-
-    <div class="kpi-card kpi-purple">
-      <div class="kpi-icon">📚</div>
-      <div class="kpi-body">
-        <div class="kpi-label">Classes</div>
-        <div class="kpi-value" id="kpiClasses">—</div>
-      </div>
-      <div class="kpi-bg-icon">📚</div>
-    </div>
-
-  </section>
-
-  <!-- CHARTS ROW -->
-  <section class="charts-row">
-
-    <!-- Chart 1: Students per School / Class -->
-    <div class="chart-card">
-      <div class="chart-header">
-        <div>
-          <div class="chart-title" id="chartSchoolBarTitle">Students per School</div>
-          <div class="chart-subtitle">Distribution overview</div>
-        </div>
-      </div>
-      <div class="chart-wrap">
-        <canvas id="chartSchoolBar"></canvas>
-      </div>
-    </div>
-
-    <!-- Chart 2: Monthly Growth -->
-    <div class="chart-card">
-      <div class="chart-header">
-        <div>
-          <div class="chart-title">Monthly Growth</div>
-          <div class="chart-subtitle">Students added — last 6 months</div>
-        </div>
-      </div>
-      <div class="chart-wrap">
-        <canvas id="chartMonthly"></canvas>
-      </div>
-    </div>
-
-    <!-- Chart 3: Top Data Operators (admin only) -->
-    <div class="chart-card" id="chartAddedByCard">
-      <div class="chart-header">
-        <div>
-          <div class="chart-title">Top Data Operators</div>
-          <div class="chart-subtitle">Students entered per user</div>
-        </div>
-      </div>
-      <div class="chart-wrap">
-        <canvas id="chartAddedBy"></canvas>
-      </div>
-    </div>
-
-  </section>
-
-  <!-- QUICK ACTIONS -->
-  <section class="actions-section">
-    <div class="section-header">
-      <h2 class="section-title">Quick Actions</h2>
-    </div>
-
-    <div class="actions-grid">
-
-      <div class="action-card ac-blue" data-permission="add" onclick="showSchoolSelector('add')">
-        <div class="ac-icon">➕</div>
-        <div class="ac-label">Add Records</div>
-      </div>
-
-      <div class="action-card ac-indigo" data-permission="manage" onclick="showSchoolSelector('manage')">
-        <div class="ac-icon">🧾</div>
-        <div class="ac-label">Manage Records</div>
-      </div>
-
-      <div class="action-card ac-cyan" data-permission="print" onclick="showSchoolSelector('print')">
-        <div class="ac-icon">🖨</div>
-        <div class="ac-label">Print ID Cards</div>
-      </div>
-
-      <div class="action-card ac-green" data-permission="export" onclick="showSchoolSelector('export')">
-        <div class="ac-icon">💾</div>
-        <div class="ac-label">Export Data</div>
-      </div>
-
-      <div class="action-card ac-orange" data-permission="bulk" onclick="showSchoolSelector('bulk')">
-        <div class="ac-icon">📤</div>
-        <div class="ac-label">Bulk Upload</div>
-      </div>
-
-      <div class="action-card ac-pink" data-permission="manage" onclick="showSchoolSelector('photos')">
-        <div class="ac-icon">📸</div>
-        <div class="ac-label">Manage Photos</div>
-      </div>
-
-      <div class="action-card ac-slate" data-permission="schools|own_schools" onclick="location.href='school_management.html'">
-        <div class="ac-icon">🏫</div>
-        <div class="ac-label">Manage Schools</div>
-      </div>
-
-      <div class="action-card ac-slate" data-permission="session" onclick="location.href='new_session.html'" title="Admins, and people an admin gave 🔁 Session & promotion">
-        <div class="ac-icon">🔁</div>
-        <div class="ac-label">New Session</div>
-      </div>
-
-      <div class="action-card ac-slate" data-permission="session" onclick="location.href='pipeline.html'" title="Where every school stands in this year's session work">
-        <div class="ac-icon">🧭</div>
-        <div class="ac-label">Session Pipeline</div>
-      </div>
-
-      <div class="action-card ac-violet" data-permission="templates" onclick="showSchoolSelector('templates')">
-        <div class="ac-icon">🎨</div>
-        <div class="ac-label">Template Builder</div>
-      </div>
-
-      <div class="action-card ac-slate" data-role="admin" data-permission="vendors" onclick="location.href='manage_vendors.html'">
-        <div class="ac-icon">🤝</div>
-        <div class="ac-label">Manage Vendors</div>
-      </div>
-
-      <div class="action-card ac-rose" data-permission="form" onclick="showSchoolSelector('form')">
-        <div class="ac-icon">📄</div>
-        <div class="ac-label">School Forms</div>
-      </div>
-
-      <div class="action-card ac-teal" data-permission="restore" onclick="location.href='restore_students.html'">
-        <div class="ac-icon">♻️</div>
-        <div class="ac-label">Restore Students</div>
-      </div>
-
-      <div class="action-card ac-violet" data-permission="users|own_users" onclick="location.href='manage_users.html'">
-        <div class="ac-icon">👥</div>
-        <div class="ac-label">Manage Users</div>
-      </div>
-
-    </div>
-  </section>
-
 </main>
 
-<!-- SCHOOL SELECTOR POPUP -->
-<div id="schoolBox" class="school-box">
-  <h3>Select School</h3>
-  <select id="schoolSelect"><option value="">Loading...</option></select>
-  <br><br>
-  <button onclick="continueAction()">Continue</button>
+<!-- SCHOOL SELECTOR POPUP (same IDs and functions as before) -->
+<div id="schoolBox" class="md-modal md-dash-modal" role="dialog" aria-modal="true" aria-labelledby="schoolBoxTitle" style="display:none;">
+  <div class="md-dash-modal__head"><h2 class="md-h3" id="schoolBoxTitle">Choose a school</h2><button type="button" class="md-iconbtn" aria-label="Close" onclick="hideAllPopups()">✕</button></div>
+  <div class="md-dash-modal__body">
+    <label class="md-label" for="schoolSelect">School</label>
+    <select id="schoolSelect" class="md-select"><option value="">Loading...</option></select>
+  </div>
+  <div class="md-dash-modal__foot"><button type="button" class="md-btn md-btn--secondary" onclick="hideAllPopups()">Cancel</button><button type="button" class="md-btn md-btn--primary" onclick="continueAction()">Continue</button></div>
 </div>
 
-<div id="customSchoolPopup" class="school-box" style="display:none;">
-  <h3>New School Form</h3>
-  <input id="cs_name"    placeholder="School Name *"><br><br>
-  <input id="cs_address" placeholder="Address"><br><br>
-  <input id="cs_contact" placeholder="Contact"><br><br>
-  <input id="cs_session" placeholder="Session"><br><br>
-  <select id="cs_type" onchange="handleTypeChange()">
-    <option value="student">Student ID Card Form</option>
-    <option value="teacher">Teacher ID Card Form</option>
-    <option value="other">Other</option>
-  </select>
-  <br><br>
-  <input id="cs_custom_title" placeholder="Enter custom title" style="display:none;">
-  <br><br>
-  <button onclick="submitCustomSchool()">Continue</button>
+<div id="customSchoolPopup" class="md-modal md-dash-modal" role="dialog" aria-modal="true" aria-labelledby="customSchoolTitle" style="display:none;">
+  <div class="md-dash-modal__head"><h2 class="md-h3" id="customSchoolTitle">Form for a new school</h2><button type="button" class="md-iconbtn" aria-label="Close" onclick="hideAllPopups()">✕</button></div>
+  <div class="md-dash-modal__body md-dash-modal__grid">
+    <div class="md-field"><label class="md-label" for="cs_name">School name<span class="md-req" aria-hidden="true">*</span></label><input id="cs_name" class="md-input" autocomplete="off"></div>
+    <div class="md-field"><label class="md-label" for="cs_address">Address</label><input id="cs_address" class="md-input" autocomplete="off"></div>
+    <div class="md-field"><label class="md-label" for="cs_contact">Contact</label><input id="cs_contact" class="md-input" autocomplete="off"></div>
+    <div class="md-field"><label class="md-label" for="cs_session">Session</label><input id="cs_session" class="md-input" autocomplete="off" placeholder="e.g. 2026-27"></div>
+    <div class="md-field"><label class="md-label" for="cs_type">Form type</label>
+      <select id="cs_type" class="md-select" onchange="handleTypeChange()">
+        <option value="student">Student ID Card Form</option>
+        <option value="teacher">Teacher ID Card Form</option>
+        <option value="other">Other</option>
+      </select></div>
+    <div class="md-field"><label class="md-label md-sr" for="cs_custom_title">Custom title</label><input id="cs_custom_title" class="md-input" placeholder="Enter custom title" style="display:none;"></div>
+  </div>
+  <div class="md-dash-modal__foot"><button type="button" class="md-btn md-btn--secondary" onclick="hideAllPopups()">Cancel</button><button type="button" class="md-btn md-btn--primary" onclick="submitCustomSchool()">Continue</button></div>
 </div>
 
-<div id="overlay" class="overlay" style="display:none;"></div>
+<div id="overlay" class="md-dash-overlay" style="display:none;"></div>
 
 </body>
 </html>

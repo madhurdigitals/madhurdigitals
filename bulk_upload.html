@@ -79,6 +79,12 @@
       </select>
       <button type="button" class="bu-btn" style="padding:5px 12px;" onclick="applyCategoryToTicked()" title="Change the Category of every ticked row at once">Apply</button>
     </div>
+    <!-- R1: phone numbers that only need tidying -->
+    <div id="phoneFixBar" style="display:none; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px; font-size:13px; padding:8px 12px; border-radius:8px; background:#fffbeb; border:1px solid #fcd34d;">
+      <span id="phoneFixText"></span>
+      <button type="button" class="bu-btn" id="phoneFixBtn" style="padding:5px 12px;" onclick="openPhoneReview()" title="See every change before anything is changed">Review and fix</button>
+      <button type="button" class="bu-btn" id="phoneUndoBtn" style="padding:5px 12px; display:none;" onclick="undoPhoneFixes()" title="Put the last fixed numbers back as they were">Undo fix</button>
+    </div>
     <div class="table-wrapper">
       <table>
         <thead id="tableHead"></thead>
@@ -106,6 +112,23 @@
   document.getElementById("schoolName").innerText = _schoolName;
   document.getElementById("schoolNameTop").innerText = _schoolName;
 </script>
+
+<!-- R1: review before fixing phone numbers -->
+<div id="phoneReviewOverlay" onclick="closePhoneReview()" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:1000;"></div>
+<div id="phoneReview" role="dialog" aria-modal="true" aria-labelledby="phoneReviewTitle" style="display:none; position:fixed; left:50%; top:6vh; transform:translateX(-50%); width:calc(100% - 32px); max-width:760px; max-height:86vh; overflow:auto; background:#fff; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,.25); z-index:1001; padding:18px 20px;">
+  <h3 id="phoneReviewTitle" style="margin:0 0 8px;">Review phone numbers</h3>
+  <div id="phoneReviewBody"></div>
+  <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;">
+    <button type="button" class="bu-btn" onclick="closePhoneReview()">Cancel</button>
+    <button type="button" class="submit-btn" id="phoneFixApply" onclick="applyPhoneFixes()">Fix ticked</button>
+  </div>
+</div>
+<style>
+  .bu-fixed { background: #dcfce7 !important; }
+  .pr-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pr-table th, .pr-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #e5e7eb; white-space: normal !important; max-width: none !important; overflow: visible !important; }
+  .pr-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 4px; }
+</style>
 
 </body>
 </html>

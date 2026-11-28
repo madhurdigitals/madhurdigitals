@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Madhur Digitals</title>
+  <defs>
+    <linearGradient id="gi" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF8A1F"/>
+      <stop offset="1" stop-color="#F05A05"/>
+    </linearGradient>
+    <linearGradient id="hi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#gi)"/>
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#hi)"/>
+  <rect x="206" y="78" width="100" height="26" rx="13" fill="#FFFFFF"/>
+  <path d="M150 384 V196 L256 322 L362 196 V384" fill="none" stroke="#FFFFFF"
+        stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="256" cy="200" r="32" fill="#FFFFFF"/>
+</svg>

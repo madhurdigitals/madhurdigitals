@@ -1,42 +1,49 @@
-# Release SE3d: 🔁 Bulk promote (admins), on the Session Pipeline page
+# Release P2c: phone bottom bar + home-screen app icon
 
-**2 files, no Code.gs change, no setup.**
+Apply after P2b.5. **No Apps Script change.**
 
-## Why no server change
-Bulk promote does exactly what you'd do by hand: for each school, the same 🔁 check and the same promotion as that school's own page, **one school at a time**. So every existing safeguard applies unchanged:
-- the date lock;
-- the class check;
-- "changed since the preview";
-- the frozen session;
-- ↩ Undo per school.
+## What changed
 
-## How it works (admins only)
-1. **🧭 Session Pipeline** → each **⏳ Due** school has a tick box, and there's also "Select all ⏳ Due schools shown". You can use the search, vendor and stage filters first, then tick.
-2. **🔁 Preview bulk promote (N)** checks the ticked schools, a few at a time, and splits them:
-   - **✅ Ready:** the session has started, every class is recognised, and nothing is half done. Each school gets one line, e.g. "Old School (OLDS): 2026-27 → 2027-28 — 420 move up, 30 pass out, 0 stay", with **classes** to expand the full list ("5 → 6 (32), …").
-   - **⚠ Needs a look:** an unrecognised class, a class above the last class, a half-done promotion, not started yet, or an error. These are **left out**, with the reason and a link to that school's 🔁 page.
-3. Tick **"I have checked the schools and classes above"** → **🔁 Start N schools** → confirm.
-   - Schools run **one after another**, each marked ✅ promoted or ❌ with the server's reason.
-   - **One failing never stops the others.** If a student was added after the preview, that school is refused and the rest carry on.
-   - **⏹ Stop after this school** stops the run part-way.
-   - The page warns you if you try to leave while it's running.
-4. When it finishes, the list reloads. Every promoted school is a normal promotion: **↩ Undo** works on its own page until the first change.
+| Part | Now |
+|---|---|
+| **Bottom bar (phones only, up to 600 px wide)** | Home · Add · Records · Photos · Menu. The current page is orange. Add / Records / Photos go through the school chooser like the top menu. **Menu** opens the full menu. |
+| Permissions | A button the user may not use is replaced by the next allowed one (Print, Bulk, Export). With none allowed: Home and Menu only. |
+| While typing | The bar slides away while the phone keyboard is up (text boxes), and comes back after. Tick boxes and lists do not hide it. |
+| Space | Pages get room at the bottom so nothing sits under the bar; messages (toasts) appear above it. |
+| Where | Pages already redesigned: Dashboard, Help, Add records, Records. Each later page gets it when it is redesigned. Laptops and tablets never show it. |
+| **Add to Home screen** | New manifest.webmanifest + icons: name "Madhur Digitals" (short "Madhur"), the orange M icon (a round-safe version for Android), white top. Opening the icon goes **straight to the Dashboard, full screen** (no browser bar). Added to every page that uses layout.js, including Login. |
+| No offline worker | On purpose: no files are stored on the phone, so every release reaches everyone at once. |
 
-## Not included, on purpose
-- **Early promotion:** before the start date no school is ⏳ Due, so early stays a deliberate one-school decision.
-- **Non-admins with 🔁:** they promote one school at a time, as before.
+## Files
+
+| File | Lines | Base |
+|---|---|---|
+| js/layout.js | 401 | P1d |
+| css/app.css | 1126 | P2b.5 |
+| manifest.webmanifest | new | — |
+| assets/icon-192.png, assets/icon-512.png, assets/icon-maskable-512.png | new | — |
+
+Put **manifest.webmanifest in the site's top folder** (next to dashboard.html) and the 3 icons in **assets/**.
 
 ## Apply
-Upload `pipeline.html` and `js/pipeline.js`, then press Ctrl+F5.
+Copy the files and hard-refresh (Ctrl+Shift+R).
 
-## Test
-1. Put 2 test schools in an older session: in `manage_school`, set active_session to '2025-26 so their next session (2026-27) has already started. Give one of them a student with class "Remedial".
-2. 🧭 Pipeline → Select all ⏳ Due → Preview. Expected: one ✅ Ready (with its summary), and one ⚠ "class not recognised: Remedial" with a link.
-3. Tick, then Start. Only the ready school is promoted. Check its classes in the sheet, and that ↩ Undo is offered on its 🔁 page.
+## Tests on TV_Test
 
-## Tests
-- 8 new page tests.
-- **Mutation check:** I broke 5 things one at a time, and each was caught. They were: an unknown class not excluded, Stop ignored, a stale preview kept after changing the ticks, non-admins getting bulk, and non-Due schools tickable.
-- **Full regression:**
-  - Every suite that touches the session work passes.
-  - The same old page tests (Add Records and the student page) fail on some runs and pass on others, because of the test harness's timing. They hit different tests each run, and they don't load the 2 changed files.
+| # | Do | Expect |
+|---|---|---|
+| 1 | Phone: open Dashboard | Bar at the bottom: Home · Add · Records · Photos · Menu; Home orange |
+| 2 | Tap Records | School chooser (or straight in if the school is already chosen); Records orange |
+| 3 | Tap Menu | Full menu slides in |
+| 4 | Add records → tap the Name box | Bar slides away while typing; comes back after |
+| 5 | Log in as a user without Records permission | That button replaced (e.g. Print) |
+| 6 | Laptop | No bottom bar |
+| 7 | **Android Chrome**: ⋮ → Add to Home screen / Install app | Orange M icon "Madhur"; opens on Dashboard full screen |
+| 8 | **iPhone Safari**: Share → Add to Home Screen | Same icon; opens full screen |
+| 9 | From the installed app: Print cards and Export | Print / download still work (check once on your phones) |
+
+## Tested
+- New test_p2c (8); full kit **863 passed, 0 failed**; 7 mutations, all caught.
+- Laptop screenshots of Dashboard, Help, Login, Add records with old vs new files: identical. Phones: the only change is the bar (and the 56 px room for it).
+- Real Chrome 390 px: bar at the bottom on Dashboard, Add records, Records; slides away while typing; Records panel opens above it; no page errors.
+- Found and fixed while testing: old page stylesheets style every <nav> (sticky at the top), which pulled the bar to the top on Records. The bar is now a div with role="navigation", so they can't reach it.
